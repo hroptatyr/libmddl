@@ -1,0 +1,99 @@
+/** mddl.h - mddl stubs and snippets */
+
+#if !defined INCLUDED_mddl_h_
+#define INCLUDED_mddl_h_
+
+#undef DECLF
+#undef DEFUN
+#if defined STATIC_GUTS
+# define DEFUN	static
+# define DECLF	static
+#else  /* !STATIC_GUTS */
+# define DEFUN
+# define DECLF	extern
+#endif	/* STATIC_GUTS */
+
+
+/* properties */
+struct __p_src_s {
+	char *string;
+};
+
+struct __p_snap_type_s {
+	enum {
+		MDDL_SNAP_TYPE_UNK,
+		MDDL_SNAP_TYPE_UPDATE,
+		MDDL_SNAP_TYPE_NEW,
+		MDDL_SNAP_TYPE_EOD,
+	} voc_snap_type;
+};
+
+
+/* domains */
+struct __dom_instr_s {
+};
+
+struct __g_domain_s {
+	enum {
+		MDDL_DOM_UNK,
+		MDDL_DOM_INSTRUMENT,
+		MDDL_DOM_INDEX,
+		MDDL_DOM_PORTFOLIO,
+		MDDL_DOM_INDICATOR,
+		MDDL_DOM_FOREX,
+		MDDL_DOM_ENTITY,
+		MDDL_DOM_COMMODITY,
+		MDDL_DOM_CASH,
+		MDDL_DOM_CAE,
+	} dom;
+	union {
+	};
+};
+
+
+/* elements */
+struct __g_snap_choi_s {
+	time_t stamp;
+	struct __p_snap_type_s snap_type[1];
+	enum {
+		MDDL_SNAP_CHOICE_UNK,
+		MDDL_SNAP_CHOICE_DOMAINS,
+	} snap_choice;
+	union {
+		struct __g_domain_s domain[1];
+	};
+};
+
+struct __e_snap_s {
+	struct __g_snap_choi_s choice[1];
+};
+
+struct __e_tser_s {
+	/* not implemented yet */
+};
+
+struct __e_hdr_s {
+	time_t stamp;
+	struct __p_src_s source[1];
+};
+
+
+struct __g_mddl_choice_s {
+	enum {
+		MDDL_CHOICE_UNK,
+		MDDL_CHOICE_SNAP,
+		MDDL_CHOICE_TIMESERIES,
+	} mddl_choice;
+	union {
+		struct __e_snap_s snap[1];
+		struct __e_tser_s timeseries[1];
+	};
+};
+
+struct __e_mddl_s {
+	struct __e_hdr_s hdr[1];
+	size_t nchoice;
+	struct __g_mddl_choice_s choice[];
+};
+
+#endif	/* INCLUDED_mddl_h_ */
