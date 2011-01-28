@@ -33,7 +33,31 @@ struct __p_snap_type_s {
 struct __dom_instr_s {
 };
 
-struct __g_domain_s {
+struct __dom_index_s {
+};
+
+struct __dom_pfolio_s {
+};
+
+struct __dom_indica_s {
+};
+
+struct __dom_forex_s {
+};
+
+struct __dom_entity_s {
+};
+
+struct __dom_comdty_s {
+};
+
+struct __dom_cash_s {
+};
+
+struct __dom_cae_s {
+};
+
+struct __g_domains_s {
 	enum {
 		MDDL_DOM_UNK,
 		MDDL_DOM_INSTRUMENT,
@@ -46,21 +70,32 @@ struct __g_domain_s {
 		MDDL_DOM_CASH,
 		MDDL_DOM_CAE,
 	} dom;
+	size_t ndomains;
 	union {
+		struct __dom_instr_s *instrument;
+		struct __dom_index_s *index;
+		struct __dom_pfolio_s *portfolio;
+		struct __dom_indica_s *indicator;
+		struct __dom_forex_s *forex;
+		struct __dom_entity_s *entity;
+		struct __dom_comdty_s *commodity;
+		struct __dom_cash_s *cash;
+		struct __dom_cae_s *cae;
 	};
 };
 
 
 /* elements */
 struct __g_snap_choi_s {
-	time_t stamp;
-	struct __p_snap_type_s snap_type[1];
 	enum {
 		MDDL_SNAP_CHOICE_UNK,
 		MDDL_SNAP_CHOICE_DOMAINS,
 	} snap_choice;
+	time_t stamp;
+	struct __p_snap_type_s snap_type[1];
+	size_t ndomains;
 	union {
-		struct __g_domain_s domain[1];
+		struct __g_domains_s *domains;
 	};
 };
 
