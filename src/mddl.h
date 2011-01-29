@@ -25,11 +25,17 @@ typedef char *__a_instr_type_t;
 typedef char *__a_instr_form_type_t;
 typedef char *__a_comment_t;
 typedef char *__a_background_t;
+typedef char *__a_country_t;
+typedef char *__a_instr_status_type_t;
+typedef char *__a_scope_type_t;
+
+typedef char *mdstring_t;
+typedef char *mduri_t;
 
 
 /* properties */
 struct __p_src_s {
-	char *string;
+	mdstring_t value;
 };
 
 struct __p_snap_type_s {
@@ -49,7 +55,7 @@ struct __p_name_s {
 	__a_role_t *role;
 
 	/* the actual name contents */
-	char *string;
+	mdstring_t value;
 #if 0
 /* not impl'd */
 	size_t nperiod;
@@ -74,7 +80,7 @@ struct __p_code_s {
 	__a_scheme_t scheme;
 
 	/* the actual code contents */
-	char *string;
+	mdstring_t value;
 #if 0
 /* not impl'd */
 	size_t nperiod;
@@ -104,7 +110,7 @@ struct __g_code_name_s {
 struct __p_currency_s {
 	__a_scheme_t scheme;
 	/* the actual contents */
-	char *string;
+	mdstring_t value;
 
 #if 0
 /* um */
@@ -142,8 +148,25 @@ struct __p_instr_data_s {
 #endif	/* 0 */
 };
 
+struct __p_issuer_ref_s {
+	mduri_t value;
+	
+	size_t ncode_name;
+	struct __g_code_name_s *code_name;
+};
+
+
 struct __p_instr_ident_s {
-	size_t ncode_names;
+	size_t ncountry;
+	__a_country_t *country;
+
+	size_t ninstr_status_type;
+	__a_instr_status_type_t *instr_status_type;
+
+	size_t nscope_type;
+	__a_scope_type_t *scope_type;
+
+	size_t ncode_name;
 	struct __g_code_name_s *code_name;
 
 	size_t nmkt_ident;
@@ -165,6 +188,8 @@ struct __p_indus_ident_s {
 };
 
 struct __p_issue_data_s {
+	size_t nissuer_ref;
+	struct __p_issuer_ref_s *issuer_ref;
 };
 
 struct __g_basic_idents_s {
