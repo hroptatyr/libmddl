@@ -34,14 +34,22 @@
 typedef struct mddl_ctx_s *mddl_ctx_t;
 typedef xmlSAXHandler sax_hdl_s;
 typedef sax_hdl_s *sax_hdl_t;
+typedef struct mddl_ctxcb_s *mddl_ctxcb_t;
 
 struct mddl_ns_s {
 	char *pref;
 	char *href;
 };
 
+/* contextual callbacks */
+struct mddl_ctxcb_s {
+	void(*dtf)(mddl_ctxcb_t ctx, time_t date_time);
+	void *object;
+	mddl_ctxcb_t old_ctxcb;
+};
+
 struct mddl_ctx_s {
-	void *doc;
+	mddl_doc_t doc;
 	struct mddl_ns_s ns[16];
 	size_t nns;
 	/* stuff buf */
@@ -51,6 +59,8 @@ struct mddl_ctx_s {
 	size_t sbix;
 	/* the current sax handler */
 	sax_hdl_s hdl[1];
+	/* parser state, for contextual callbacks */
+	struct mddl_ctxcb_s pst[1];
 };
 
 #if 0
@@ -143,6 +153,8 @@ mddl_init(mddl_ctx_t ctx, const char **attrs)
 			mddl_reg_ns(ctx, pref == attrs[i] ? NULL : pref, href);
 		}
 	}
+	/* alloc some space for our document */
+	ctx->doc = malloc(sizeof(*ctx->doc));
 	return;
 }
 
@@ -181,12 +193,24 @@ stuff_buf_reset(mddl_ctx_t ctx)
 	return;
 }
 
+static void
+hdr_ass_dt(mddl_ctxcb_t ctx, time_t dt)
+{
+	struct __e_hdr_s *hdr = ctx->object;
+	hdr->stamp = dt;
+	return;
+}
+
 
 static const char tag_mddl[] = "mddl";
 static const char tag_dt1[] = "dateTime";
 static const char tag_dt2[] = "mdDateTime";
 static const char tag_obj[] = "objective";
 static const char tag_hdr[] = "header";
+
+static struct mddl_ctxcb_s __hdr_cc = {
+	.dtf = hdr_ass_dt,
+};
 
 static void
 sax_bo_elt(mddl_ctx_t ctx, const char *name, const char **attrs)
@@ -215,10 +239,9 @@ sax_bo_elt(mddl_ctx_t ctx, const char *name, const char **attrs)
 
 	/* all the stuff that needs a new sax handler */
 	if (strcmp(rname, tag_hdr) == 0) {
-		sax_hdl_t old_hdl = malloc(sizeof(*old_hdl));
-		*old_hdl = *ctx->hdl;
-		/* store a pointer to the old handler so we can restore it */
-		ctx->hdl->_private = old_hdl;
+		__hdr_cc.old_ctxcb = ctx->pst;
+		__hdr_cc.object = malloc(sizeof(struct __e_hdr_s));
+		*ctx->pst = __hdr_cc;
 	}
 	return;
 }
@@ -243,6 +266,9 @@ sax_eo_elt(mddl_ctx_t ctx, const char *name)
 		   strcmp(rname, tag_dt2) == 0) {
 		time_t t = get_zulu(ctx->sbuf);
 		fprintf(stderr, "DATETIME: %s gave us %ld\n", ctx->sbuf, t);
+		if (ctx->pst->dtf) {
+			ctx->pst->dtf(ctx->pst, t);
+		}
 		stuff_buf_reset(ctx);
 
 	} else if (strcmp(rname, tag_obj) == 0) {
@@ -253,11 +279,16 @@ sax_eo_elt(mddl_ctx_t ctx, const char *name)
 		stuff_buf_reset(ctx);
 
 	} else if (strcmp(rname, tag_hdr) == 0) {
-		/* restore the sax handler */
-		sax_hdl_t old_hdl = ctx->hdl->_private;
-
-		*ctx->hdl = *old_hdl;
-		free(old_hdl);
+		struct __e_hdr_s *hdr = ctx->pst->object;
+		fputs("HEADER", stderr);
+		if (hdr->stamp > 0) {
+			fprintf(stderr, " .stamp = %ld", hdr->stamp);
+		}
+		fputc('\n', stderr);
+		/* normally we should mount this blob into our mddl doc tree */
+		free(ctx->pst->object);
+		/* restore old handler */
+		*ctx->pst = *ctx->pst->old_ctxcb;
 
 	} else {
 		/* stuff buf reset */
