@@ -313,16 +313,16 @@ struct __g_mddl_choi_s {
 		MDDL_CHOICE_SNAP,
 		MDDL_CHOICE_TIMESERIES,
 	} mddl_choi_gt;
+	size_t nchoice;
 	union {
-		struct __e_snap_s snap[1];
-		struct __e_tser_s timeseries[1];
+		struct __e_snap_s *snap;
+		struct __e_tser_s *timeseries;
 	};
 };
 
 struct __e_mddl_s {
 	struct __e_hdr_s hdr[1];
-	size_t nchoice;
-	struct __g_mddl_choi_s *choice;
+	struct __g_mddl_choi_s choice[1];
 };
 
 #endif	/* INCLUDED_mddl_h_ */

@@ -41,6 +41,7 @@ typedef enum {
 	MDDL_OBJ_E_MDDL,
 	MDDL_OBJ_E_HDR,
 	MDDL_OBJ_P_SRC,
+	MDDL_OBJ_E_SNAP,
 } mddl_obj_type_t;
 
 struct mddl_ns_s {
@@ -165,9 +166,13 @@ mddl_init(mddl_ctx_t ctx, const char **attrs)
 		}
 	}
 	/* alloc some space for our document */
-	ctx->doc = malloc(sizeof(*ctx->doc));
-	ctx->pst->object = ctx->doc;
-	ctx->pst->otype = MDDL_OBJ_E_MDDL;
+	{
+		struct __e_mddl_s *m = calloc(sizeof(*m), 1);
+
+		ctx->doc = m;
+		ctx->pst->object = m;
+		ctx->pst->otype = MDDL_OBJ_E_MDDL;
+	}
 	return;
 }
 
@@ -231,6 +236,7 @@ static const char tag_s2[] = "mdString";
 static const char tag_obj[] = "objective";
 static const char tag_hdr[] = "header";
 static const char tag_src[] = "source";
+static const char tag_snap[] = "snap";
 
 static struct mddl_ctxcb_s __hdr_cc = {
 	.dtf = hdr_ass_dt,
@@ -238,6 +244,9 @@ static struct mddl_ctxcb_s __hdr_cc = {
 
 static struct mddl_ctxcb_s __src_cc = {
 	.sf = src_ass_s,
+};
+
+static struct mddl_ctxcb_s __snap_cc = {
 };
 
 static void
@@ -286,6 +295,20 @@ sax_bo_elt(mddl_ctx_t ctx, const char *name, const char **attrs)
 			__src_cc.object = hdr->source;
 			__src_cc.otype = MDDL_OBJ_P_SRC;
 			ctx->pst = &__src_cc;
+		}
+	} else if (strcmp(rname, tag_snap) == 0) {
+		/* check that we're in an mddl context */
+		if (ctx->pst->otype == MDDL_OBJ_E_MDDL) {
+			struct __e_mddl_s *m = ctx->pst->object;
+
+			m->choice->mddl_choi_gt = MDDL_CHOICE_SNAP;
+			m->choice->nchoice = 1;
+			m->choice->snap = malloc(sizeof(*m->choice->snap));
+
+			__snap_cc.object = m->choice->snap;
+			__snap_cc.otype = MDDL_OBJ_E_SNAP;
+			__snap_cc.old_ctxcb = ctx->pst;
+			ctx->pst = &__snap_cc;
 		}
 	}
 	return;
@@ -349,6 +372,9 @@ sax_eo_elt(mddl_ctx_t ctx, const char *name)
 		ctx->pst = ctx->pst->old_ctxcb;
 
 	} else if (strcmp(rname, tag_src) == 0) {
+		ctx->pst = ctx->pst->old_ctxcb;
+
+	} else if (strcmp(rname, tag_snap) == 0) {
 		ctx->pst = ctx->pst->old_ctxcb;
 
 	} else {
