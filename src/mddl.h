@@ -13,6 +13,9 @@
 # define DECLF	extern
 #endif	/* STATIC_GUTS */
 
+/* teh main thing */
+typedef struct __e_mddl_s *mddl_doc_t;
+
 
 /* attributes */
 typedef int __a_rank_t;
@@ -319,7 +322,7 @@ struct __g_mddl_choi_s {
 struct __e_mddl_s {
 	struct __e_hdr_s hdr[1];
 	size_t nchoice;
-	struct __g_mddl_choi_s choice[];
+	struct __g_mddl_choi_s *choice;
 };
 
 #endif	/* INCLUDED_mddl_h_ */
