@@ -15,6 +15,10 @@
 
 /* teh main thing */
 typedef struct __e_mddl_s *mddl_doc_t;
+typedef struct __e_hdr_s *mddl_hdr_t;
+typedef struct __e_snap_s *mddl_snap_t;
+typedef struct __dom_instr_s *mddl_dom_instr_t;
+typedef struct __p_instr_ident_s *mddl_p_instr_ident_t;
 
 
 /* attributes */
@@ -198,6 +202,9 @@ struct __p_issue_data_s {
 struct __g_basic_idents_s {
 	enum {
 		MDDL_BASIC_IDENT_UNK,
+		MDDL_BASIC_IDENT_INDUS_IDENT,
+		MDDL_BASIC_IDENT_INSTR_IDENT,
+		MDDL_BASIC_IDENT_ISSUE_DATA,
 	} basic_ident_gt;
 	size_t nidents;
 	union {
@@ -324,5 +331,13 @@ struct __e_mddl_s {
 	struct __e_hdr_s hdr[1];
 	struct __g_mddl_choi_s choice[1];
 };
+
+
+/* functions */
+DECLF mddl_snap_t mddl_add_snap(mddl_doc_t doc);
+
+DECLF mddl_dom_instr_t mddl_snap_add_dom_instr(mddl_snap_t snap);
+
+DECLF mddl_p_instr_ident_t mddl_dom_instr_add_instr_ident(mddl_dom_instr_t);
 
 #endif	/* INCLUDED_mddl_h_ */

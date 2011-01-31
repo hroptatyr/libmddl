@@ -42,6 +42,8 @@ typedef enum {
 	MDDL_OBJ_E_HDR,
 	MDDL_OBJ_P_SRC,
 	MDDL_OBJ_E_SNAP,
+	MDDL_OBJ_DOM_INSTR,
+	MDDL_OBJ_INSTR_IDENT,
 } mddl_obj_type_t;
 
 struct mddl_ns_s {
@@ -237,6 +239,8 @@ static const char tag_obj[] = "objective";
 static const char tag_hdr[] = "header";
 static const char tag_src[] = "source";
 static const char tag_snap[] = "snap";
+static const char tag_insdom[] = "instrumentDomain";
+static const char tag_insidnt[] = "instrumentIdentifier";
 
 static struct mddl_ctxcb_s __hdr_cc = {
 	.dtf = hdr_ass_dt,
@@ -247,6 +251,12 @@ static struct mddl_ctxcb_s __src_cc = {
 };
 
 static struct mddl_ctxcb_s __snap_cc = {
+};
+
+static struct mddl_ctxcb_s __insdom_cc = {
+};
+
+static struct mddl_ctxcb_s __insidnt_cc = {
 };
 
 static void
@@ -299,16 +309,41 @@ sax_bo_elt(mddl_ctx_t ctx, const char *name, const char **attrs)
 	} else if (strcmp(rname, tag_snap) == 0) {
 		/* check that we're in an mddl context */
 		if (ctx->pst->otype == MDDL_OBJ_E_MDDL) {
-			struct __e_mddl_s *m = ctx->pst->object;
+			mddl_doc_t m = ctx->pst->object;
+			mddl_snap_t s;
 
-			m->choice->mddl_choi_gt = MDDL_CHOICE_SNAP;
-			m->choice->nchoice = 1;
-			m->choice->snap = malloc(sizeof(*m->choice->snap));
+			if ((s = mddl_add_snap(m))) {
+				__snap_cc.object = s;
+				__snap_cc.otype = MDDL_OBJ_E_SNAP;
+				__snap_cc.old_ctxcb = ctx->pst;
+				ctx->pst = &__snap_cc;
+			}
+		}
+	} else if (strcmp(rname, tag_insdom)) {
+		/* check that we're in a snap context */
+		if (ctx->pst->otype == MDDL_OBJ_E_SNAP) {
+			mddl_snap_t m = ctx->pst->object;
+			struct __dom_instr_s *insdom;
 
-			__snap_cc.object = m->choice->snap;
-			__snap_cc.otype = MDDL_OBJ_E_SNAP;
-			__snap_cc.old_ctxcb = ctx->pst;
-			ctx->pst = &__snap_cc;
+			if ((insdom = mddl_snap_add_dom_instr(m))) {
+				__insdom_cc.object = insdom;
+				__insdom_cc.otype = MDDL_OBJ_DOM_INSTR;
+				__insdom_cc.old_ctxcb = ctx->pst;
+				ctx->pst = &__insdom_cc;
+			}
+		}
+	} else if (strcmp(rname, tag_insidnt)) {
+		/* check that we're in a insdom context */
+		if (ctx->pst->otype == MDDL_OBJ_DOM_INSTR) {
+			struct __dom_instr_s *insdom = ctx->pst->object;
+			struct __p_instr_ident_s *iid;
+
+			if ((iid = mddl_dom_instr_add_instr_ident(insdom))) {
+				__insidnt_cc.object = iid;
+				__insidnt_cc.otype = MDDL_OBJ_INSTR_IDENT;
+				__insidnt_cc.old_ctxcb = ctx->pst;
+				ctx->pst = &__insidnt_cc;
+			}
 		}
 	}
 	return;
