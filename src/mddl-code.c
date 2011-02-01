@@ -446,7 +446,13 @@ sax_eo_elt(mddl_ctx_t ctx, const char *name)
 
 	/* check for mddl */
 	if (tag_eq_p(rname, tag_mddl)) {
-		fputs("doc has finished, YAY\n", stderr);
+		struct __e_mddl_s *mddl = get_state_object(ctx);
+		fputs("mddl popped\n", stderr);
+		for (size_t i = 0; i < 1; i++) {
+			struct __g_mddl_choi_s *choi = mddl->choice + i;
+			fprintf(stderr, "  type %u %zu %p\n",
+				choi->mddl_choi_gt, choi->nchoice, choi->ptr);
+		}
 		pop_state(ctx);
 
 	} else if (tag_eq_p(rname, tag_s1) ||
@@ -489,11 +495,17 @@ sax_eo_elt(mddl_ctx_t ctx, const char *name)
 		pop_state(ctx);
 
 	} else if (tag_eq_p(rname, tag_src)) {
-		fputs("source popped\n", stderr);
 		pop_state(ctx);
 
 	} else if (tag_eq_p(rname, tag_snap)) {
+		struct __e_snap_s *snap = get_state_object(ctx);
 		fputs("snap popped\n", stderr);
+		fprintf(stderr, "%zu domains\n", snap->choice->ndomains);
+		for (size_t i = 0; i < snap->choice->ndomains; i++) {
+			struct __g_domains_s *dom = snap->choice->domains + i;
+			fprintf(stderr, "  type %u %zu %p\n",
+				dom->domains_gt, dom->ndomains, dom->ptr);
+		}
 		pop_state(ctx);
 
 	} else if (tag_eq_p(rname, tag_insdom)) {
