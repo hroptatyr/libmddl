@@ -14,28 +14,51 @@
 
 typedef struct __g_domains_s *mddl_dom_t;
 typedef struct __g_snap_choi_s *mddl_g_snap_choi_t;
+typedef struct __g_mddl_choi_s *mddl_g_mddl_choi_t;
 
 
+static mddl_g_mddl_choi_t
+__mddl_find_choice(mddl_doc_t m, enum mddl_choi_e mtype)
+{
+	mddl_g_mddl_choi_t p = m->choice;
+	if (p->mddl_choi_gt == mtype) {
+		return p;
+	}
+	return NULL;
+}
+
+static mddl_g_mddl_choi_t
+__mddl_add_choice(mddl_doc_t m, enum mddl_choi_e mtype)
+{
+	mddl_g_mddl_choi_t p;
+
+	/* already alloc'd */
+	p = m->choice;
+	/* initialise p somehow, we need a named enum here it seems */
+	memset(p, 0, sizeof(*p));
+	p->mddl_choi_gt = mtype;
+	return p;
+}
+
 DEFUN mddl_snap_t
 mddl_add_snap(mddl_doc_t doc)
 {
-	mddl_snap_t res = NULL;
+	mddl_g_mddl_choi_t choi;
+	mddl_snap_t snap;
 	size_t idx;
 
-	if ((idx = doc->choice->nchoice) == 0) {
-		doc->choice->mddl_choi_gt = MDDL_CHOICE_SNAP;
-		doc->choice->snap =
-			malloc((++doc->choice->nchoice) *
-			       sizeof(*doc->choice->snap));
-		res = doc->choice->snap;
-	} else if (doc->choice->mddl_choi_gt == MDDL_CHOICE_SNAP) {
-		doc->choice->snap =
-			realloc(doc->choice->snap,
-				(++doc->choice->nchoice) *
-				sizeof(*doc->choice->snap));
-		res = doc->choice->snap + idx;
+	if (!(choi = __mddl_find_choice(doc, MDDL_CHOICE_SNAP)) &&
+	    !(choi = __mddl_add_choice(doc, MDDL_CHOICE_SNAP))) {
+		return NULL;
 	}
-	return res;
+
+	idx = choi->nchoice++;
+	choi->snap = realloc(
+		choi->snap, choi->nchoice * sizeof(*choi->snap));
+	snap = choi->snap + idx;
+	/* intialise snap */
+	memset(snap, 0, sizeof(*snap));
+	return snap;
 }
 
 static mddl_dom_t
@@ -92,7 +115,7 @@ __snap_add_snap_choice(mddl_snap_t snap, enum snap_choi_e snap_choice)
 DEFUN mddl_dom_instr_t
 mddl_snap_add_dom_instr(mddl_snap_t snap)
 {
-	struct __g_snap_choi_s *choi;
+	mddl_g_snap_choi_t choi;
 	mddl_dom_t dom;
 	mddl_dom_instr_t res = NULL;
 	size_t idx;
@@ -112,6 +135,8 @@ mddl_snap_add_dom_instr(mddl_snap_t snap)
 		dom->instrument,
 		dom->ndomains * sizeof(*dom->instrument));
 	res = dom->instrument + idx;
+	/* initialise the result */
+	memset(res, 0, sizeof(*res));
 	return res;
 }
 
@@ -163,6 +188,8 @@ mddl_dom_instr_add_instr_ident(mddl_dom_instr_t insdom)
 		bi->instr_ident,
 		bi->nidents * sizeof(*bi->instr_ident));
 	res = bi->instr_ident + idx;
+	/* initialise res somehow */
+	memset(res, 0, sizeof(*res));
 	return res;
 }
 
