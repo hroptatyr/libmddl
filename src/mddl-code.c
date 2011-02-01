@@ -52,14 +52,23 @@ struct mddl_ns_s {
 };
 
 /* contextual callbacks */
-struct mddl_ctxcb_s {
-	/* principal types callbacks */
+struct __ctxcb_s {
+	/* principal types callbacks,
+	 * sf is for strings (and mdStrings)
+	 * dt is for dateTime (and mdDateTime) */
 	void(*sf)(mddl_ctxcb_t ctx, const char *str, size_t len);
 	void(*dtf)(mddl_ctxcb_t ctx, time_t date_time);
+};
+
+struct mddl_ctxcb_s {
+	/* for a linked list */
+	mddl_ctxcb_t next;
+
+	struct __ctxcb_s cb[1];
 	/* navigation info, stores the context */
 	mddl_obj_type_t otype;
 	void *object;
-	mddl_ctxcb_t old_ctxcb;
+	mddl_ctxcb_t old_state;
 };
 
 struct mddl_ctx_s {
@@ -74,7 +83,10 @@ struct mddl_ctx_s {
 	/* the current sax handler */
 	sax_hdl_s hdl[1];
 	/* parser state, for contextual callbacks */
-	mddl_ctxcb_t pst;
+	mddl_ctxcb_t state;
+	/* pool of context trackers, implies maximum parsing depth */
+	struct mddl_ctxcb_s ctxcb_pool[16];
+	mddl_ctxcb_t ctxcb_head;
 };
 
 #if 0
@@ -84,6 +96,37 @@ static const char mddl_xsi_loc[] = "mddl-3.0-beta-full.xsd";
 static const char mddl_xsi_uri[] = "http://www.mddl.org/mddl/3.0-beta";
 
 
+static void
+init_ctxcb(mddl_ctx_t ctx)
+{
+	memset(ctx->ctxcb_pool, 0, sizeof(ctx->ctxcb_pool));
+	for (int i = 0; i < countof(ctx->ctxcb_pool) - 1; i++) {
+		ctx->ctxcb_pool[i].next = ctx->ctxcb_pool + i + 1;
+	}
+	ctx->ctxcb_head = ctx->ctxcb_pool;
+	return;
+}
+
+static mddl_ctxcb_t
+pop_ctxcb(mddl_ctx_t ctx)
+{
+	mddl_ctxcb_t res = ctx->ctxcb_head;
+
+	if (LIKELY(res != NULL)) {
+		ctx->ctxcb_head = res->next;
+		memset(res, 0, sizeof(*res));
+	}
+	return res;
+}
+
+static void
+push_ctxcb(mddl_ctx_t ctx, mddl_ctxcb_t ctxcb)
+{
+	ctxcb->next = ctx->ctxcb_head;
+	ctx->ctxcb_head = ctxcb;
+	return;
+}
+
 static void __attribute__((unused))
 zulu_stamp(char *buf, size_t bsz, time_t stamp)
 {
@@ -167,13 +210,18 @@ mddl_init(mddl_ctx_t ctx, const char **attrs)
 			mddl_reg_ns(ctx, pref == attrs[i] ? NULL : pref, href);
 		}
 	}
+	/* initialise the ctxcb pool */
+	init_ctxcb(ctx);
 	/* alloc some space for our document */
 	{
 		struct __e_mddl_s *m = calloc(sizeof(*m), 1);
+		mddl_ctxcb_t cc = pop_ctxcb(ctx);
 
 		ctx->doc = m;
-		ctx->pst->object = m;
-		ctx->pst->otype = MDDL_OBJ_E_MDDL;
+		ctx->state = cc;
+		cc->old_state = NULL;
+		cc->object = m;
+		cc->otype = MDDL_OBJ_E_MDDL;
 	}
 	return;
 }
@@ -242,22 +290,67 @@ static const char tag_snap[] = "snap";
 static const char tag_insdom[] = "instrumentDomain";
 static const char tag_insidnt[] = "instrumentIdentifier";
 
-static struct mddl_ctxcb_s __hdr_cc = {
+static struct __ctxcb_s __hdr_cb = {
 	.dtf = hdr_ass_dt,
 };
 
-static struct mddl_ctxcb_s __src_cc = {
+static struct __ctxcb_s __src_cb = {
 	.sf = src_ass_s,
 };
 
-static struct mddl_ctxcb_s __snap_cc = {
-};
+static void
+pop_state(mddl_ctx_t ctx)
+{
+/* restore the previous current state */
+	mddl_ctxcb_t curr = ctx->state;
 
-static struct mddl_ctxcb_s __insdom_cc = {
-};
+	ctx->state = curr->old_state;
+	/* queue him in our pool */
+	push_ctxcb(ctx, curr);
+	return;
+}
 
-static struct mddl_ctxcb_s __insidnt_cc = {
-};
+static mddl_ctxcb_t
+push_state(mddl_ctx_t ctx, mddl_obj_type_t otype, void *object)
+{
+	mddl_ctxcb_t res = pop_ctxcb(ctx);
+
+	/* stuff it with the object we want to keep track of */
+	res->object = object;
+	res->otype = otype;
+	/* fiddle with the states in our context */
+	res->old_state = ctx->state;
+	ctx->state = res;
+	return res;
+}
+
+static mddl_obj_type_t
+get_state_otype(mddl_ctx_t ctx)
+{
+	return ctx->state->otype;
+}
+
+static void*
+get_state_object(mddl_ctx_t ctx)
+{
+	return ctx->state->object;
+}
+
+static void*
+get_state_object_if(mddl_ctx_t ctx, mddl_obj_type_t otype)
+{
+/* like get_state_object() but return NULL if types do not match */
+	if (LIKELY(get_state_otype(ctx) == otype)) {
+		return get_state_object(ctx);
+	}
+	return NULL;
+}
+
+static bool
+tag_eq_p(const char *tag1, const char *tag2)
+{
+	return strcmp(tag1, tag2) == 0;
+}
 
 static void
 sax_bo_elt(mddl_ctx_t ctx, const char *name, const char **attrs)
@@ -266,7 +359,7 @@ sax_bo_elt(mddl_ctx_t ctx, const char *name, const char **attrs)
 	const char *rname = tag_massage(name);
 
 	/* check for mddl */
-	if (UNLIKELY(strcmp(rname, tag_mddl) == 0)) {
+	if (UNLIKELY(tag_eq_p(rname, tag_mddl))) {
 		mddl_init(ctx, attrs);
 		return;
 	}
@@ -277,73 +370,63 @@ sax_bo_elt(mddl_ctx_t ctx, const char *name, const char **attrs)
 	}
 
 	/* add up all the tags that need a stuff buf reset */
-	if (strcmp(rname, tag_s1) == 0 ||
-	    strcmp(rname, tag_s2) == 0 ||
-	    strcmp(rname, tag_dt1) == 0 ||
-	    strcmp(rname, tag_dt2) == 0 ||
-	    strcmp(rname, tag_obj) == 0) {
+	if (tag_eq_p(rname, tag_s1) ||
+	    tag_eq_p(rname, tag_s2) ||
+	    tag_eq_p(rname, tag_dt1) ||
+	    tag_eq_p(rname, tag_dt2) ||
+	    tag_eq_p(rname, tag_obj)) {
 		/* something fundamentally brilliant starts now */
 		stuff_buf_reset(ctx);
 	}
 
 	/* all the stuff that needs a new sax handler */
-	if (strcmp(rname, tag_hdr) == 0) {
+	if (tag_eq_p(rname, tag_hdr)) {
 		/* check that we're inside an mddl context */
-		if (ctx->pst->otype == MDDL_OBJ_E_MDDL) {
-			struct __e_mddl_s *m = ctx->pst->object;
-			__hdr_cc.old_ctxcb = ctx->pst;
-			__hdr_cc.object = m->hdr;
-			__hdr_cc.otype = MDDL_OBJ_E_HDR;
-			ctx->pst = &__hdr_cc;
+		struct __e_mddl_s *m =
+			get_state_object_if(ctx, MDDL_OBJ_E_MDDL);
+		mddl_ctxcb_t cc;
+
+		if (m && (cc = push_state(ctx, MDDL_OBJ_E_HDR, m->hdr))) {
+			cc->cb[0] = __hdr_cb;
 		}
 
-	} else if (strcmp(rname, tag_src) == 0) {
+	} else if (tag_eq_p(rname, tag_src)) {
 		/* check that we're in a header context */
-		if (ctx->pst->otype == MDDL_OBJ_E_HDR) {
-			struct __e_hdr_s *hdr = ctx->pst->object;
-			__src_cc.old_ctxcb = ctx->pst;
-			__src_cc.object = hdr->source;
-			__src_cc.otype = MDDL_OBJ_P_SRC;
-			ctx->pst = &__src_cc;
+		struct __e_hdr_s *hdr =
+			get_state_object_if(ctx, MDDL_OBJ_E_HDR);
+		mddl_ctxcb_t cc;
+
+		if (hdr &&
+		    (cc = push_state(ctx, MDDL_OBJ_P_SRC, hdr->source))) {
+			cc->cb[0] = __src_cb;
 		}
-	} else if (strcmp(rname, tag_snap) == 0) {
+
+	} else if (tag_eq_p(rname, tag_snap)) {
 		/* check that we're in an mddl context */
-		if (ctx->pst->otype == MDDL_OBJ_E_MDDL) {
-			mddl_doc_t m = ctx->pst->object;
-			mddl_snap_t s;
+		mddl_doc_t m = get_state_object_if(ctx, MDDL_OBJ_E_MDDL);
+		mddl_snap_t s;
 
-			if ((s = mddl_add_snap(m))) {
-				__snap_cc.object = s;
-				__snap_cc.otype = MDDL_OBJ_E_SNAP;
-				__snap_cc.old_ctxcb = ctx->pst;
-				ctx->pst = &__snap_cc;
-			}
+		if (m && (s = mddl_add_snap(m))) {
+			push_state(ctx, MDDL_OBJ_E_SNAP, s);
 		}
-	} else if (strcmp(rname, tag_insdom)) {
+
+	} else if (tag_eq_p(rname, tag_insdom)) {
 		/* check that we're in a snap context */
-		if (ctx->pst->otype == MDDL_OBJ_E_SNAP) {
-			mddl_snap_t m = ctx->pst->object;
-			struct __dom_instr_s *insdom;
+		mddl_snap_t m = get_state_object_if(ctx, MDDL_OBJ_E_SNAP);
+		struct __dom_instr_s *insdom;
 
-			if ((insdom = mddl_snap_add_dom_instr(m))) {
-				__insdom_cc.object = insdom;
-				__insdom_cc.otype = MDDL_OBJ_DOM_INSTR;
-				__insdom_cc.old_ctxcb = ctx->pst;
-				ctx->pst = &__insdom_cc;
-			}
+		if (m && (insdom = mddl_snap_add_dom_instr(m))) {
+			push_state(ctx, MDDL_OBJ_DOM_INSTR, insdom);
 		}
-	} else if (strcmp(rname, tag_insidnt)) {
-		/* check that we're in a insdom context */
-		if (ctx->pst->otype == MDDL_OBJ_DOM_INSTR) {
-			struct __dom_instr_s *insdom = ctx->pst->object;
-			struct __p_instr_ident_s *iid;
 
-			if ((iid = mddl_dom_instr_add_instr_ident(insdom))) {
-				__insidnt_cc.object = iid;
-				__insidnt_cc.otype = MDDL_OBJ_INSTR_IDENT;
-				__insidnt_cc.old_ctxcb = ctx->pst;
-				ctx->pst = &__insidnt_cc;
-			}
+	} else if (tag_eq_p(rname, tag_insidnt)) {
+		/* check that we're in a insdom context */
+		struct __dom_instr_s *insdom =
+			get_state_object_if(ctx, MDDL_OBJ_DOM_INSTR);
+		struct __p_instr_ident_s *iid;
+
+		if (insdom && (iid = mddl_dom_instr_add_instr_ident(insdom))) {
+			push_state(ctx, MDDL_OBJ_INSTR_IDENT, iid);
 		}
 	}
 	return;
@@ -362,36 +445,37 @@ sax_eo_elt(mddl_ctx_t ctx, const char *name)
 	}
 
 	/* check for mddl */
-	if (strcmp(rname, tag_mddl) == 0) {
+	if (tag_eq_p(rname, tag_mddl)) {
 		fputs("doc has finished, YAY\n", stderr);
+		pop_state(ctx);
 
-	} else if (strcmp(rname, tag_s1) == 0 ||
-		   strcmp(rname, tag_s2) == 0) {
+	} else if (tag_eq_p(rname, tag_s1) ||
+		   tag_eq_p(rname, tag_s2)) {
 		size_t len = strlen(ctx->sbuf);
 		fprintf(stderr, "STRING: \"%s\"\n", ctx->sbuf);
-		if (ctx->pst->sf) {
-			ctx->pst->sf(ctx->pst, ctx->sbuf, len);
+		if (ctx->state->cb->sf) {
+			ctx->state->cb->sf(ctx->state, ctx->sbuf, len);
 		}
 		stuff_buf_reset(ctx);
 
-	} else if (strcmp(rname, tag_dt1) == 0 ||
-		   strcmp(rname, tag_dt2) == 0) {
+	} else if (tag_eq_p(rname, tag_dt1) ||
+		   tag_eq_p(rname, tag_dt2)) {
 		time_t t = get_zulu(ctx->sbuf);
 		fprintf(stderr, "DATETIME: %s gave us %ld\n", ctx->sbuf, t);
-		if (ctx->pst->dtf) {
-			ctx->pst->dtf(ctx->pst, t);
+		if (ctx->state->cb->dtf) {
+			ctx->state->cb->dtf(ctx->state, t);
 		}
 		stuff_buf_reset(ctx);
 
-	} else if (strcmp(rname, tag_obj) == 0) {
+	} else if (tag_eq_p(rname, tag_obj)) {
 		fputs("OBJECTIVE\n", stderr);
 		fputs(ctx->sbuf, stderr);
 		fputc('\n', stderr);
 		fputs("/OBJECTIVE\n", stderr);
 		stuff_buf_reset(ctx);
 
-	} else if (strcmp(rname, tag_hdr) == 0) {
-		struct __e_hdr_s *hdr = ctx->pst->object;
+	} else if (tag_eq_p(rname, tag_hdr)) {
+		struct __e_hdr_s *hdr = get_state_object(ctx);
 		fputs("HEADER", stderr);
 		fprintf(stderr, " %p", hdr);
 		if (hdr->stamp > 0) {
@@ -401,16 +485,24 @@ sax_eo_elt(mddl_ctx_t ctx, const char *name)
 			fprintf(stderr, " .source = %s", hdr->source->value);
 		}
 		fputc('\n', stderr);
-		/* normally we should mount this blob into our mddl doc tree */
-		free(ctx->pst->object);
 		/* restore old handler */
-		ctx->pst = ctx->pst->old_ctxcb;
+		pop_state(ctx);
 
-	} else if (strcmp(rname, tag_src) == 0) {
-		ctx->pst = ctx->pst->old_ctxcb;
+	} else if (tag_eq_p(rname, tag_src)) {
+		fputs("source popped\n", stderr);
+		pop_state(ctx);
 
-	} else if (strcmp(rname, tag_snap) == 0) {
-		ctx->pst = ctx->pst->old_ctxcb;
+	} else if (tag_eq_p(rname, tag_snap)) {
+		fputs("snap popped\n", stderr);
+		pop_state(ctx);
+
+	} else if (tag_eq_p(rname, tag_insdom)) {
+		fputs("instrumendDomain popped\n", stderr);
+		pop_state(ctx);
+
+	} else if (tag_eq_p(rname, tag_insidnt)) {
+		fputs("instrumentIdentifier popped\n", stderr);
+		pop_state(ctx);
 
 	} else {
 		/* stuff buf reset */
@@ -439,15 +531,12 @@ stuff_buf_push(mddl_ctx_t ctx, const char *ch, int len)
 static int
 parse_doc(mddl_ctx_t ctx, const char *file)
 {
-	static struct mddl_ctxcb_s pst[1] = {{0}};
 	int res;
 
 	/* fill in the minimalistic sax handler to begin with */
 	ctx->hdl->startElement = (startElementSAXFunc)sax_bo_elt;
 	ctx->hdl->endElement = (endElementSAXFunc)sax_eo_elt;
 	ctx->hdl->characters = (charactersSAXFunc)stuff_buf_push;
-	/* establish our contextual callbacks */
-	ctx->pst = pst;
 
 	res = xmlSAXUserParseFile(ctx->hdl, ctx, file);
 	return res;
