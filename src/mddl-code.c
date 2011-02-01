@@ -44,6 +44,9 @@ typedef enum {
 	MDDL_OBJ_E_SNAP,
 	MDDL_OBJ_DOM_INSTR,
 	MDDL_OBJ_INSTR_IDENT,
+	MDDL_OBJ_ISSUER_REF,
+	MDDL_OBJ_NAME,
+	MDDL_OBJ_CODE,
 } mddl_obj_type_t;
 
 struct mddl_ns_s {
@@ -127,6 +130,61 @@ push_ctxcb(mddl_ctx_t ctx, mddl_ctxcb_t ctxcb)
 	return;
 }
 
+static void
+pop_state(mddl_ctx_t ctx)
+{
+/* restore the previous current state */
+	mddl_ctxcb_t curr = ctx->state;
+
+	ctx->state = curr->old_state;
+	/* queue him in our pool */
+	push_ctxcb(ctx, curr);
+	return;
+}
+
+static mddl_ctxcb_t
+push_state(mddl_ctx_t ctx, mddl_obj_type_t otype, void *object)
+{
+	mddl_ctxcb_t res = pop_ctxcb(ctx);
+
+	/* stuff it with the object we want to keep track of */
+	res->object = object;
+	res->otype = otype;
+	/* fiddle with the states in our context */
+	res->old_state = ctx->state;
+	ctx->state = res;
+	return res;
+}
+
+static mddl_obj_type_t
+get_state_otype(mddl_ctx_t ctx)
+{
+	return ctx->state->otype;
+}
+
+static void*
+get_state_object(mddl_ctx_t ctx)
+{
+	return ctx->state->object;
+}
+
+static void*
+get_state_object_if(mddl_ctx_t ctx, mddl_obj_type_t otype)
+{
+/* like get_state_object() but return NULL if types do not match */
+	if (LIKELY(get_state_otype(ctx) == otype)) {
+		return get_state_object(ctx);
+	}
+	return NULL;
+}
+
+static bool
+tag_eq_p(const char *tag1, const char *tag2)
+{
+	return strcmp(tag1, tag2) == 0;
+}
+
+
 static void __attribute__((unused))
 zulu_stamp(char *buf, size_t bsz, time_t stamp)
 {
@@ -277,6 +335,22 @@ src_ass_s(mddl_ctxcb_t ctx, const char *str, size_t len)
 	return;
 }
 
+static void
+name_ass_s(mddl_ctxcb_t ctx, const char *str, size_t len)
+{
+	mddl_p_name_t n = ctx->object;
+	n->value = strndup(str, len);
+	return;
+}
+
+static void
+code_ass_s(mddl_ctxcb_t ctx, const char *str, size_t len)
+{
+	mddl_p_code_t c = ctx->object;
+	c->value = strndup(str, len);
+	return;
+}
+
 
 static const char tag_mddl[] = "mddl";
 static const char tag_dt1[] = "dateTime";
@@ -289,6 +363,8 @@ static const char tag_src[] = "source";
 static const char tag_snap[] = "snap";
 static const char tag_insdom[] = "instrumentDomain";
 static const char tag_insidnt[] = "instrumentIdentifier";
+static const char tag_name[] = "name";
+static const char tag_code[] = "code";
 
 static struct __ctxcb_s __hdr_cb = {
 	.dtf = hdr_ass_dt,
@@ -298,59 +374,13 @@ static struct __ctxcb_s __src_cb = {
 	.sf = src_ass_s,
 };
 
-static void
-pop_state(mddl_ctx_t ctx)
-{
-/* restore the previous current state */
-	mddl_ctxcb_t curr = ctx->state;
+static struct __ctxcb_s __name_cb = {
+	.sf = name_ass_s,
+};
 
-	ctx->state = curr->old_state;
-	/* queue him in our pool */
-	push_ctxcb(ctx, curr);
-	return;
-}
-
-static mddl_ctxcb_t
-push_state(mddl_ctx_t ctx, mddl_obj_type_t otype, void *object)
-{
-	mddl_ctxcb_t res = pop_ctxcb(ctx);
-
-	/* stuff it with the object we want to keep track of */
-	res->object = object;
-	res->otype = otype;
-	/* fiddle with the states in our context */
-	res->old_state = ctx->state;
-	ctx->state = res;
-	return res;
-}
-
-static mddl_obj_type_t
-get_state_otype(mddl_ctx_t ctx)
-{
-	return ctx->state->otype;
-}
-
-static void*
-get_state_object(mddl_ctx_t ctx)
-{
-	return ctx->state->object;
-}
-
-static void*
-get_state_object_if(mddl_ctx_t ctx, mddl_obj_type_t otype)
-{
-/* like get_state_object() but return NULL if types do not match */
-	if (LIKELY(get_state_otype(ctx) == otype)) {
-		return get_state_object(ctx);
-	}
-	return NULL;
-}
-
-static bool
-tag_eq_p(const char *tag1, const char *tag2)
-{
-	return strcmp(tag1, tag2) == 0;
-}
+static struct __ctxcb_s __code_cb = {
+	.sf = code_ass_s,
+};
 
 static void
 sax_bo_elt(mddl_ctx_t ctx, const char *name, const char **attrs)
@@ -421,13 +451,45 @@ sax_bo_elt(mddl_ctx_t ctx, const char *name, const char **attrs)
 
 	} else if (tag_eq_p(rname, tag_insidnt)) {
 		/* check that we're in a insdom context */
-		struct __dom_instr_s *insdom =
+		mddl_dom_instr_t insdom =
 			get_state_object_if(ctx, MDDL_OBJ_DOM_INSTR);
-		struct __p_instr_ident_s *iid;
+		mddl_p_instr_ident_t iid;
 
 		if (insdom && (iid = mddl_dom_instr_add_instr_ident(insdom))) {
 			push_state(ctx, MDDL_OBJ_INSTR_IDENT, iid);
 		}
+	} else if (tag_eq_p(rname, tag_name)) {
+		/* allow names nearly everywhere */
+		switch (get_state_otype(ctx)) {
+		case MDDL_OBJ_INSTR_IDENT: {
+			struct __p_instr_ident_s *iid = get_state_object(ctx);
+			mddl_p_name_t n;
+
+			if ((n = mddl_instr_ident_add_name(iid))) {
+				mddl_ctxcb_t cc =
+					push_state(ctx, MDDL_OBJ_NAME, n);
+				cc->cb[0] = __name_cb;
+			}
+			break;
+		}
+		case MDDL_OBJ_ISSUER_REF: {
+			struct __p_issuer_ref_s *iref = get_state_object(ctx);
+			iref->code_name = NULL;
+			break;
+		}
+		default:
+			break;
+		}
+
+	} else if (tag_eq_p(rname, tag_code)) {
+		/* allow codes nearly everywhere */
+		switch (get_state_otype(ctx)) {
+		case MDDL_OBJ_INSTR_IDENT:
+		case MDDL_OBJ_ISSUER_REF:
+		default:
+			break;
+		}
+
 	}
 	return;
 }
@@ -515,8 +577,21 @@ sax_eo_elt(mddl_ctx_t ctx, const char *name)
 		pop_state(ctx);
 
 	} else if (tag_eq_p(rname, tag_insidnt)) {
+		struct __p_instr_ident_s *iid = get_state_object(ctx);
 		fputs("instrumentIdentifier popped\n", stderr);
+		fprintf(stderr, "%zu code/names\n", iid->ncode_name);
+		for (size_t i = 0; i < iid->ncode_name; i++) {
+			struct __g_code_name_s *cn = iid->code_name + i;
+			fprintf(stderr, "  type %u %zu %p\n",
+				cn->code_name_gt, cn->ncode_name, cn->ptr);
+		}
 		pop_state(ctx);
+
+	} else if (tag_eq_p(rname, tag_name)) {
+		if (get_state_otype(ctx) == MDDL_OBJ_NAME) {
+			fputs("name popped\n", stderr);
+			pop_state(ctx);
+		}
 
 	} else {
 		/* stuff buf reset */
