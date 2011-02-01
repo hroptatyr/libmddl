@@ -52,9 +52,9 @@ mddl_add_snap(mddl_doc_t doc)
 		return NULL;
 	}
 
-	idx = choi->nchoice++;
+	idx = choi->nmddl_choi++;
 	choi->snap = realloc(
-		choi->snap, choi->nchoice * sizeof(*choi->snap));
+		choi->snap, choi->nmddl_choi * sizeof(*choi->snap));
 	snap = choi->snap + idx;
 	/* intialise snap */
 	memset(snap, 0, sizeof(*snap));
@@ -64,7 +64,7 @@ mddl_add_snap(mddl_doc_t doc)
 static mddl_dom_t
 __snap_choi_find_domain(mddl_g_snap_choi_t snch, enum domains_e dom_type)
 {
-	for (size_t i = 0; i < snch->ndomains; i++) {
+	for (size_t i = 0; i < snch->nsnap_choi; i++) {
 		mddl_dom_t p = snch->domains + i;
 		if (p->domains_gt == dom_type) {
 			return p;
@@ -77,10 +77,10 @@ static mddl_dom_t
 __snap_choi_add_domain(mddl_g_snap_choi_t snch, enum domains_e dom_type)
 {
 	mddl_dom_t p;
-	size_t idx = snch->ndomains;
+	size_t idx = snch->nsnap_choi;
 
 	snch->domains = realloc(
-		snch->domains, (++snch->ndomains) * sizeof(*snch->domains));
+		snch->domains, (++snch->nsnap_choi) * sizeof(*snch->domains));
 	p = snch->domains + idx;
 	/* initialise p somehow, we need a named enum here it seems */
 	memset(p, 0, sizeof(*p));
@@ -145,7 +145,7 @@ __insdom_find_basic_ident(mddl_dom_instr_t idom, enum basic_idents_e ident_type)
 {
 	for (size_t i = 0; i < idom->nbasic_idents; i++) {
 		struct __g_basic_idents_s *p = idom->basic_idents + i;
-		if (p->basic_ident_gt == ident_type) {
+		if (p->basic_idents_gt == ident_type) {
 			return p;
 		}
 	}
@@ -164,8 +164,8 @@ __insdom_add_basic_ident(mddl_dom_instr_t idom, enum basic_idents_e ident_type)
 	p = idom->basic_idents + idx;
 	/* initialise p somehow, we need a named enum here it seems */
 	memset(p, 0, sizeof(*p));
-	p->basic_ident_gt = ident_type;
-	p->nidents = 0;
+	p->basic_idents_gt = ident_type;
+	p->nbasic_idents = 0;
 	return p;
 }
 
@@ -183,10 +183,10 @@ mddl_dom_instr_add_instr_ident(mddl_dom_instr_t insdom)
 		return NULL;
 	}
 
-	idx = bi->nidents++;
+	idx = bi->nbasic_idents++;
 	bi->instr_ident = realloc(
 		bi->instr_ident,
-		bi->nidents * sizeof(*bi->instr_ident));
+		bi->nbasic_idents * sizeof(*bi->instr_ident));
 	res = bi->instr_ident + idx;
 	/* initialise res somehow */
 	memset(res, 0, sizeof(*res));
