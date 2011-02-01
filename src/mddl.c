@@ -193,4 +193,73 @@ mddl_dom_instr_add_instr_ident(mddl_dom_instr_t insdom)
 	return res;
 }
 
+static struct __g_code_name_s*
+__instr_ident_find_code_name(mddl_p_instr_ident_t iid, enum code_name_e type)
+{
+	for (size_t i = 0; i < iid->ncode_name; i++) {
+		struct __g_code_name_s *p = iid->code_name + i;
+		if (p->code_name_gt == type) {
+			return p;
+		}
+	}
+	return NULL;
+}
+
+static struct __g_code_name_s*
+__instr_ident_add_code_name(mddl_p_instr_ident_t iid, enum code_name_e type)
+{
+	struct __g_code_name_s *p;
+	size_t idx = iid->ncode_name;
+
+	iid->code_name = realloc(
+		iid->code_name,
+		(++iid->ncode_name) * sizeof(*iid->code_name));
+	p = iid->code_name + idx;
+	/* initialise p somehow, we need a named enum here it seems */
+	memset(p, 0, sizeof(*p));
+	p->code_name_gt = type;
+	p->ncode_name = 0;
+	return p;
+}
+
+DEFUN mddl_p_name_t
+mddl_instr_ident_add_name(mddl_p_instr_ident_t iid)
+{
+	mddl_p_name_t res = NULL;
+	struct __g_code_name_s *cn = NULL;
+	size_t idx;
+
+	if (!(cn = __instr_ident_find_code_name(iid, MDDL_CODE_NAME_NAME)) &&
+	    !(cn = __instr_ident_add_code_name(iid, MDDL_CODE_NAME_NAME))) {
+		return NULL;
+	}
+
+	idx = cn->ncode_name++;
+	cn->name = realloc(cn->name, cn->ncode_name * sizeof(*cn->name));
+	res = cn->name + idx;
+	/* initialise res somehow */
+	memset(res, 0, sizeof(*res));
+	return res;
+}
+
+DEFUN mddl_p_code_t
+mddl_instr_ident_add_code(mddl_p_instr_ident_t iid)
+{
+	mddl_p_code_t res = NULL;
+	struct __g_code_name_s *cn = NULL;
+	size_t idx;
+
+	if (!(cn = __instr_ident_find_code_name(iid, MDDL_CODE_NAME_CODE)) &&
+	    !(cn = __instr_ident_add_code_name(iid, MDDL_CODE_NAME_CODE))) {
+		return NULL;
+	}
+
+	idx = cn->ncode_name++;
+	cn->code = realloc(cn->code, cn->ncode_name * sizeof(*cn->code));
+	res = cn->code + idx;
+	/* initialise res somehow */
+	memset(res, 0, sizeof(*res));
+	return res;
+}
+
 /* mddl.c ends here */

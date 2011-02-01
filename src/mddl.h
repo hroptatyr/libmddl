@@ -34,6 +34,8 @@ typedef struct __e_hdr_s *mddl_hdr_t;
 typedef struct __e_snap_s *mddl_snap_t;
 typedef struct __dom_instr_s *mddl_dom_instr_t;
 typedef struct __p_instr_ident_s *mddl_p_instr_ident_t;
+typedef struct __p_code_s *mddl_p_code_t;
+typedef struct __p_name_s *mddl_p_name_t;
 
 
 /* attributes */
@@ -347,5 +349,8 @@ DECLF mddl_snap_t mddl_add_snap(mddl_doc_t doc);
 DECLF mddl_dom_instr_t mddl_snap_add_dom_instr(mddl_snap_t snap);
 
 DECLF mddl_p_instr_ident_t mddl_dom_instr_add_instr_ident(mddl_dom_instr_t);
+
+DECLF mddl_p_name_t mddl_instr_ident_add_name(mddl_p_instr_ident_t);
+DECLF mddl_p_code_t mddl_instr_ident_add_code(mddl_p_instr_ident_t);
 
 #endif	/* INCLUDED_mddl_h_ */
