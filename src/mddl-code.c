@@ -35,23 +35,34 @@ typedef struct mddl_ctx_s *mddl_ctx_t;
 typedef xmlSAXHandler sax_hdl_s;
 typedef sax_hdl_s *sax_hdl_t;
 typedef struct mddl_ctxcb_s *mddl_ctxcb_t;
+typedef struct mddl_tag_s *mddl_tag_t;
 
 typedef enum {
-	MDDL_OBJ_TYPE_UNK,
-	MDDL_OBJ_E_MDDL,
-	MDDL_OBJ_E_HDR,
-	MDDL_OBJ_P_SRC,
-	MDDL_OBJ_E_SNAP,
-	MDDL_OBJ_DOM_INSTR,
-	MDDL_OBJ_INSTR_IDENT,
-	MDDL_OBJ_ISSUER_REF,
-	MDDL_OBJ_NAME,
-	MDDL_OBJ_CODE,
-} mddl_obj_type_t;
+	MDDL_TAG_UNK,
+	MDDL_TAG_MDDL,
+	MDDL_TAG_HEADER,
+	MDDL_TAG_SOURCE,
+	MDDL_TAG_SNAP,
+	MDDL_TAG_INSTRUMENT_DOMAIN,
+	MDDL_TAG_INSTRUMENT_IDENTIFIER,
+	MDDL_TAG_ISSUER_REF,
+	MDDL_TAG_NAME,
+	MDDL_TAG_CODE,
+	MDDL_TAG_RANK,
+	MDDL_TAG_ROLE,
+	MDDL_TAG_STRING,
+	MDDL_TAG_DATETIME,
+	MDDL_TAG_OBJECTIVE,
+} mddl_tid_t;
 
 struct mddl_ns_s {
 	char *pref;
 	char *href;
+};
+
+struct mddl_tag_s {
+	mddl_tid_t tid;
+	const char *tag;
 };
 
 /* contextual callbacks */
@@ -69,7 +80,7 @@ struct mddl_ctxcb_s {
 
 	struct __ctxcb_s cb[1];
 	/* navigation info, stores the context */
-	mddl_obj_type_t otype;
+	mddl_tid_t otype;
 	void *object;
 	mddl_ctxcb_t old_state;
 };
@@ -143,7 +154,7 @@ pop_state(mddl_ctx_t ctx)
 }
 
 static mddl_ctxcb_t
-push_state(mddl_ctx_t ctx, mddl_obj_type_t otype, void *object)
+push_state(mddl_ctx_t ctx, mddl_tid_t otype, void *object)
 {
 	mddl_ctxcb_t res = pop_ctxcb(ctx);
 
@@ -156,10 +167,10 @@ push_state(mddl_ctx_t ctx, mddl_obj_type_t otype, void *object)
 	return res;
 }
 
-static mddl_obj_type_t
+static mddl_tid_t
 get_state_otype(mddl_ctx_t ctx)
 {
-	return ctx->state->otype;
+	return ctx->state ? ctx->state->otype : MDDL_TAG_UNK;
 }
 
 static void*
@@ -169,7 +180,7 @@ get_state_object(mddl_ctx_t ctx)
 }
 
 static void*
-get_state_object_if(mddl_ctx_t ctx, mddl_obj_type_t otype)
+get_state_object_if(mddl_ctx_t ctx, mddl_tid_t otype)
 {
 /* like get_state_object() but return NULL if types do not match */
 	if (LIKELY(get_state_otype(ctx) == otype)) {
@@ -279,7 +290,7 @@ mddl_init(mddl_ctx_t ctx, const char **attrs)
 		ctx->state = cc;
 		cc->old_state = NULL;
 		cc->object = m;
-		cc->otype = MDDL_OBJ_E_MDDL;
+		cc->otype = MDDL_TAG_MDDL;
 	}
 	return;
 }
@@ -352,20 +363,6 @@ code_ass_s(mddl_ctxcb_t ctx, const char *str, size_t len)
 }
 
 
-static const char tag_mddl[] = "mddl";
-static const char tag_dt1[] = "dateTime";
-static const char tag_dt2[] = "mdDateTime";
-static const char tag_s1[] = "string";
-static const char tag_s2[] = "mdString";
-static const char tag_obj[] = "objective";
-static const char tag_hdr[] = "header";
-static const char tag_src[] = "source";
-static const char tag_snap[] = "snap";
-static const char tag_insdom[] = "instrumentDomain";
-static const char tag_insidnt[] = "instrumentIdentifier";
-static const char tag_name[] = "name";
-static const char tag_code[] = "code";
-
 static struct __ctxcb_s __hdr_cb = {
 	.dtf = hdr_ass_dt,
 };
@@ -382,14 +379,90 @@ static struct __ctxcb_s __code_cb = {
 	.sf = code_ass_s,
 };
 
+static struct mddl_tag_s tags[] = {
+	{
+		.tid = MDDL_TAG_MDDL,
+		.tag = "mddl",
+	},
+	{
+		.tid = MDDL_TAG_DATETIME,
+		.tag = "dateTime",
+	},
+	{
+		.tid = MDDL_TAG_DATETIME,
+		.tag = "mdDateTime",
+	},
+	{
+		.tid = MDDL_TAG_STRING,
+		.tag = "string",
+	},
+	{
+		.tid = MDDL_TAG_STRING,
+		.tag = "mdString",
+	},
+	{
+		.tid = MDDL_TAG_OBJECTIVE,
+		.tag = "objective",
+	},
+	{
+		.tid = MDDL_TAG_HEADER,
+		.tag = "header",
+	},
+	{
+		.tid = MDDL_TAG_SOURCE,
+		.tag = "source",
+	},
+	{
+		.tid = MDDL_TAG_SNAP,
+		.tag = "snap",
+	},
+	{
+		.tid = MDDL_TAG_INSTRUMENT_DOMAIN,
+		.tag = "instrumentDomain",
+	},
+	{
+		.tid = MDDL_TAG_INSTRUMENT_IDENTIFIER,
+		.tag = "instrumentIdentifier",
+	},
+	{
+		.tid = MDDL_TAG_NAME,
+		.tag = "name",
+	},
+	{
+		.tid = MDDL_TAG_CODE,
+		.tag = "code",
+	},
+	{
+		.tid = MDDL_TAG_ROLE,
+		.tag = "role",
+	},
+	{
+		.tid = MDDL_TAG_RANK,
+		.tag = "rank",
+	},
+};
+
+static mddl_tid_t
+sax_tid_from_tag(const char *tag)
+{
+	for (int i = 0; i < countof(tags); i++) {
+		if (tag_eq_p(tag, tags[i].tag)) {
+			fprintf(stderr, "%s -> %u\n", tag, tags[i].tid);
+			return tags[i].tid;
+		}
+	}
+	return MDDL_TAG_UNK;
+}
+
 static void
 sax_bo_elt(mddl_ctx_t ctx, const char *name, const char **attrs)
 {
 	/* where the real element name starts, sans ns prefix */
 	const char *rname = tag_massage(name);
+	mddl_tid_t tid = sax_tid_from_tag(rname);
 
 	/* check for mddl */
-	if (UNLIKELY(tag_eq_p(rname, tag_mddl))) {
+	if (UNLIKELY(tid == MDDL_TAG_MDDL)) {
 		mddl_init(ctx, attrs);
 		return;
 	}
@@ -400,79 +473,83 @@ sax_bo_elt(mddl_ctx_t ctx, const char *name, const char **attrs)
 	}
 
 	/* add up all the tags that need a stuff buf reset */
-	if (tag_eq_p(rname, tag_s1) ||
-	    tag_eq_p(rname, tag_s2) ||
-	    tag_eq_p(rname, tag_dt1) ||
-	    tag_eq_p(rname, tag_dt2) ||
-	    tag_eq_p(rname, tag_obj)) {
+	if (tid == MDDL_TAG_STRING ||
+	    tid == MDDL_TAG_DATETIME) {
 		/* something fundamentally brilliant starts now */
 		stuff_buf_reset(ctx);
 	}
 
 	/* all the stuff that needs a new sax handler */
-	if (tag_eq_p(rname, tag_hdr)) {
+	switch (tid) {
+	case MDDL_TAG_HEADER: {
 		/* check that we're inside an mddl context */
 		struct __e_mddl_s *m =
-			get_state_object_if(ctx, MDDL_OBJ_E_MDDL);
+			get_state_object_if(ctx, MDDL_TAG_MDDL);
 		mddl_ctxcb_t cc;
 
-		if (m && (cc = push_state(ctx, MDDL_OBJ_E_HDR, m->hdr))) {
+		if (m && (cc = push_state(ctx, MDDL_TAG_HEADER, m->hdr))) {
 			cc->cb[0] = __hdr_cb;
 		}
-
-	} else if (tag_eq_p(rname, tag_src)) {
+		break;
+	}
+	case MDDL_TAG_SOURCE: {
 		/* check that we're in a header context */
 		struct __e_hdr_s *hdr =
-			get_state_object_if(ctx, MDDL_OBJ_E_HDR);
+			get_state_object_if(ctx, MDDL_TAG_HEADER);
 		mddl_ctxcb_t cc;
 
 		if (hdr &&
-		    (cc = push_state(ctx, MDDL_OBJ_P_SRC, hdr->source))) {
+		    (cc = push_state(ctx, MDDL_TAG_SOURCE, hdr->source))) {
 			cc->cb[0] = __src_cb;
 		}
-
-	} else if (tag_eq_p(rname, tag_snap)) {
+		break;
+	}
+	case MDDL_TAG_SNAP: {
 		/* check that we're in an mddl context */
-		mddl_doc_t m = get_state_object_if(ctx, MDDL_OBJ_E_MDDL);
+		mddl_doc_t m = get_state_object_if(ctx, MDDL_TAG_MDDL);
 		mddl_snap_t s;
 
 		if (m && (s = mddl_add_snap(m))) {
-			push_state(ctx, MDDL_OBJ_E_SNAP, s);
+			push_state(ctx, MDDL_TAG_SNAP, s);
 		}
-
-	} else if (tag_eq_p(rname, tag_insdom)) {
+		break;
+	}
+	case MDDL_TAG_INSTRUMENT_DOMAIN: {
 		/* check that we're in a snap context */
-		mddl_snap_t m = get_state_object_if(ctx, MDDL_OBJ_E_SNAP);
+		mddl_snap_t m = get_state_object_if(ctx, MDDL_TAG_SNAP);
 		struct __dom_instr_s *insdom;
 
 		if (m && (insdom = mddl_snap_add_dom_instr(m))) {
-			push_state(ctx, MDDL_OBJ_DOM_INSTR, insdom);
+			push_state(ctx, MDDL_TAG_INSTRUMENT_DOMAIN, insdom);
 		}
-
-	} else if (tag_eq_p(rname, tag_insidnt)) {
+		break;
+	}
+	case MDDL_TAG_INSTRUMENT_IDENTIFIER: {
 		/* check that we're in a insdom context */
 		mddl_dom_instr_t insdom =
-			get_state_object_if(ctx, MDDL_OBJ_DOM_INSTR);
+			get_state_object_if(ctx, MDDL_TAG_INSTRUMENT_DOMAIN);
 		mddl_p_instr_ident_t iid;
 
 		if (insdom && (iid = mddl_dom_instr_add_instr_ident(insdom))) {
-			push_state(ctx, MDDL_OBJ_INSTR_IDENT, iid);
+			push_state(ctx, MDDL_TAG_INSTRUMENT_IDENTIFIER, iid);
 		}
-	} else if (tag_eq_p(rname, tag_name)) {
+		break;
+	}
+	case MDDL_TAG_NAME: {
 		/* allow names nearly everywhere */
 		switch (get_state_otype(ctx)) {
-		case MDDL_OBJ_INSTR_IDENT: {
+		case MDDL_TAG_INSTRUMENT_IDENTIFIER: {
 			struct __p_instr_ident_s *iid = get_state_object(ctx);
 			mddl_p_name_t n;
 
 			if ((n = mddl_instr_ident_add_name(iid))) {
 				mddl_ctxcb_t cc =
-					push_state(ctx, MDDL_OBJ_NAME, n);
+					push_state(ctx, MDDL_TAG_NAME, n);
 				cc->cb[0] = __name_cb;
 			}
 			break;
 		}
-		case MDDL_OBJ_ISSUER_REF: {
+		case MDDL_TAG_ISSUER_REF: {
 			struct __p_issuer_ref_s *iref = get_state_object(ctx);
 			iref->code_name = NULL;
 			break;
@@ -480,26 +557,30 @@ sax_bo_elt(mddl_ctx_t ctx, const char *name, const char **attrs)
 		default:
 			break;
 		}
-
-	} else if (tag_eq_p(rname, tag_code)) {
+		break;
+	}
+	case MDDL_TAG_CODE: {
 		/* allow codes nearly everywhere */
 		switch (get_state_otype(ctx)) {
-		case MDDL_OBJ_INSTR_IDENT: {
+		case MDDL_TAG_INSTRUMENT_IDENTIFIER: {
 			struct __p_instr_ident_s *iid = get_state_object(ctx);
 			mddl_p_code_t c;
 
 			if ((c = mddl_instr_ident_add_code(iid))) {
 				mddl_ctxcb_t cc =
-					push_state(ctx, MDDL_OBJ_CODE, c);
+					push_state(ctx, MDDL_TAG_CODE, c);
 				cc->cb[0] = __code_cb;
 			}
 			break;
 		}
-		case MDDL_OBJ_ISSUER_REF:
+		case MDDL_TAG_ISSUER_REF:
 		default:
 			break;
 		}
-
+		break;
+	}
+	default:
+		break;
 	}
 	return;
 }
@@ -509,6 +590,7 @@ sax_eo_elt(mddl_ctx_t ctx, const char *name)
 {
 	/* where the real element name starts, sans ns prefix */
 	const char *rname = tag_massage(name);
+	mddl_tid_t tid = sax_tid_from_tag(rname);
 
 	/* check if this is an mddl node */
 	if (!mddl_pref_p(ctx, name, rname - name)) {
@@ -517,7 +599,8 @@ sax_eo_elt(mddl_ctx_t ctx, const char *name)
 	}
 
 	/* check for mddl */
-	if (tag_eq_p(rname, tag_mddl)) {
+	switch (tid) {
+	case MDDL_TAG_MDDL: {
 		struct __e_mddl_s *mddl = get_state_object(ctx);
 		fputs("mddl popped\n", stderr);
 		for (size_t i = 0; i < 1; i++) {
@@ -528,33 +611,35 @@ sax_eo_elt(mddl_ctx_t ctx, const char *name)
 				choi->ptr);
 		}
 		pop_state(ctx);
-
-	} else if (tag_eq_p(rname, tag_s1) ||
-		   tag_eq_p(rname, tag_s2)) {
+		break;
+	}
+	case MDDL_TAG_STRING: {
 		size_t len = strlen(ctx->sbuf);
 		fprintf(stderr, "STRING: \"%s\"\n", ctx->sbuf);
 		if (ctx->state->cb->sf) {
 			ctx->state->cb->sf(ctx->state, ctx->sbuf, len);
 		}
 		stuff_buf_reset(ctx);
-
-	} else if (tag_eq_p(rname, tag_dt1) ||
-		   tag_eq_p(rname, tag_dt2)) {
+		break;
+	}
+	case MDDL_TAG_DATETIME: {
 		time_t t = get_zulu(ctx->sbuf);
 		fprintf(stderr, "DATETIME: %s gave us %ld\n", ctx->sbuf, t);
 		if (ctx->state->cb->dtf) {
 			ctx->state->cb->dtf(ctx->state, t);
 		}
 		stuff_buf_reset(ctx);
-
-	} else if (tag_eq_p(rname, tag_obj)) {
+		break;
+	}
+	case MDDL_TAG_OBJECTIVE: {
 		fputs("OBJECTIVE\n", stderr);
 		fputs(ctx->sbuf, stderr);
 		fputc('\n', stderr);
 		fputs("/OBJECTIVE\n", stderr);
 		stuff_buf_reset(ctx);
-
-	} else if (tag_eq_p(rname, tag_hdr)) {
+		break;
+	}
+	case MDDL_TAG_HEADER: {
 		struct __e_hdr_s *hdr = get_state_object(ctx);
 		fputs("HEADER", stderr);
 		fprintf(stderr, " %p", hdr);
@@ -567,11 +652,13 @@ sax_eo_elt(mddl_ctx_t ctx, const char *name)
 		fputc('\n', stderr);
 		/* restore old handler */
 		pop_state(ctx);
-
-	} else if (tag_eq_p(rname, tag_src)) {
+		break;
+	}
+	case MDDL_TAG_SOURCE: {
 		pop_state(ctx);
-
-	} else if (tag_eq_p(rname, tag_snap)) {
+		break;
+	}
+	case MDDL_TAG_SNAP: {
 		struct __e_snap_s *snap = get_state_object(ctx);
 		fputs("snap popped\n", stderr);
 		fprintf(stderr, "%zu domains\n", snap->choice->nsnap_choi);
@@ -581,12 +668,14 @@ sax_eo_elt(mddl_ctx_t ctx, const char *name)
 				dom->domains_gt, dom->ndomains, dom->ptr);
 		}
 		pop_state(ctx);
-
-	} else if (tag_eq_p(rname, tag_insdom)) {
+		break;
+	}
+	case MDDL_TAG_INSTRUMENT_DOMAIN: {
 		fputs("instrumendDomain popped\n", stderr);
 		pop_state(ctx);
-
-	} else if (tag_eq_p(rname, tag_insidnt)) {
+		break;
+	}
+	case MDDL_TAG_INSTRUMENT_IDENTIFIER: {
 		struct __p_instr_ident_s *iid = get_state_object(ctx);
 		fputs("instrumentIdentifier popped\n", stderr);
 		fprintf(stderr, "%zu code/names\n", iid->ncode_name);
@@ -596,23 +685,28 @@ sax_eo_elt(mddl_ctx_t ctx, const char *name)
 				cn->code_name_gt, cn->ncode_name, cn->ptr);
 		}
 		pop_state(ctx);
-
-	} else if (tag_eq_p(rname, tag_name)) {
-		if (get_state_otype(ctx) == MDDL_OBJ_NAME) {
+		break;
+	}
+	case MDDL_TAG_NAME: {
+		if (get_state_otype(ctx) == MDDL_TAG_NAME) {
 			fputs("name popped\n", stderr);
 			pop_state(ctx);
 		}
-
-	} else if (tag_eq_p(rname, tag_code)) {
-		if (get_state_otype(ctx) == MDDL_OBJ_CODE) {
+		break;
+	}
+	case MDDL_TAG_CODE: {
+		if (get_state_otype(ctx) == MDDL_TAG_CODE) {
 			fputs("code popped\n", stderr);
 			pop_state(ctx);
 		}
-
-	} else {
+		break;
+	}
+	default:
 		/* stuff buf reset */
 		stuff_buf_reset(ctx);
+		break;
 	}
+	fprintf(stderr, "STATE %u\n", get_state_otype(ctx));
 	return;
 }
 
