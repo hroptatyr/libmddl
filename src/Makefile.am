@@ -14,7 +14,7 @@ libmddl_la_CPPFLAGS = $(AM_CPPFLAGS) $(LIBXML_CFLAGS)
 bin_PROGRAMS += mddl-code
 mddl_code_CPPFLAGS = $(AM_CPPFLAGS) $(LIBXML_CFLAGS)
 mddl_code_LDADD = libmddl.la
-mddl_code_LDFLAGS = $(LIBXML_LIBS)
+mddl_code_LDFLAGS = $(AM_LDFLAGS) $(LIBXML_LIBS)
 BUILT_SOURCES += mddl-code-opt.c
 
 ## our rule for gengetopt
