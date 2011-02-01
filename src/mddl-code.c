@@ -484,7 +484,17 @@ sax_bo_elt(mddl_ctx_t ctx, const char *name, const char **attrs)
 	} else if (tag_eq_p(rname, tag_code)) {
 		/* allow codes nearly everywhere */
 		switch (get_state_otype(ctx)) {
-		case MDDL_OBJ_INSTR_IDENT:
+		case MDDL_OBJ_INSTR_IDENT: {
+			struct __p_instr_ident_s *iid = get_state_object(ctx);
+			mddl_p_code_t c;
+
+			if ((c = mddl_instr_ident_add_code(iid))) {
+				mddl_ctxcb_t cc =
+					push_state(ctx, MDDL_OBJ_CODE, c);
+				cc->cb[0] = __code_cb;
+			}
+			break;
+		}
 		case MDDL_OBJ_ISSUER_REF:
 		default:
 			break;
@@ -590,6 +600,12 @@ sax_eo_elt(mddl_ctx_t ctx, const char *name)
 	} else if (tag_eq_p(rname, tag_name)) {
 		if (get_state_otype(ctx) == MDDL_OBJ_NAME) {
 			fputs("name popped\n", stderr);
+			pop_state(ctx);
+		}
+
+	} else if (tag_eq_p(rname, tag_code)) {
+		if (get_state_otype(ctx) == MDDL_OBJ_CODE) {
+			fputs("code popped\n", stderr);
 			pop_state(ctx);
 		}
 
