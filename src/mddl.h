@@ -108,6 +108,7 @@ struct __g_code_name_s {
 	} code_name_gt;
 	size_t ncode_name;
 	union {
+		void *ptr;
 		struct __p_name_s *name;
 		struct __p_code_s *code;
 		struct __p_prev_code_s *prev_code;
@@ -208,6 +209,7 @@ struct __g_basic_idents_s {
 	} basic_ident_gt;
 	size_t nidents;
 	union {
+		void *ptr;
 		struct __p_indus_ident_s *indus_ident;
 		struct __p_instr_ident_s *instr_ident;
 		struct __p_issue_data_s *issue_data;
@@ -273,6 +275,7 @@ struct __g_domains_s {
 	} domains_gt;
 	size_t ndomains;
 	union {
+		void *ptr;
 		struct __dom_instr_s *instrument;
 		struct __dom_index_s *index;
 		struct __dom_pfolio_s *portfolio;
@@ -296,6 +299,7 @@ struct __g_snap_choi_s {
 	struct __p_snap_type_s snap_type[1];
 	size_t ndomains;
 	union {
+		void *ptr;
 		struct __g_domains_s *domains;
 	};
 };
@@ -322,6 +326,7 @@ struct __g_mddl_choi_s {
 	} mddl_choi_gt;
 	size_t nchoice;
 	union {
+		void *ptr;
 		struct __e_snap_s *snap;
 		struct __e_tser_s *timeseries;
 	};
