@@ -46,7 +46,7 @@ struct __p_src_s {
 };
 
 struct __p_snap_type_s {
-	enum {
+	enum snap_type_e {
 		MDDL_SNAP_TYPE_UNK,
 		MDDL_SNAP_TYPE_UPDATE,
 		MDDL_SNAP_TYPE_NEW,
@@ -100,7 +100,7 @@ struct __p_prev_code_s {
 };
 
 struct __g_code_name_s {
-	enum {
+	enum code_name_e {
 		MDDL_CODE_NAME_UNK,
 		MDDL_CODE_NAME_PREVIOUS_CODE,
 		MDDL_CODE_NAME_CODE,
@@ -200,7 +200,7 @@ struct __p_issue_data_s {
 };
 
 struct __g_basic_idents_s {
-	enum {
+	enum basic_idents_e {
 		MDDL_BASIC_IDENT_UNK,
 		MDDL_BASIC_IDENT_INDUS_IDENT,
 		MDDL_BASIC_IDENT_INSTR_IDENT,
@@ -259,7 +259,7 @@ struct __dom_cae_s {
 };
 
 struct __g_domains_s {
-	enum {
+	enum domains_e {
 		MDDL_DOM_UNK,
 		MDDL_DOM_INSTRUMENT,
 		MDDL_DOM_INDEX,
@@ -288,7 +288,7 @@ struct __g_domains_s {
 
 /* elements */
 struct __g_snap_choi_s {
-	enum {
+	enum snap_choi_e {
 		MDDL_SNAP_CHOICE_UNK,
 		MDDL_SNAP_CHOICE_DOMAINS,
 	} snap_choi_gt;
@@ -315,7 +315,7 @@ struct __e_hdr_s {
 
 
 struct __g_mddl_choi_s {
-	enum {
+	enum mddl_choi_e {
 		MDDL_CHOICE_UNK,
 		MDDL_CHOICE_SNAP,
 		MDDL_CHOICE_TIMESERIES,
@@ -331,6 +331,34 @@ struct __e_mddl_s {
 	struct __e_hdr_s hdr[1];
 	struct __g_mddl_choi_s choice[1];
 };
+
+/* alternatively */
+#define DEFMDDL_GROUP(name, types, structs)	\
+	struct __g_##name##_s {			\
+		enum {				\
+			types			\
+		} name##_gt;			\
+		size_t n##name;			\
+		union {				\
+			structs			\
+		};				\
+	}
+#define STRUCT(structs...)	structs
+#define ENUM(types...)		types
+DEFMDDL_GROUP(
+	test_name,
+	ENUM(
+		MDDL_TEST_NAME_UNK,
+		MDDL_TEST_NAME_PREVIOUS_CODE,
+		MDDL_TEST_NAME_CODE,
+		MDDL_TEST_NAME_NAME
+		),
+	STRUCT(
+		struct __p_name_s *name;
+		struct __p_code_s *code;
+		struct __p_prev_code_s *prev_code;
+		)
+	);
 
 
 /* functions */

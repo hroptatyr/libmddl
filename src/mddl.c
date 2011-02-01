@@ -13,6 +13,7 @@
 #endif	/* !UNUSED */
 
 typedef struct __g_domains_s *mddl_dom_t;
+typedef struct __g_snap_choi_s *mddl_g_snap_choi_t;
 
 
 DEFUN mddl_snap_t
@@ -38,10 +39,10 @@ mddl_add_snap(mddl_doc_t doc)
 }
 
 static mddl_dom_t
-__snap_find_domain(mddl_snap_t snap, int dom_type)
+__snap_choi_find_domain(mddl_g_snap_choi_t snch, enum domains_e dom_type)
 {
-	for (size_t i = 0; i < snap->choice->ndomains; i++) {
-		mddl_dom_t p = snap->choice->domains + i;
+	for (size_t i = 0; i < snch->ndomains; i++) {
+		mddl_dom_t p = snch->domains + i;
 		if (p->domains_gt == dom_type) {
 			return p;
 		}
@@ -50,56 +51,75 @@ __snap_find_domain(mddl_snap_t snap, int dom_type)
 }
 
 static mddl_dom_t
-__snap_add_domain(mddl_snap_t snap, int dom_type)
+__snap_choi_add_domain(mddl_g_snap_choi_t snch, enum domains_e dom_type)
 {
 	mddl_dom_t p;
-	size_t idx = snap->choice->ndomains;
+	size_t idx = snch->ndomains;
 
-	snap->choice->domains = realloc(
-		snap->choice->domains,
-		(++snap->choice->ndomains) * sizeof(*snap->choice->domains));
-	p = snap->choice->domains + idx;
+	snch->domains = realloc(
+		snch->domains, (++snch->ndomains) * sizeof(*snch->domains));
+	p = snch->domains + idx;
 	/* initialise p somehow, we need a named enum here it seems */
+	memset(p, 0, sizeof(*p));
 	p->domains_gt = dom_type;
 	p->ndomains = 0;
+	return p;
+}
+
+static mddl_g_snap_choi_t
+__snap_find_snap_choice(mddl_snap_t snap, enum snap_choi_e snap_choice)
+{
+	mddl_g_snap_choi_t p = snap->choice;
+	if (p->snap_choi_gt == snap_choice) {
+		return p;
+	}
+	return NULL;
+}
+
+static mddl_g_snap_choi_t
+__snap_add_snap_choice(mddl_snap_t snap, enum snap_choi_e snap_choice)
+{
+	mddl_g_snap_choi_t p;
+
+	/* already alloc'd */
+	p = snap->choice;
+	/* initialise p somehow, we need a named enum here it seems */
+	memset(p, 0, sizeof(*p));
+	p->snap_choi_gt = snap_choice;
 	return p;
 }
 
 DEFUN mddl_dom_instr_t
 mddl_snap_add_dom_instr(mddl_snap_t snap)
 {
+	struct __g_snap_choi_s *choi;
 	mddl_dom_t dom;
 	mddl_dom_instr_t res = NULL;
 	size_t idx;
 
-	if ((idx = snap->choice->ndomains) == 0) {
-		snap->choice->snap_choi_gt = MDDL_SNAP_CHOICE_DOMAINS;
-		dom = snap->choice->domains =
-			malloc((++snap->choice->ndomains) *
-			       sizeof(*snap->choice->domains));
-		dom->domains_gt = MDDL_DOM_INSTRUMENT;
-		res = dom->instrument + idx;
-
-	} else if (snap->choice->snap_choi_gt == MDDL_SNAP_CHOICE_DOMAINS) {
-		/* trivially true coz there are no other choices */
-		if (!(dom = __snap_find_domain(snap, MDDL_DOM_INSTRUMENT)) &&
-		    !(dom = __snap_add_domain(snap, MDDL_DOM_INSTRUMENT))) {
-			return NULL;
-		}
-		idx = dom->ndomains++;
-		dom->instrument = realloc(
-			dom->instrument,
-			dom->ndomains * sizeof(*dom->instrument));
-		res = dom->instrument + idx;
+	if (!(choi = __snap_find_snap_choice(snap, MDDL_SNAP_CHOICE_DOMAINS)) &&
+	    !(choi = __snap_add_snap_choice(snap, MDDL_SNAP_CHOICE_DOMAINS))) {
+		return NULL;
 	}
+
+	if (!(dom = __snap_choi_find_domain(choi, MDDL_DOM_INSTRUMENT)) &&
+	    !(dom = __snap_choi_add_domain(choi, MDDL_DOM_INSTRUMENT))) {
+		return NULL;
+	}
+
+	idx = dom->ndomains++;
+	dom->instrument = realloc(
+		dom->instrument,
+		dom->ndomains * sizeof(*dom->instrument));
+	res = dom->instrument + idx;
 	return res;
 }
 
 static struct __g_basic_idents_s*
-__insdom_find_basic_ident(mddl_dom_instr_t insdom, int ident_type)
+__insdom_find_basic_ident(mddl_dom_instr_t idom, enum basic_idents_e ident_type)
 {
-	for (size_t i = 0; i < insdom->nbasic_idents; i++) {
-		struct __g_basic_idents_s *p = insdom->basic_idents + i;
+	for (size_t i = 0; i < idom->nbasic_idents; i++) {
+		struct __g_basic_idents_s *p = idom->basic_idents + i;
 		if (p->basic_ident_gt == ident_type) {
 			return p;
 		}
@@ -108,16 +128,17 @@ __insdom_find_basic_ident(mddl_dom_instr_t insdom, int ident_type)
 }
 
 static struct __g_basic_idents_s*
-__insdom_add_basic_ident(mddl_dom_instr_t insdom, int ident_type)
+__insdom_add_basic_ident(mddl_dom_instr_t idom, enum basic_idents_e ident_type)
 {
 	struct __g_basic_idents_s *p;
-	size_t idx = insdom->nbasic_idents;
+	size_t idx = idom->nbasic_idents;
 
-	insdom->basic_idents = realloc(
-		insdom->basic_idents,
-		(++insdom->nbasic_idents) * sizeof(*insdom->basic_idents));
-	p = insdom->basic_idents + idx;
+	idom->basic_idents = realloc(
+		idom->basic_idents,
+		(++idom->nbasic_idents) * sizeof(*idom->basic_idents));
+	p = idom->basic_idents + idx;
 	/* initialise p somehow, we need a named enum here it seems */
+	memset(p, 0, sizeof(*p));
 	p->basic_ident_gt = ident_type;
 	p->nidents = 0;
 	return p;
@@ -130,19 +151,13 @@ mddl_dom_instr_add_instr_ident(mddl_dom_instr_t insdom)
 	struct __g_basic_idents_s *bi = NULL;
 	size_t idx;
 
-	if ((idx = insdom->nbasic_idents) == 0) {
-		bi = insdom->basic_idents =
-			malloc((++insdom->nbasic_idents) *
-			       sizeof(*insdom->basic_idents));
-		bi->basic_ident_gt = MDDL_BASIC_IDENT_INSTR_IDENT;
-		bi->nidents = 0;
-
-	} else if (!(bi = __insdom_find_basic_ident(
-			    insdom, MDDL_BASIC_IDENT_INSTR_IDENT)) &&
-		   !(bi = __insdom_add_basic_ident(
-			     insdom, MDDL_BASIC_IDENT_INSTR_IDENT))) {
+	if (!(bi = __insdom_find_basic_ident(
+		      insdom, MDDL_BASIC_IDENT_INSTR_IDENT)) &&
+	    !(bi = __insdom_add_basic_ident(
+		      insdom, MDDL_BASIC_IDENT_INSTR_IDENT))) {
 		return NULL;
 	}
+
 	idx = bi->nidents++;
 	bi->instr_ident = realloc(
 		bi->instr_ident,
