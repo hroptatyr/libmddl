@@ -262,4 +262,34 @@ mddl_instr_ident_add_code(mddl_p_instr_ident_t iid)
 	return res;
 }
 
+DEFUN __a_scheme_t
+mddl_code_add_scheme(mddl_p_code_t code, const char *scheme)
+{
+	return code->scheme = strdup(scheme);
+}
+
+DEFUN __a_rank_t
+mddl_code_add_rank(mddl_p_code_t code, int rank)
+{
+	size_t idx = code->nrank++;
+	code->rank = realloc(code->rank, (code->nrank) * sizeof(*code->rank));
+	return code->rank[idx] = rank;
+}
+
+DEFUN __a_role_t
+mddl_name_add_role(mddl_p_name_t name, const char *role)
+{
+	size_t idx = name->nrole++;
+	name->role = realloc(name->role, (name->nrole) * sizeof(*name->role));
+	return name->role[idx] = strdup(role);
+}
+
+DEFUN __a_rank_t
+mddl_name_add_rank(mddl_p_name_t name, int rank)
+{
+	size_t idx = name->nrank++;
+	name->rank = realloc(name->rank, (name->nrank) * sizeof(*name->rank));
+	return name->rank[idx] = rank;
+}
+
 /* mddl.c ends here */

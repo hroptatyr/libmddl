@@ -9,6 +9,10 @@
 #include <libxml/parser.h>
 #include "mddl.h"
 
+/* gperf goodness */
+#include "mddl-tag.c"
+#include "mddl-attr.c"
+
 /* include the command line parser */
 #if defined __INTEL_COMPILER
 # pragma warning (disable:181)
@@ -35,34 +39,10 @@ typedef struct mddl_ctx_s *mddl_ctx_t;
 typedef xmlSAXHandler sax_hdl_s;
 typedef sax_hdl_s *sax_hdl_t;
 typedef struct mddl_ctxcb_s *mddl_ctxcb_t;
-typedef struct mddl_tag_s *mddl_tag_t;
-
-typedef enum {
-	MDDL_TAG_UNK,
-	MDDL_TAG_MDDL,
-	MDDL_TAG_HEADER,
-	MDDL_TAG_SOURCE,
-	MDDL_TAG_SNAP,
-	MDDL_TAG_INSTRUMENT_DOMAIN,
-	MDDL_TAG_INSTRUMENT_IDENTIFIER,
-	MDDL_TAG_ISSUER_REF,
-	MDDL_TAG_NAME,
-	MDDL_TAG_CODE,
-	MDDL_TAG_RANK,
-	MDDL_TAG_ROLE,
-	MDDL_TAG_STRING,
-	MDDL_TAG_DATETIME,
-	MDDL_TAG_OBJECTIVE,
-} mddl_tid_t;
 
 struct mddl_ns_s {
 	char *pref;
 	char *href;
-};
-
-struct mddl_tag_s {
-	mddl_tid_t tid;
-	const char *tag;
 };
 
 /* contextual callbacks */
@@ -187,12 +167,6 @@ get_state_object_if(mddl_ctx_t ctx, mddl_tid_t otype)
 		return get_state_object(ctx);
 	}
 	return NULL;
-}
-
-static bool
-tag_eq_p(const char *tag1, const char *tag2)
-{
-	return strcmp(tag1, tag2) == 0;
 }
 
 
@@ -322,6 +296,70 @@ mddl_pref_p(mddl_ctx_t ctx, const char *pref, size_t pref_len)
 	}
 }
 
+static void
+print_indent(size_t indent)
+{
+	for (size_t i = 0; i < indent; i++) {
+		fputc(' ', stderr);
+	}
+	return;
+}
+
+static void
+print_name(mddl_p_name_t name, size_t indent)
+{
+	print_indent(indent);
+	fprintf(stderr, "name \"%s\"\n", name->value);
+	for (size_t i = 0; i < name->nrole; i++) {
+		print_indent(indent);
+		fprintf(stderr, "  role %zu %s\n", i, name->role[i]);
+	}
+	for (size_t i = 0; i < name->nrank; i++) {
+		print_indent(indent);
+		fprintf(stderr, "  rank %zu %i\n", i, name->rank[i]);
+	}
+	return;
+}
+
+static void
+print_code(mddl_p_code_t code, size_t indent)
+{
+	print_indent(indent);
+	fprintf(stderr, "code %s \"%s\"\n", code->scheme, code->value);
+	for (size_t i = 0; i < code->nrank; i++) {
+		print_indent(indent);
+		fprintf(stderr, "  rank %zu %i\n", i, code->rank[i]);
+	}
+	return;
+}
+
+static void
+print_instr_ident(mddl_p_instr_ident_t iid, size_t indent)
+{
+	fprintf(stderr, "  %zu code/names\n", iid->ncode_name);
+	for (size_t i = 0; i < iid->ncode_name; i++) {
+		struct __g_code_name_s *cn = iid->code_name + i;
+		fprintf(stderr, "  type %u %zu %p\n",
+			cn->code_name_gt, cn->ncode_name, cn->ptr);
+		switch (cn->code_name_gt) {
+		case MDDL_CODE_NAME_NAME:
+			for (size_t j = 0; j < cn->ncode_name; j++) {
+				mddl_p_name_t n = cn->name + j;
+				print_name(n, indent + 4);
+			}
+			break;
+		case MDDL_CODE_NAME_CODE:
+			for (size_t j = 0; j < cn->ncode_name; j++) {
+				mddl_p_code_t c = cn->code + j;
+				print_code(c, indent + 4);
+			}
+			break;
+		default:
+			break;
+		}
+	}
+}
+
 /* stuff buf handling */
 static void
 stuff_buf_reset(mddl_ctx_t ctx)
@@ -379,79 +417,20 @@ static struct __ctxcb_s __code_cb = {
 	.sf = code_ass_s,
 };
 
-static struct mddl_tag_s tags[] = {
-	{
-		.tid = MDDL_TAG_MDDL,
-		.tag = "mddl",
-	},
-	{
-		.tid = MDDL_TAG_DATETIME,
-		.tag = "dateTime",
-	},
-	{
-		.tid = MDDL_TAG_DATETIME,
-		.tag = "mdDateTime",
-	},
-	{
-		.tid = MDDL_TAG_STRING,
-		.tag = "string",
-	},
-	{
-		.tid = MDDL_TAG_STRING,
-		.tag = "mdString",
-	},
-	{
-		.tid = MDDL_TAG_OBJECTIVE,
-		.tag = "objective",
-	},
-	{
-		.tid = MDDL_TAG_HEADER,
-		.tag = "header",
-	},
-	{
-		.tid = MDDL_TAG_SOURCE,
-		.tag = "source",
-	},
-	{
-		.tid = MDDL_TAG_SNAP,
-		.tag = "snap",
-	},
-	{
-		.tid = MDDL_TAG_INSTRUMENT_DOMAIN,
-		.tag = "instrumentDomain",
-	},
-	{
-		.tid = MDDL_TAG_INSTRUMENT_IDENTIFIER,
-		.tag = "instrumentIdentifier",
-	},
-	{
-		.tid = MDDL_TAG_NAME,
-		.tag = "name",
-	},
-	{
-		.tid = MDDL_TAG_CODE,
-		.tag = "code",
-	},
-	{
-		.tid = MDDL_TAG_ROLE,
-		.tag = "role",
-	},
-	{
-		.tid = MDDL_TAG_RANK,
-		.tag = "rank",
-	},
-};
-
 static mddl_tid_t
 sax_tid_from_tag(const char *tag)
 {
-	for (int i = 0; i < countof(tags); i++) {
-		if (tag_eq_p(tag, tags[i].tag)) {
-			fprintf(stderr, "%s -> %u\n", tag, tags[i].tid);
-			return tags[i].tid;
-		}
-	}
-	return MDDL_TAG_UNK;
+	size_t tlen = strlen(tag);
+	const struct mddl_tag_s *t = __tiddify(tag, tlen);
+	return t ? t->tid : MDDL_TAG_UNK;
+}
+
+static mddl_aid_t
+sax_aid_from_attr(const char *attr)
+{
+	size_t alen = strlen(attr);
+	const struct mddl_attr_s *a = __aiddify(attr, alen);
+	return a ? a->aid : MDDL_ATTR_UNK;
 }
 
 static void
@@ -470,13 +449,6 @@ sax_bo_elt(mddl_ctx_t ctx, const char *name, const char **attrs)
 	if (!mddl_pref_p(ctx, name, rname - name)) {
 		/* dont know what to do */
 		return;
-	}
-
-	/* add up all the tags that need a stuff buf reset */
-	if (tid == MDDL_TAG_STRING ||
-	    tid == MDDL_TAG_DATETIME) {
-		/* something fundamentally brilliant starts now */
-		stuff_buf_reset(ctx);
 	}
 
 	/* all the stuff that needs a new sax handler */
@@ -537,16 +509,13 @@ sax_bo_elt(mddl_ctx_t ctx, const char *name, const char **attrs)
 	}
 	case MDDL_TAG_NAME: {
 		/* allow names nearly everywhere */
+		mddl_p_name_t n = NULL;
+
 		switch (get_state_otype(ctx)) {
 		case MDDL_TAG_INSTRUMENT_IDENTIFIER: {
 			struct __p_instr_ident_s *iid = get_state_object(ctx);
-			mddl_p_name_t n;
 
-			if ((n = mddl_instr_ident_add_name(iid))) {
-				mddl_ctxcb_t cc =
-					push_state(ctx, MDDL_TAG_NAME, n);
-				cc->cb[0] = __name_cb;
-			}
+			n = mddl_instr_ident_add_name(iid);
 			break;
 		}
 		case MDDL_TAG_ISSUER_REF: {
@@ -557,29 +526,53 @@ sax_bo_elt(mddl_ctx_t ctx, const char *name, const char **attrs)
 		default:
 			break;
 		}
+
+		if (LIKELY(n != NULL)) {
+			mddl_ctxcb_t cc = push_state(ctx, MDDL_TAG_NAME, n);
+			cc->cb[0] = __name_cb;
+		}
 		break;
 	}
 	case MDDL_TAG_CODE: {
 		/* allow codes nearly everywhere */
+		mddl_p_code_t c = NULL;
+
 		switch (get_state_otype(ctx)) {
 		case MDDL_TAG_INSTRUMENT_IDENTIFIER: {
 			struct __p_instr_ident_s *iid = get_state_object(ctx);
-			mddl_p_code_t c;
 
-			if ((c = mddl_instr_ident_add_code(iid))) {
-				mddl_ctxcb_t cc =
-					push_state(ctx, MDDL_TAG_CODE, c);
-				cc->cb[0] = __code_cb;
-			}
+			c = mddl_instr_ident_add_code(iid);
 			break;
 		}
 		case MDDL_TAG_ISSUER_REF:
 		default:
 			break;
 		}
+
+		if (LIKELY(c != NULL)) {
+			mddl_ctxcb_t cc = push_state(ctx, MDDL_TAG_CODE, c);
+			cc->cb[0] = __code_cb;
+			/* try and find the scheme attr */
+			for (int i = 0; attrs[i] != NULL; i += 2) {
+				switch (sax_aid_from_attr(attrs[i])) {
+				case MDDL_ATTR_SCHEME:
+					mddl_code_add_scheme(c, attrs[i + 1]);
+					break;
+				default:
+					break;
+				}
+			}
+		}
 		break;
 	}
+	/* add up all the tags that need a stuff buf reset */
+	case MDDL_TAG_STRING:
+	case MDDL_TAG_DATETIME:
+	case MDDL_TAG_ROLE:
+	case MDDL_TAG_RANK:
 	default:
+		/* something fundamentally brilliant starts now */
+		stuff_buf_reset(ctx);
 		break;
 	}
 	return;
@@ -631,6 +624,38 @@ sax_eo_elt(mddl_ctx_t ctx, const char *name)
 		stuff_buf_reset(ctx);
 		break;
 	}
+	case MDDL_TAG_ROLE: {
+		switch (get_state_otype(ctx)) {
+		case MDDL_TAG_NAME: {
+			mddl_p_name_t n = get_state_object(ctx);
+			mddl_name_add_role(n, ctx->sbuf);
+		}
+		default:
+			break;
+		}
+		stuff_buf_reset(ctx);
+		break;
+	}
+	case MDDL_TAG_RANK: {
+		switch (get_state_otype(ctx)) {
+		case MDDL_TAG_NAME: {
+			mddl_p_name_t n = get_state_object(ctx);
+			long int rk = strtol(ctx->sbuf, NULL, 10);
+			mddl_name_add_rank(n, rk);
+			break;
+		}
+		case MDDL_TAG_CODE: {
+			mddl_p_code_t c = get_state_object(ctx);
+			long int rk = strtol(ctx->sbuf, NULL, 10);
+			mddl_code_add_rank(c, rk);
+			break;
+		}
+		default:
+			break;
+		}
+		stuff_buf_reset(ctx);
+		break;
+	}
 	case MDDL_TAG_OBJECTIVE: {
 		fputs("OBJECTIVE\n", stderr);
 		fputs(ctx->sbuf, stderr);
@@ -678,12 +703,7 @@ sax_eo_elt(mddl_ctx_t ctx, const char *name)
 	case MDDL_TAG_INSTRUMENT_IDENTIFIER: {
 		struct __p_instr_ident_s *iid = get_state_object(ctx);
 		fputs("instrumentIdentifier popped\n", stderr);
-		fprintf(stderr, "%zu code/names\n", iid->ncode_name);
-		for (size_t i = 0; i < iid->ncode_name; i++) {
-			struct __g_code_name_s *cn = iid->code_name + i;
-			fprintf(stderr, "  type %u %zu %p\n",
-				cn->code_name_gt, cn->ncode_name, cn->ptr);
-		}
+		print_instr_ident(iid, 0);
 		pop_state(ctx);
 		break;
 	}
@@ -706,7 +726,6 @@ sax_eo_elt(mddl_ctx_t ctx, const char *name)
 		stuff_buf_reset(ctx);
 		break;
 	}
-	fprintf(stderr, "STATE %u\n", get_state_otype(ctx));
 	return;
 }
 

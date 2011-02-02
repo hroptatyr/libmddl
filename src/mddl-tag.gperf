@@ -1,0 +1,52 @@
+%{
+typedef struct mddl_tag_s *mddl_tag_t;
+
+typedef enum {
+	MDDL_TAG_UNK,
+	MDDL_TAG_MDDL,
+	MDDL_TAG_HEADER,
+	MDDL_TAG_SOURCE,
+	MDDL_TAG_SNAP,
+	MDDL_TAG_INSTRUMENT_DOMAIN,
+	MDDL_TAG_INSTRUMENT_IDENTIFIER,
+	MDDL_TAG_ISSUER_REF,
+	MDDL_TAG_NAME,
+	MDDL_TAG_CODE,
+	MDDL_TAG_RANK,
+	MDDL_TAG_ROLE,
+	MDDL_TAG_STRING,
+	MDDL_TAG_DATETIME,
+	MDDL_TAG_OBJECTIVE,
+} mddl_tid_t;
+
+%}
+%7bit
+%readonly-tables
+%struct-type
+%define slot-name tag
+%define hash-function-name __tid_hash
+%define lookup-function-name __tiddify
+%null-strings
+%enum
+
+struct mddl_tag_s {
+	const char *tag;
+	mddl_tid_t tid;
+};
+
+%%
+mddl, MDDL_TAG_MDDL
+dateTime, MDDL_TAG_DATETIME
+mdDateTime, MDDL_TAG_DATETIME
+string, MDDL_TAG_STRING
+mdString, MDDL_TAG_STRING
+objective, MDDL_TAG_OBJECTIVE
+header, MDDL_TAG_HEADER
+source, MDDL_TAG_SOURCE
+snap, MDDL_TAG_SNAP
+instrumentDomain, MDDL_TAG_INSTRUMENT_DOMAIN
+instrumentIdentifier, MDDL_TAG_INSTRUMENT_IDENTIFIER
+name, MDDL_TAG_NAME
+code, MDDL_TAG_CODE
+role, MDDL_TAG_ROLE
+rank, MDDL_TAG_RANK

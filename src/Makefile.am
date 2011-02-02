@@ -15,11 +15,15 @@ bin_PROGRAMS += mddl-code
 mddl_code_CPPFLAGS = $(AM_CPPFLAGS) $(LIBXML_CFLAGS)
 mddl_code_LDADD = libmddl.la
 mddl_code_LDFLAGS = $(AM_LDFLAGS) $(LIBXML_LIBS)
-BUILT_SOURCES += mddl-code-opt.c
+BUILT_SOURCES += mddl-code-opt.c mddl-tag.c mddl-attr.c
 
 ## our rule for gengetopt
 %.c: %.ggo
 	gengetopt -l -i $< -F $*
+
+## our rule for gperf
+%.c: %.gperf
+	gperf $< --output-file $@
 
 ## Help the developers get nice post-processed source files
 
