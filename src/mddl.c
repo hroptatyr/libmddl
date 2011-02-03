@@ -289,6 +289,21 @@ mddl_instr_data_add_instr_type(mddl_p_instr_data_t id, const char *type)
 	return id->instr_type[idx] = strdup(type);
 }
 
+DEFUN mddl_p_currency_t
+mddl_instr_data_add_currency(mddl_p_instr_data_t id)
+{
+	mddl_p_currency_t res = NULL;
+	size_t idx;
+
+	idx = id->ncurrency++;
+	id->currency = realloc(
+		id->currency, id->ncurrency * sizeof(*id->currency));
+	res = id->currency + idx;
+	/* initialise res somehow */
+	memset(res, 0, sizeof(*res));
+	return res;
+}
+
 
 DEFUN __a_scheme_t
 mddl_code_add_scheme(mddl_p_code_t code, const char *scheme)

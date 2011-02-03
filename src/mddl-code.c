@@ -343,6 +343,11 @@ print_instr_data(mddl_p_instr_data_t id, size_t indent)
 		print_indent(indent);
 		fprintf(stderr, "  type %s\n", t);
 	}
+	for (size_t i = 0; i < id->ncurrency; i++) {
+		mddl_p_currency_t ccy = id->currency + i;
+		print_indent(indent);
+		fprintf(stderr, "  ccy %s\n", ccy->value);
+	}
 	return;
 }
 
@@ -417,6 +422,14 @@ code_ass_s(mddl_ctxcb_t ctx, const char *str, size_t len)
 	return;
 }
 
+static void
+ccy_ass_s(mddl_ctxcb_t ctx, const char *str, size_t len)
+{
+	mddl_p_currency_t c = ctx->object;
+	c->value = strndup(str, len);
+	return;
+}
+
 
 static struct __ctxcb_s __hdr_cb = {
 	.dtf = hdr_ass_dt,
@@ -432,6 +445,10 @@ static struct __ctxcb_s __name_cb = {
 
 static struct __ctxcb_s __code_cb = {
 	.sf = code_ass_s,
+};
+
+static struct __ctxcb_s __ccy_cb = {
+	.sf = ccy_ass_s,
 };
 
 static mddl_tid_t
@@ -593,6 +610,20 @@ sax_bo_elt(mddl_ctx_t ctx, const char *name, const char **attrs)
 		}
 		break;
 	}
+	case MDDL_TAG_CURRENCY: {
+		mddl_p_instr_data_t id =
+			get_state_object_if(ctx, MDDL_TAG_INSTRUMENT_DATA);
+		mddl_p_currency_t ccy;
+		mddl_ctxcb_t cc;
+
+		if (id &&
+		    (ccy = mddl_instr_data_add_currency(id)) &&
+		    (cc = push_state(ctx, MDDL_TAG_CURRENCY, ccy))) {
+			cc->cb[0] = __ccy_cb;
+			stuff_buf_reset(ctx);
+		}
+		break;
+	}
 	/* add up all the tags that need a stuff buf reset */
 	case MDDL_TAG_STRING:
 	case MDDL_TAG_DATETIME:
@@ -690,6 +721,15 @@ sax_eo_elt(mddl_ctx_t ctx, const char *name)
 
 		if (LIKELY(id != NULL)) {
 			mddl_instr_data_add_instr_type(id, ctx->sbuf);
+		}
+		break;
+	}
+	case MDDL_TAG_CURRENCY: {
+		mddl_p_currency_t ccy =
+			get_state_object_if(ctx, MDDL_TAG_CURRENCY);
+
+		if (LIKELY(ccy != NULL && ccy->value == NULL)) {
+			ccy_ass_s(ctx->state, ctx->sbuf, ctx->sbsz);
 		}
 		break;
 	}

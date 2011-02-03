@@ -37,6 +37,7 @@ typedef struct __p_instr_ident_s *mddl_p_instr_ident_t;
 typedef struct __p_code_s *mddl_p_code_t;
 typedef struct __p_name_s *mddl_p_name_t;
 typedef struct __p_instr_data_s *mddl_p_instr_data_t;
+typedef struct __p_currency_s *mddl_p_currency_t;
 
 
 /* attributes */
@@ -357,6 +358,7 @@ DECLF mddl_p_instr_data_t mddl_instr_ident_add_instr_data(mddl_p_instr_ident_t);
 
 DECLF __a_instr_type_t
 mddl_instr_data_add_instr_type(mddl_p_instr_data_t, const char *type);
+DECLF mddl_p_currency_t mddl_instr_data_add_currency(mddl_p_instr_data_t);
 
 DECLF __a_scheme_t mddl_code_add_scheme(mddl_p_code_t code, const char *scheme);
 DECLF __a_rank_t mddl_code_add_rank(mddl_p_code_t code, int rank);
