@@ -36,6 +36,7 @@ typedef struct __dom_instr_s *mddl_dom_instr_t;
 typedef struct __p_instr_ident_s *mddl_p_instr_ident_t;
 typedef struct __p_code_s *mddl_p_code_t;
 typedef struct __p_name_s *mddl_p_name_t;
+typedef struct __p_instr_data_s *mddl_p_instr_data_t;
 
 
 /* attributes */
@@ -352,6 +353,7 @@ DECLF mddl_p_instr_ident_t mddl_dom_instr_add_instr_ident(mddl_dom_instr_t);
 
 DECLF mddl_p_name_t mddl_instr_ident_add_name(mddl_p_instr_ident_t);
 DECLF mddl_p_code_t mddl_instr_ident_add_code(mddl_p_instr_ident_t);
+DECLF mddl_p_instr_data_t mddl_instr_ident_add_instr_data(mddl_p_instr_ident_t);
 
 DECLF __a_scheme_t mddl_code_add_scheme(mddl_p_code_t code, const char *scheme);
 DECLF __a_rank_t mddl_code_add_rank(mddl_p_code_t code, int rank);

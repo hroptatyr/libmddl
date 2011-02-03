@@ -262,6 +262,22 @@ mddl_instr_ident_add_code(mddl_p_instr_ident_t iid)
 	return res;
 }
 
+DEFUN mddl_p_instr_data_t
+mddl_instr_ident_add_instr_data(mddl_p_instr_ident_t iid)
+{
+	mddl_p_instr_data_t res = NULL;
+	size_t idx;
+
+	idx = iid->ninstr_data++;
+	iid->instr_data = realloc(
+		iid->instr_data, iid->ninstr_data * sizeof(*iid->instr_data));
+	res = iid->instr_data + idx;
+	/* initialise res somehow */
+	memset(res, 0, sizeof(*res));
+	return res;
+}
+
+
 DEFUN __a_scheme_t
 mddl_code_add_scheme(mddl_p_code_t code, const char *scheme)
 {

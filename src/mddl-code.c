@@ -507,6 +507,17 @@ sax_bo_elt(mddl_ctx_t ctx, const char *name, const char **attrs)
 		}
 		break;
 	}
+	case MDDL_TAG_INSTRUMENT_DATA: {
+		mddl_p_instr_ident_t iid =
+			get_state_object_if(
+				ctx, MDDL_TAG_INSTRUMENT_IDENTIFIER);
+		mddl_p_instr_data_t id;
+
+		if (iid && (id = mddl_instr_ident_add_instr_data(iid))) {
+			push_state(ctx, MDDL_TAG_INSTRUMENT_DATA, id);
+		}
+		break;
+	}
 	case MDDL_TAG_NAME: {
 		/* allow names nearly everywhere */
 		mddl_p_name_t n = NULL;
@@ -603,7 +614,6 @@ sax_eo_elt(mddl_ctx_t ctx, const char *name)
 				choi->nmddl_choi,
 				choi->ptr);
 		}
-		pop_state(ctx);
 		break;
 	}
 	case MDDL_TAG_STRING: {
@@ -675,12 +685,9 @@ sax_eo_elt(mddl_ctx_t ctx, const char *name)
 			fprintf(stderr, " .source = %s", hdr->source->value);
 		}
 		fputc('\n', stderr);
-		/* restore old handler */
-		pop_state(ctx);
 		break;
 	}
 	case MDDL_TAG_SOURCE: {
-		pop_state(ctx);
 		break;
 	}
 	case MDDL_TAG_SNAP: {
@@ -692,32 +699,35 @@ sax_eo_elt(mddl_ctx_t ctx, const char *name)
 			fprintf(stderr, "  type %u %zu %p\n",
 				dom->domains_gt, dom->ndomains, dom->ptr);
 		}
-		pop_state(ctx);
 		break;
 	}
 	case MDDL_TAG_INSTRUMENT_DOMAIN: {
 		fputs("instrumendDomain popped\n", stderr);
-		pop_state(ctx);
 		break;
 	}
 	case MDDL_TAG_INSTRUMENT_IDENTIFIER: {
 		struct __p_instr_ident_s *iid = get_state_object(ctx);
 		fputs("instrumentIdentifier popped\n", stderr);
 		print_instr_ident(iid, 0);
-		pop_state(ctx);
+		break;
+	}
+	case MDDL_TAG_INSTRUMENT_DATA: {
+		fputs("instrumentData popped\n", stderr);
+		break;
+	}
+	case MDDL_TAG_INSTRUMENT_TYPE: {
+		
 		break;
 	}
 	case MDDL_TAG_NAME: {
 		if (get_state_otype(ctx) == MDDL_TAG_NAME) {
 			fputs("name popped\n", stderr);
-			pop_state(ctx);
 		}
 		break;
 	}
 	case MDDL_TAG_CODE: {
 		if (get_state_otype(ctx) == MDDL_TAG_CODE) {
 			fputs("code popped\n", stderr);
-			pop_state(ctx);
 		}
 		break;
 	}
@@ -725,6 +735,11 @@ sax_eo_elt(mddl_ctx_t ctx, const char *name)
 		/* stuff buf reset */
 		stuff_buf_reset(ctx);
 		break;
+	}
+
+	/* restore old handler */
+	if (LIKELY(tid == get_state_otype(ctx))) {
+		pop_state(ctx);
 	}
 	return;
 }
