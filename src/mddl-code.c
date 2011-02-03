@@ -334,6 +334,19 @@ print_code(mddl_p_code_t code, size_t indent)
 }
 
 static void
+print_instr_data(mddl_p_instr_data_t id, size_t indent)
+{
+	print_indent(indent);
+	fprintf(stderr, "instr data\n");
+	for (size_t i = 0; i < id->ninstr_type; i++) {
+		__a_instr_type_t t = id->instr_type[i];
+		print_indent(indent);
+		fprintf(stderr, "  type %s\n", t);
+	}
+	return;
+}
+
+static void
 print_instr_ident(mddl_p_instr_ident_t iid, size_t indent)
 {
 	fprintf(stderr, "  %zu code/names\n", iid->ncode_name);
@@ -358,6 +371,10 @@ print_instr_ident(mddl_p_instr_ident_t iid, size_t indent)
 			break;
 		}
 	}
+	for (size_t j = 0; j < iid->ninstr_data; j++) {
+		print_instr_data(iid->instr_data + j, indent + 2);
+	}
+	return;
 }
 
 /* stuff buf handling */
@@ -581,6 +598,7 @@ sax_bo_elt(mddl_ctx_t ctx, const char *name, const char **attrs)
 	case MDDL_TAG_DATETIME:
 	case MDDL_TAG_ROLE:
 	case MDDL_TAG_RANK:
+	case MDDL_TAG_INSTRUMENT_TYPE:
 	default:
 		/* something fundamentally brilliant starts now */
 		stuff_buf_reset(ctx);
@@ -666,6 +684,15 @@ sax_eo_elt(mddl_ctx_t ctx, const char *name)
 		stuff_buf_reset(ctx);
 		break;
 	}
+	case MDDL_TAG_INSTRUMENT_TYPE: {
+		mddl_p_instr_data_t id =
+			get_state_object_if(ctx, MDDL_TAG_INSTRUMENT_DATA);
+
+		if (LIKELY(id != NULL)) {
+			mddl_instr_data_add_instr_type(id, ctx->sbuf);
+		}
+		break;
+	}
 	case MDDL_TAG_OBJECTIVE: {
 		fputs("OBJECTIVE\n", stderr);
 		fputs(ctx->sbuf, stderr);
@@ -713,10 +740,6 @@ sax_eo_elt(mddl_ctx_t ctx, const char *name)
 	}
 	case MDDL_TAG_INSTRUMENT_DATA: {
 		fputs("instrumentData popped\n", stderr);
-		break;
-	}
-	case MDDL_TAG_INSTRUMENT_TYPE: {
-		
 		break;
 	}
 	case MDDL_TAG_NAME: {

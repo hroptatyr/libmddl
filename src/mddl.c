@@ -277,6 +277,18 @@ mddl_instr_ident_add_instr_data(mddl_p_instr_ident_t iid)
 	return res;
 }
 
+DEFUN __a_instr_type_t
+mddl_instr_data_add_instr_type(mddl_p_instr_data_t id, const char *type)
+{
+	__a_instr_type_t *res = NULL;
+	size_t idx;
+
+	idx = id->ninstr_type++;
+	id->instr_type = realloc(
+		id->instr_type, id->ninstr_type * sizeof(*id->instr_type));
+	return id->instr_type[idx] = strdup(type);
+}
+
 
 DEFUN __a_scheme_t
 mddl_code_add_scheme(mddl_p_code_t code, const char *scheme)

@@ -355,6 +355,9 @@ DECLF mddl_p_name_t mddl_instr_ident_add_name(mddl_p_instr_ident_t);
 DECLF mddl_p_code_t mddl_instr_ident_add_code(mddl_p_instr_ident_t);
 DECLF mddl_p_instr_data_t mddl_instr_ident_add_instr_data(mddl_p_instr_ident_t);
 
+DECLF __a_instr_type_t
+mddl_instr_data_add_instr_type(mddl_p_instr_data_t, const char *type);
+
 DECLF __a_scheme_t mddl_code_add_scheme(mddl_p_code_t code, const char *scheme);
 DECLF __a_rank_t mddl_code_add_rank(mddl_p_code_t code, int rank);
 
