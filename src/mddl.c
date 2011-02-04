@@ -193,6 +193,31 @@ mddl_dom_instr_add_instr_ident(mddl_dom_instr_t insdom)
 	return res;
 }
 
+DEFUN mddl_p_issue_data_t
+mddl_dom_instr_add_issue_data(mddl_dom_instr_t insdom)
+{
+	mddl_p_issue_data_t res = NULL;
+	struct __g_basic_idents_s *bi = NULL;
+	size_t idx;
+
+	if (!(bi = __insdom_find_basic_ident(
+		      insdom, MDDL_BASIC_IDENT_ISSUE_DATA)) &&
+	    !(bi = __insdom_add_basic_ident(
+		      insdom, MDDL_BASIC_IDENT_ISSUE_DATA))) {
+		return NULL;
+	}
+
+	idx = bi->nbasic_idents++;
+	bi->issue_data = realloc(
+		bi->issue_data,
+		bi->nbasic_idents * sizeof(*bi->issue_data));
+	res = bi->issue_data + idx;
+	/* initialise res somehow */
+	memset(res, 0, sizeof(*res));
+	return res;
+}
+
+
 static struct __g_code_name_s*
 __instr_ident_find_code_name(mddl_p_instr_ident_t iid, enum code_name_e type)
 {
@@ -276,6 +301,91 @@ mddl_instr_ident_add_instr_data(mddl_p_instr_ident_t iid)
 	memset(res, 0, sizeof(*res));
 	return res;
 }
+
+DEFUN mddl_p_issuer_ref_t
+mddl_issue_data_add_issuer_ref(mddl_p_issue_data_t id)
+{
+	mddl_p_issuer_ref_t res = NULL;
+	size_t idx;
+
+	idx = id->nissuer_ref++;
+	id->issuer_ref = realloc(
+		id->issuer_ref, id->nissuer_ref * sizeof(*id->issuer_ref));
+	res = id->issuer_ref + idx;
+	/* initialise res somehow */
+	memset(res, 0, sizeof(*res));
+	return res;
+}
+
+static struct __g_code_name_s*
+__issuer_ref_find_code_name(mddl_p_issuer_ref_t ir, enum code_name_e type)
+{
+	for (size_t i = 0; i < ir->ncode_name; i++) {
+		struct __g_code_name_s *p = ir->code_name + i;
+		if (p->code_name_gt == type) {
+			return p;
+		}
+	}
+	return NULL;
+}
+
+static struct __g_code_name_s*
+__issuer_ref_add_code_name(mddl_p_issuer_ref_t ir, enum code_name_e type)
+{
+	struct __g_code_name_s *p;
+	size_t idx = ir->ncode_name;
+
+	ir->code_name = realloc(
+		ir->code_name,
+		(++ir->ncode_name) * sizeof(*ir->code_name));
+	p = ir->code_name + idx;
+	/* initialise p somehow, we need a named enum here it seems */
+	memset(p, 0, sizeof(*p));
+	p->code_name_gt = type;
+	p->ncode_name = 0;
+	return p;
+}
+
+DEFUN mddl_p_name_t
+mddl_issuer_ref_add_name(mddl_p_issuer_ref_t ir)
+{
+	mddl_p_name_t res = NULL;
+	struct __g_code_name_s *cn = NULL;
+	size_t idx;
+
+	if (!(cn = __issuer_ref_find_code_name(ir, MDDL_CODE_NAME_NAME)) &&
+	    !(cn = __issuer_ref_add_code_name(ir, MDDL_CODE_NAME_NAME))) {
+		return NULL;
+	}
+
+	idx = cn->ncode_name++;
+	cn->name = realloc(cn->name, cn->ncode_name * sizeof(*cn->name));
+	res = cn->name + idx;
+	/* initialise res somehow */
+	memset(res, 0, sizeof(*res));
+	return res;
+}
+
+DEFUN mddl_p_code_t
+mddl_issuer_ref_add_code(mddl_p_issuer_ref_t ir)
+{
+	mddl_p_code_t res = NULL;
+	struct __g_code_name_s *cn = NULL;
+	size_t idx;
+
+	if (!(cn = __issuer_ref_find_code_name(ir, MDDL_CODE_NAME_CODE)) &&
+	    !(cn = __issuer_ref_add_code_name(ir, MDDL_CODE_NAME_CODE))) {
+		return NULL;
+	}
+
+	idx = cn->ncode_name++;
+	cn->code = realloc(cn->code, cn->ncode_name * sizeof(*cn->code));
+	res = cn->code + idx;
+	/* initialise res somehow */
+	memset(res, 0, sizeof(*res));
+	return res;
+}
+
 
 DEFUN __a_instr_type_t
 mddl_instr_data_add_instr_type(mddl_p_instr_data_t id, const char *type)

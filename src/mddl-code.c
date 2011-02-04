@@ -382,6 +382,40 @@ print_instr_ident(mddl_p_instr_ident_t iid, size_t indent)
 	return;
 }
 
+static void
+print_issue_data(mddl_p_issue_data_t id, size_t indent)
+{
+	fprintf(stderr, "  %zu issuerRefs\n", id->nissuer_ref);
+	for (size_t i = 0; i < id->nissuer_ref; i++) {
+		struct __p_issuer_ref_s *iref = id->issuer_ref + i;
+
+		fprintf(stderr, "  %zu code/names\n", iref->ncode_name);
+		for (size_t k = 0; k < iref->ncode_name; k++) {
+			struct __g_code_name_s *cn = iref->code_name + k;
+
+			fprintf(stderr, "  type %u %zu %p\n",
+				cn->code_name_gt, cn->ncode_name, cn->ptr);
+			switch (cn->code_name_gt) {
+			case MDDL_CODE_NAME_NAME:
+				for (size_t j = 0; j < cn->ncode_name; j++) {
+					mddl_p_name_t n = cn->name + j;
+					print_name(n, indent + 4);
+				}
+				break;
+			case MDDL_CODE_NAME_CODE:
+				for (size_t j = 0; j < cn->ncode_name; j++) {
+					mddl_p_code_t c = cn->code + j;
+					print_code(c, indent + 4);
+				}
+				break;
+			default:
+				break;
+			}
+		}
+	}
+	return;
+}
+
 /* stuff buf handling */
 static void
 stuff_buf_reset(mddl_ctx_t ctx)
@@ -541,6 +575,19 @@ sax_bo_elt(mddl_ctx_t ctx, const char *name, const char **attrs)
 		}
 		break;
 	}
+	case MDDL_TAG_ISSUE_DATA: {
+		/* check that we're in a insdom context */
+		mddl_dom_instr_t insdom =
+			get_state_object_if(ctx, MDDL_TAG_INSTRUMENT_DOMAIN);
+		mddl_p_issue_data_t id;
+
+		if (insdom && (id = mddl_dom_instr_add_issue_data(insdom))) {
+			push_state(ctx, MDDL_TAG_ISSUE_DATA, id);
+		}
+		break;
+	}
+
+/* depth 4 */
 	case MDDL_TAG_INSTRUMENT_DATA: {
 		mddl_p_instr_ident_t iid =
 			get_state_object_if(
@@ -549,6 +596,16 @@ sax_bo_elt(mddl_ctx_t ctx, const char *name, const char **attrs)
 
 		if (iid && (id = mddl_instr_ident_add_instr_data(iid))) {
 			push_state(ctx, MDDL_TAG_INSTRUMENT_DATA, id);
+		}
+		break;
+	}
+	case MDDL_TAG_ISSUER_REF: {
+		mddl_p_issue_data_t id =
+			get_state_object_if(ctx, MDDL_TAG_ISSUE_DATA);
+		mddl_p_issuer_ref_t iref;
+
+		if (id && (iref = mddl_issue_data_add_issuer_ref(id))) {
+			push_state(ctx, MDDL_TAG_ISSUER_REF, iref);
 		}
 		break;
 	}
@@ -565,7 +622,8 @@ sax_bo_elt(mddl_ctx_t ctx, const char *name, const char **attrs)
 		}
 		case MDDL_TAG_ISSUER_REF: {
 			struct __p_issuer_ref_s *iref = get_state_object(ctx);
-			iref->code_name = NULL;
+
+			n = mddl_issuer_ref_add_name(iref);
 			break;
 		}
 		default:
@@ -589,7 +647,12 @@ sax_bo_elt(mddl_ctx_t ctx, const char *name, const char **attrs)
 			c = mddl_instr_ident_add_code(iid);
 			break;
 		}
-		case MDDL_TAG_ISSUER_REF:
+		case MDDL_TAG_ISSUER_REF: {
+			struct __p_issuer_ref_s *iref = get_state_object(ctx);
+
+			c = mddl_issuer_ref_add_code(iref);
+			break;
+		}
 		default:
 			break;
 		}
@@ -778,8 +841,18 @@ sax_eo_elt(mddl_ctx_t ctx, const char *name)
 		print_instr_ident(iid, 0);
 		break;
 	}
+	case MDDL_TAG_ISSUE_DATA: {
+		struct __p_issue_data_s *id = get_state_object(ctx);
+		fputs("issueData popped\n", stderr);
+		print_issue_data(id, 0);
+		break;
+	}
 	case MDDL_TAG_INSTRUMENT_DATA: {
 		fputs("instrumentData popped\n", stderr);
+		break;
+	}
+	case MDDL_TAG_ISSUER_REF: {
+		fputs("issuerRef popped\n", stderr);
 		break;
 	}
 	case MDDL_TAG_NAME: {

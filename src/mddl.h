@@ -34,10 +34,12 @@ typedef struct __e_hdr_s *mddl_hdr_t;
 typedef struct __e_snap_s *mddl_snap_t;
 typedef struct __dom_instr_s *mddl_dom_instr_t;
 typedef struct __p_instr_ident_s *mddl_p_instr_ident_t;
+typedef struct __p_issue_data_s *mddl_p_issue_data_t;
 typedef struct __p_code_s *mddl_p_code_t;
 typedef struct __p_name_s *mddl_p_name_t;
 typedef struct __p_instr_data_s *mddl_p_instr_data_t;
 typedef struct __p_currency_s *mddl_p_currency_t;
+typedef struct __p_issuer_ref_s *mddl_p_issuer_ref_t;
 
 
 /* attributes */
@@ -351,10 +353,16 @@ DECLF mddl_snap_t mddl_add_snap(mddl_doc_t doc);
 DECLF mddl_dom_instr_t mddl_snap_add_dom_instr(mddl_snap_t snap);
 
 DECLF mddl_p_instr_ident_t mddl_dom_instr_add_instr_ident(mddl_dom_instr_t);
+DECLF mddl_p_issue_data_t mddl_dom_instr_add_issue_data(mddl_dom_instr_t);
 
 DECLF mddl_p_name_t mddl_instr_ident_add_name(mddl_p_instr_ident_t);
 DECLF mddl_p_code_t mddl_instr_ident_add_code(mddl_p_instr_ident_t);
 DECLF mddl_p_instr_data_t mddl_instr_ident_add_instr_data(mddl_p_instr_ident_t);
+
+DECLF mddl_p_issuer_ref_t mddl_issue_data_add_issuer_ref(mddl_p_issue_data_t);
+
+DECLF mddl_p_name_t mddl_issuer_ref_add_name(mddl_p_issuer_ref_t);
+DECLF mddl_p_code_t mddl_issuer_ref_add_code(mddl_p_issuer_ref_t);
 
 DECLF __a_instr_type_t
 mddl_instr_data_add_instr_type(mddl_p_instr_data_t, const char *type);
