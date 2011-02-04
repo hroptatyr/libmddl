@@ -16,6 +16,21 @@ typedef struct __g_domains_s *mddl_dom_t;
 typedef struct __g_snap_choi_s *mddl_g_snap_choi_t;
 typedef struct __g_mddl_choi_s *mddl_g_mddl_choi_t;
 
+
+#define add_p(res, obj, prop)			\
+	do {					\
+		size_t idx;			\
+						\
+		idx = (obj)->n##prop##++;	\
+		(obj)->prop = realloc(		\
+			(obj)->prop,		\
+			(obj)->n##prop *	\
+			sizeof(*(obj)->prop));	\
+		res = (obj)->prop + idx;	\
+		/* initialise res somehow */	\
+		memset(res, 0, sizeof(*res));	\
+	} while (0)
+
 
 static mddl_g_mddl_choi_t
 __mddl_find_choice(mddl_doc_t m, enum mddl_choi_e mtype)
@@ -156,14 +171,8 @@ static struct __g_basic_idents_s*
 __insdom_add_basic_ident(mddl_dom_instr_t idom, enum basic_idents_e ident_type)
 {
 	struct __g_basic_idents_s *p;
-	size_t idx = idom->nbasic_idents;
 
-	idom->basic_idents = realloc(
-		idom->basic_idents,
-		(++idom->nbasic_idents) * sizeof(*idom->basic_idents));
-	p = idom->basic_idents + idx;
-	/* initialise p somehow, we need a named enum here it seems */
-	memset(p, 0, sizeof(*p));
+	add_p(p, idom, basic_idents);
 	p->basic_idents_gt = ident_type;
 	p->nbasic_idents = 0;
 	return p;
@@ -234,14 +243,8 @@ static struct __g_code_name_s*
 __instr_ident_add_code_name(mddl_p_instr_ident_t iid, enum code_name_e type)
 {
 	struct __g_code_name_s *p;
-	size_t idx = iid->ncode_name;
 
-	iid->code_name = realloc(
-		iid->code_name,
-		(++iid->ncode_name) * sizeof(*iid->code_name));
-	p = iid->code_name + idx;
-	/* initialise p somehow, we need a named enum here it seems */
-	memset(p, 0, sizeof(*p));
+	add_p(p, iid, code_name);
 	p->code_name_gt = type;
 	p->ncode_name = 0;
 	return p;
@@ -291,14 +294,8 @@ DEFUN mddl_p_instr_data_t
 mddl_instr_ident_add_instr_data(mddl_p_instr_ident_t iid)
 {
 	mddl_p_instr_data_t res = NULL;
-	size_t idx;
 
-	idx = iid->ninstr_data++;
-	iid->instr_data = realloc(
-		iid->instr_data, iid->ninstr_data * sizeof(*iid->instr_data));
-	res = iid->instr_data + idx;
-	/* initialise res somehow */
-	memset(res, 0, sizeof(*res));
+	add_p(res, iid, instr_data);
 	return res;
 }
 
@@ -306,16 +303,20 @@ DEFUN mddl_p_issuer_ref_t
 mddl_issue_data_add_issuer_ref(mddl_p_issue_data_t id)
 {
 	mddl_p_issuer_ref_t res = NULL;
-	size_t idx;
 
-	idx = id->nissuer_ref++;
-	id->issuer_ref = realloc(
-		id->issuer_ref, id->nissuer_ref * sizeof(*id->issuer_ref));
-	res = id->issuer_ref + idx;
-	/* initialise res somehow */
-	memset(res, 0, sizeof(*res));
+	add_p(res, id, issuer_ref);
 	return res;
 }
+
+DEFUN mddl_p_issue_date_t
+mddl_issue_data_add_issue_date(mddl_p_issue_data_t id)
+{
+	mddl_p_issue_date_t res = NULL;
+
+	add_p(res, id, issue_date);
+	return res;
+}
+
 
 static struct __g_code_name_s*
 __issuer_ref_find_code_name(mddl_p_issuer_ref_t ir, enum code_name_e type)
@@ -333,14 +334,8 @@ static struct __g_code_name_s*
 __issuer_ref_add_code_name(mddl_p_issuer_ref_t ir, enum code_name_e type)
 {
 	struct __g_code_name_s *p;
-	size_t idx = ir->ncode_name;
 
-	ir->code_name = realloc(
-		ir->code_name,
-		(++ir->ncode_name) * sizeof(*ir->code_name));
-	p = ir->code_name + idx;
-	/* initialise p somehow, we need a named enum here it seems */
-	memset(p, 0, sizeof(*p));
+	add_p(p, ir, code_name);
 	p->code_name_gt = type;
 	p->ncode_name = 0;
 	return p;
@@ -403,14 +398,8 @@ DEFUN mddl_p_currency_t
 mddl_instr_data_add_currency(mddl_p_instr_data_t id)
 {
 	mddl_p_currency_t res = NULL;
-	size_t idx;
 
-	idx = id->ncurrency++;
-	id->currency = realloc(
-		id->currency, id->ncurrency * sizeof(*id->currency));
-	res = id->currency + idx;
-	/* initialise res somehow */
-	memset(res, 0, sizeof(*res));
+	add_p(res, id, currency);
 	return res;
 }
 

@@ -40,6 +40,7 @@ typedef struct __p_name_s *mddl_p_name_t;
 typedef struct __p_instr_data_s *mddl_p_instr_data_t;
 typedef struct __p_currency_s *mddl_p_currency_t;
 typedef struct __p_issuer_ref_s *mddl_p_issuer_ref_t;
+typedef struct __p_issue_date_s *mddl_p_issue_date_t;
 
 
 /* attributes */
@@ -57,6 +58,7 @@ typedef char *__a_country_t;
 typedef char *__a_instr_status_type_t;
 typedef char *__a_scope_type_t;
 
+typedef time_t mddate_time_t;
 typedef char *mdstring_t;
 typedef char *mduri_t;
 
@@ -182,6 +184,15 @@ struct __p_issuer_ref_s {
 	struct __g_code_name_s *code_name;
 };
 
+struct __p_issue_date_s {
+	mddate_time_t value;
+
+#if 0
+	size_t nclassification_date_time;
+	struct __g_clsf_date_time_s classification_date_time;
+#endif	/* 0 */
+};
+
 
 struct __p_instr_ident_s {
 	size_t ncountry;
@@ -217,6 +228,9 @@ struct __p_indus_ident_s {
 struct __p_issue_data_s {
 	size_t nissuer_ref;
 	struct __p_issuer_ref_s *issuer_ref;
+
+	size_t nissue_date;
+	struct __p_issue_date_s *issue_date;
 };
 
 DEFMDDL_GROUP(
@@ -324,7 +338,7 @@ struct __e_tser_s {
 };
 
 struct __e_hdr_s {
-	time_t stamp;
+	mddate_time_t stamp;
 	struct __p_src_s source[1];
 };
 
@@ -360,6 +374,7 @@ DECLF mddl_p_code_t mddl_instr_ident_add_code(mddl_p_instr_ident_t);
 DECLF mddl_p_instr_data_t mddl_instr_ident_add_instr_data(mddl_p_instr_ident_t);
 
 DECLF mddl_p_issuer_ref_t mddl_issue_data_add_issuer_ref(mddl_p_issue_data_t);
+DECLF mddl_p_issue_date_t mddl_issue_data_add_issue_date(mddl_p_issue_data_t);
 
 DECLF mddl_p_name_t mddl_issuer_ref_add_name(mddl_p_issuer_ref_t);
 DECLF mddl_p_code_t mddl_issuer_ref_add_code(mddl_p_issuer_ref_t);
