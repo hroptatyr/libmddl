@@ -235,6 +235,16 @@ mddl_dom_instr_add_objective(mddl_dom_instr_t insdom)
 	return res;
 }
 
+DEFUN __a_fund_strat_type_t
+mddl_dom_instr_add_fund_strat_type(mddl_dom_instr_t idom, const char *fst)
+{
+	size_t idx = idom->nfund_strat_type++;
+	idom->fund_strat_type = realloc(
+		idom->fund_strat_type,
+		(idom->nfund_strat_type) * sizeof(*idom->fund_strat_type));
+	return idom->fund_strat_type[idx] = strdup(fst);
+}
+
 static struct __g_code_name_s*
 __instr_ident_find_code_name(mddl_p_instr_ident_t iid, enum code_name_e type)
 {

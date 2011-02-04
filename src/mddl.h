@@ -60,6 +60,7 @@ typedef char *__a_country_t;
 typedef char *__a_instr_status_type_t;
 typedef char *__a_scope_type_t;
 typedef char *__a_objctv_type_t;
+typedef char *__a_fund_strat_type_t;
 
 typedef time_t mddate_time_t;
 typedef char *mdstring_t;
@@ -286,6 +287,9 @@ struct __dom_instr_s {
 
 	size_t nobjective;
 	struct __p_objective_s *objective;
+
+	size_t nfund_strat_type;
+	__a_fund_strat_type_t *fund_strat_type;
 };
 
 struct __dom_index_s {
@@ -398,6 +402,8 @@ DECLF mddl_dom_instr_t mddl_snap_add_dom_instr(mddl_snap_t snap);
 DECLF mddl_p_instr_ident_t mddl_dom_instr_add_instr_ident(mddl_dom_instr_t);
 DECLF mddl_p_issue_data_t mddl_dom_instr_add_issue_data(mddl_dom_instr_t);
 DECLF mddl_p_objective_t mddl_dom_instr_add_objective(mddl_dom_instr_t);
+DECLF __a_fund_strat_type_t
+mddl_dom_instr_add_fund_strat_type(mddl_dom_instr_t, const char *fst);
 
 DECLF mddl_p_name_t mddl_instr_ident_add_name(mddl_p_instr_ident_t);
 DECLF mddl_p_code_t mddl_instr_ident_add_code(mddl_p_instr_ident_t);

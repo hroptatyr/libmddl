@@ -471,9 +471,21 @@ print_insdom(mddl_dom_instr_t id, size_t indent)
 			break;
 		}
 	}
+
+	print_indent(indent);
+	fprintf(stderr, "%zu objectives\n", id->nobjective);
 	for (size_t i = 0; i < id->nobjective; i++) {
 		mddl_p_objective_t o = id->objective + i;
 		print_objective(o, indent + 2);
+	}
+
+	print_indent(indent);
+	fprintf(stderr, "%zu fund strategy types\n", id->nfund_strat_type);
+	for (size_t i = 0; i < id->nfund_strat_type; i++) {
+		__a_fund_strat_type_t fst = id->fund_strat_type[i];
+		print_indent(indent + 2);
+		fputs(fst, stderr);
+		fputc('\n', stderr);
 	}
 	return;
 }
@@ -716,6 +728,7 @@ sax_bo_elt(mddl_ctx_t ctx, const char *name, const char **attrs)
 		    (cc = push_state(ctx, MDDL_TAG_OBJECTIVE, objctv))) {
 			cc->cb[0] = __obj_cb;
 		}
+		stuff_buf_reset(ctx);
 		break;
 	}
 
@@ -970,6 +983,15 @@ sax_eo_elt(mddl_ctx_t ctx, const char *name)
 
 		if (LIKELY(ccy != NULL && ccy->value == NULL)) {
 			ccy_ass_s(ctx->state, ctx->sbuf, ctx->sbsz);
+		}
+		break;
+	}
+	case MDDL_TAG_FUND_STRATEGY_TYPE: {
+		mddl_dom_instr_t idom =
+			get_state_object_if(ctx, MDDL_TAG_INSTRUMENT_DOMAIN);
+
+		if (LIKELY(idom != NULL)) {
+			mddl_dom_instr_add_fund_strat_type(idom, ctx->sbuf);
 		}
 		break;
 	}
