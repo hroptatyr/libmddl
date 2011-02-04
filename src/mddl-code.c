@@ -893,8 +893,14 @@ stuff_buf_push(mddl_ctx_t ctx, const char *ch, int len)
 	}
 	/* now copy */
 	memcpy(ctx->sbuf + ctx->sbix, ch, len);
-	ctx->sbuf[ctx->sbix = len] = '\0';
+	ctx->sbuf[ctx->sbix += len] = '\0';
 	return;
+}
+
+static xmlEntityPtr
+sax_get_ent(void *UNUSED(user_data), const xmlChar *name)
+{
+	return xmlGetPredefinedEntity(name);
 }
 
 static int
@@ -906,6 +912,7 @@ parse_doc(mddl_ctx_t ctx, const char *file)
 	ctx->hdl->startElement = (startElementSAXFunc)sax_bo_elt;
 	ctx->hdl->endElement = (endElementSAXFunc)sax_eo_elt;
 	ctx->hdl->characters = (charactersSAXFunc)stuff_buf_push;
+	ctx->hdl->getEntity = sax_get_ent;
 
 	res = xmlSAXUserParseFile(ctx->hdl, ctx, file);
 	return res;
