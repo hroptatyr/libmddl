@@ -599,7 +599,6 @@ static void
 obj_ass_s(mddl_ctxcb_t ctx, const char *str, size_t len)
 {
 	mddl_p_objective_t c = ctx->object;
-	fputs("objective ass'ment\n", stderr);
 	c->value = strndup_sans_ws(str, len);
 	return;
 }
@@ -724,7 +723,6 @@ sax_bo_elt(mddl_ctx_t ctx, const char *name, const char **attrs)
 
 		if (m && (insdom = mddl_snap_add_dom_instr(m))) {
 			push_state(ctx, MDDL_TAG_INSTRUMENT_DOMAIN, insdom);
-			fprintf(stderr, "pushed insdom %p\n", insdom);
 		}
 		break;
 	}
@@ -814,6 +812,24 @@ sax_bo_elt(mddl_ctx_t ctx, const char *name, const char **attrs)
 		}
 		break;
 	}
+	case MDDL_TAG_CLEARING_SETTLEMENT: {
+		mddl_p_issue_data_t id =
+			get_state_object_if(ctx, MDDL_TAG_ISSUE_DATA);
+		mddl_p_clearing_stlmnt_t cs;
+
+		if (id && (cs = mddl_issue_data_add_clearing_stlmnt(id))) {
+			push_state(ctx, MDDL_TAG_CLEARING_SETTLEMENT, cs);
+		}
+		break;
+	}
+	case MDDL_TAG_SETTLEMENT_TYPE: {
+		mddl_p_clearing_stlmnt_t cs =
+			get_state_object_if(ctx, MDDL_TAG_CLEARING_SETTLEMENT);
+
+		cs->settlement_type = NULL;
+		break;
+	}
+
 	case MDDL_TAG_NAME: {
 		/* allow names nearly everywhere */
 		mddl_p_name_t n = NULL;
@@ -939,8 +955,9 @@ sax_eo_elt(mddl_ctx_t ctx, const char *name)
 	/* check for mddl */
 	switch (tid) {
 	case MDDL_TAG_MDDL: {
-		struct __e_mddl_s *mddl = get_state_object(ctx);
 		fputs("mddl popped\n", stderr);
+#if 0
+		struct __e_mddl_s *mddl = get_state_object(ctx);
 		for (size_t i = 0; i < 1; i++) {
 			struct __g_mddl_choi_s *choi = mddl->choice + i;
 			fprintf(stderr, "  type %u %zu %p\n",
@@ -948,11 +965,11 @@ sax_eo_elt(mddl_ctx_t ctx, const char *name)
 				choi->nmddl_choi,
 				choi->ptr);
 		}
+#endif
 		break;
 	}
 	case MDDL_TAG_STRING: {
 		size_t len = strlen(ctx->sbuf);
-		fprintf(stderr, "STRING: \"%s\"\n", ctx->sbuf);
 		if (ctx->state->cb->sf) {
 			ctx->state->cb->sf(ctx->state, ctx->sbuf, len);
 		}
@@ -961,7 +978,6 @@ sax_eo_elt(mddl_ctx_t ctx, const char *name)
 	}
 	case MDDL_TAG_DATETIME: {
 		time_t t = get_zulu(ctx->sbuf);
-		fprintf(stderr, "DATETIME: %s gave us %ld\n", ctx->sbuf, t);
 		if (ctx->state->cb->dtf) {
 			ctx->state->cb->dtf(ctx->state, t);
 		}
@@ -970,7 +986,6 @@ sax_eo_elt(mddl_ctx_t ctx, const char *name)
 	}
 	case MDDL_TAG_AMOUNT: {
 		double amt = strtod(ctx->sbuf, NULL);
-		fprintf(stderr, "AMOUNT: %s gave us %2.4f\n", ctx->sbuf, amt);
 		if (ctx->state->cb->amtf) {
 			ctx->state->cb->amtf(ctx->state, amt);
 		}
@@ -979,7 +994,6 @@ sax_eo_elt(mddl_ctx_t ctx, const char *name)
 	}
 	case MDDL_TAG_PRICE: {
 		double pri = strtod(ctx->sbuf, NULL);
-		fprintf(stderr, "PRICE: %s gave us %2.4f\n", ctx->sbuf, pri);
 		if (ctx->state->cb->prif) {
 			ctx->state->cb->prif(ctx->state, pri);
 		}
@@ -1063,23 +1077,8 @@ sax_eo_elt(mddl_ctx_t ctx, const char *name)
 		}
 		break;
 	}
-	case MDDL_TAG_HEADER: {
-		struct __e_hdr_s *hdr = get_state_object(ctx);
-		fputs("HEADER", stderr);
-		fprintf(stderr, " %p", hdr);
-		if (hdr->stamp > 0) {
-			fprintf(stderr, " .stamp = %ld", hdr->stamp);
-		}
-		if (hdr->source->value) {
-			fprintf(stderr, " .source = %s", hdr->source->value);
-		}
-		fputc('\n', stderr);
-		break;
-	}
-	case MDDL_TAG_SOURCE: {
-		break;
-	}
 	case MDDL_TAG_SNAP: {
+#if 0
 		struct __e_snap_s *snap = get_state_object(ctx);
 		fputs("snap popped\n", stderr);
 		fprintf(stderr, "%zu domains\n", snap->choice->nsnap_choi);
@@ -1088,6 +1087,7 @@ sax_eo_elt(mddl_ctx_t ctx, const char *name)
 			fprintf(stderr, "  type %u %zu %p\n",
 				dom->domains_gt, dom->ndomains, dom->ptr);
 		}
+#endif
 		break;
 	}
 	case MDDL_TAG_INSTRUMENT_DOMAIN: {
@@ -1096,40 +1096,6 @@ sax_eo_elt(mddl_ctx_t ctx, const char *name)
 		fprintf(stderr, "instrumentDomain popped %p\n", id);
 		if (LIKELY(id != NULL)) {
 			print_insdom(id, 0);
-		} else {
-			fprintf(stderr, "state is %u\n", get_state_otype(ctx));
-		}
-		break;
-	}
-	case MDDL_TAG_INSTRUMENT_IDENTIFIER: {
-		fputs("instrumentIdentifier popped\n", stderr);
-		break;
-	}
-	case MDDL_TAG_ISSUE_DATA: {
-		fputs("issueData popped\n", stderr);
-		break;
-	}
-	case MDDL_TAG_INSTRUMENT_DATA: {
-		fputs("instrumentData popped\n", stderr);
-		break;
-	}
-	case MDDL_TAG_ISSUER_REF: {
-		fputs("issuerRef popped\n", stderr);
-		break;
-	}
-	case MDDL_TAG_ISSUE_DATE: {
-		fputs("issueDate popped\n", stderr);
-		break;
-	}
-	case MDDL_TAG_NAME: {
-		if (get_state_otype(ctx) == MDDL_TAG_NAME) {
-			fputs("name popped\n", stderr);
-		}
-		break;
-	}
-	case MDDL_TAG_CODE: {
-		if (get_state_otype(ctx) == MDDL_TAG_CODE) {
-			fputs("code popped\n", stderr);
 		}
 		break;
 	}

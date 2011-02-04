@@ -45,6 +45,7 @@ typedef struct __p_issue_amount_s *mddl_p_issue_amount_t;
 typedef struct __p_objective_s *mddl_p_objective_t;
 typedef struct __p_crossrate_s *mddl_p_crossrate_t;
 typedef struct __p_size_s *mddl_p_size_t;
+typedef struct __p_clearing_stlmnt_s *mddl_p_clearing_stlmnt_t;
 
 
 /* attributes */
@@ -64,6 +65,7 @@ typedef char *__a_scope_type_t;
 typedef char *__a_objctv_type_t;
 typedef char *__a_fund_strat_type_t;
 typedef char *__a_distri_type_t;
+typedef char *__a_stlmnt_type_t;
 
 typedef time_t mddate_time_t;
 typedef char *mdstring_t;
@@ -201,6 +203,38 @@ struct __p_issue_date_s {
 #endif	/* 0 */
 };
 
+struct __p_clearing_stlmnt_s {
+	size_t nsettlement_type;
+	__a_stlmnt_type_t *settlement_type;
+
+	size_t nmkt_ident;
+	struct __p_mkt_ident_s *mkt_ident;
+
+	size_t ncurrency;
+	struct __p_currency_s *currency;
+
+#if 0
+/* soon */
+	size_t nclearing_house;
+	struct __p_clearing_house_s *clearing_house;
+
+	size_t nclearing_process;
+	struct __p_clearing_proc_s *clearing_process;
+
+	size_t nclearing_system;
+	struct __p_clearing_sys_s *clearing_system;
+
+	size_t ndepository_name;
+	struct __p_depo_name_s *depositary_name;
+
+	size_t ndepository_system;
+	struct __p_depo_sys_s *depositary_system;
+
+	size_t nparties_involved;
+	struct __p_parties_invlv_s *parties_involved;
+#endif	/* 0 */
+};
+
 struct __p_crossrate_s {
 	__a_scheme_t scheme;
 	/* the actual contents */
@@ -288,6 +322,9 @@ struct __p_issue_data_s {
 
 	size_t nissue_amount;
 	struct __p_issue_amount_s *issue_amount;
+
+	size_t nclearing_settlement;
+	struct __p_clearing_stlmnt_s *clearing_settlement;
 };
 
 DEFMDDL_GROUP(
@@ -455,6 +492,8 @@ DECLF mddl_p_issuer_ref_t mddl_issue_data_add_issuer_ref(mddl_p_issue_data_t);
 DECLF mddl_p_issue_date_t mddl_issue_data_add_issue_date(mddl_p_issue_data_t);
 DECLF mddl_p_issue_amount_t
 mddl_issue_data_add_issue_amount(mddl_p_issue_data_t);
+DECLF mddl_p_clearing_stlmnt_t
+mddl_issue_data_add_clearing_stlmnt(mddl_p_issue_data_t);
 
 DECLF mddl_p_name_t mddl_issuer_ref_add_name(mddl_p_issuer_ref_t);
 DECLF mddl_p_code_t mddl_issuer_ref_add_code(mddl_p_issuer_ref_t);

@@ -355,6 +355,15 @@ mddl_issue_data_add_issue_amount(mddl_p_issue_data_t id)
 	return res;
 }
 
+DEFUN mddl_p_clearing_stlmnt_t
+mddl_issue_data_add_clearing_stlmnt(mddl_p_issue_data_t id)
+{
+	mddl_p_clearing_stlmnt_t res = NULL;
+
+	add_p(res, id, clearing_settlement);
+	return res;
+}
+
 
 static struct __g_code_name_s*
 __issuer_ref_find_code_name(mddl_p_issuer_ref_t ir, enum code_name_e type)
