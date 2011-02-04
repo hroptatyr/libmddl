@@ -42,6 +42,7 @@ typedef struct __p_currency_s *mddl_p_currency_t;
 typedef struct __p_issuer_ref_s *mddl_p_issuer_ref_t;
 typedef struct __p_issue_date_s *mddl_p_issue_date_t;
 typedef struct __p_issue_amount_s *mddl_p_issue_amount_t;
+typedef struct __p_objective_s *mddl_p_objective_t;
 
 
 /* attributes */
@@ -58,6 +59,7 @@ typedef char *__a_background_t;
 typedef char *__a_country_t;
 typedef char *__a_instr_status_type_t;
 typedef char *__a_scope_type_t;
+typedef char *__a_objctv_type_t;
 
 typedef time_t mddate_time_t;
 typedef char *mdstring_t;
@@ -264,6 +266,13 @@ DEFMDDL_GROUP(
 		struct __p_issue_data_s *issue_data;
 		));
 
+struct __p_objective_s {
+	size_t nobjective_type;
+	__a_objctv_type_t objective_type;
+
+	mdstring_t value;
+};
+
 
 /* domains */
 struct __dom_instr_s {
@@ -274,6 +283,9 @@ struct __dom_instr_s {
 	size_t nbasic_quotes;
 	struct __g_basic_quotes_s *basic_quotes;
 #endif	/* 0 */
+
+	size_t nobjective;
+	struct __p_objective_s *objective;
 };
 
 struct __dom_index_s {
@@ -385,6 +397,7 @@ DECLF mddl_dom_instr_t mddl_snap_add_dom_instr(mddl_snap_t snap);
 
 DECLF mddl_p_instr_ident_t mddl_dom_instr_add_instr_ident(mddl_dom_instr_t);
 DECLF mddl_p_issue_data_t mddl_dom_instr_add_issue_data(mddl_dom_instr_t);
+DECLF mddl_p_objective_t mddl_dom_instr_add_objective(mddl_dom_instr_t);
 
 DECLF mddl_p_name_t mddl_instr_ident_add_name(mddl_p_instr_ident_t);
 DECLF mddl_p_code_t mddl_instr_ident_add_code(mddl_p_instr_ident_t);

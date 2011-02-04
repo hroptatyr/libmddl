@@ -387,7 +387,8 @@ print_instr_ident(mddl_p_instr_ident_t iid, size_t indent)
 static void
 print_issue_data(mddl_p_issue_data_t id, size_t indent)
 {
-	fprintf(stderr, "  %zu issuerRefs\n", id->nissuer_ref);
+	print_indent(indent);
+	fprintf(stderr, "%zu issuerRefs\n", id->nissuer_ref);
 	for (size_t i = 0; i < id->nissuer_ref; i++) {
 		struct __p_issuer_ref_s *iref = id->issuer_ref + i;
 
@@ -426,12 +427,78 @@ print_issue_data(mddl_p_issue_data_t id, size_t indent)
 	return;
 }
 
+static void
+print_objective(mddl_p_objective_t obj, size_t indent)
+{
+	print_indent(indent);
+	fputs("objective\n", stderr);
+	if (LIKELY(obj->value != NULL)) {
+		print_indent(indent + 2);
+		fputs(obj->value, stderr);
+		fputc('\n', stderr);
+	}
+	return;
+}
+
+static void
+print_insdom(mddl_dom_instr_t id, size_t indent)
+{
+	print_indent(indent);
+	fputs("instrument domain\n", stderr);
+
+	print_indent(indent);
+	fprintf(stderr, "%zu basic identifiers\n", id->nbasic_idents);
+	for (size_t i = 0; i < id->nbasic_idents; i++) {
+		struct __g_basic_idents_s *bi = id->basic_idents + i;
+		switch (bi->basic_idents_gt) {
+		case MDDL_BASIC_IDENT_INDUS_IDENT:
+			break;
+		case MDDL_BASIC_IDENT_INSTR_IDENT:
+			for (size_t j = 0; j < bi->nbasic_idents; j++) {
+				mddl_p_instr_ident_t insidnt =
+					bi->instr_ident + j;
+				print_instr_ident(insidnt, indent + 2);
+			}
+			break;
+		case MDDL_BASIC_IDENT_ISSUE_DATA:
+			for (size_t j = 0; j < bi->nbasic_idents; j++) {
+				mddl_p_issue_data_t issd =
+					bi->issue_data + j;
+				print_issue_data(issd, indent + 2);
+			}
+			break;
+		default:
+			break;
+		}
+	}
+	for (size_t i = 0; i < id->nobjective; i++) {
+		mddl_p_objective_t o = id->objective + i;
+		print_objective(o, indent + 2);
+	}
+	return;
+}
+
 /* stuff buf handling */
 static void
 stuff_buf_reset(mddl_ctx_t ctx)
 {
 	ctx->sbix = 0;
 	return;
+}
+
+static bool
+__wsp(char c)
+{
+	return c == ' ' || c == '\t' || c == '\r' || c == '\n';
+}
+
+static char*
+strndup_sans_ws(const char *buf, size_t bsz)
+{
+/* like strndup() but skip leading whitespace */
+	while (__wsp(*buf++));
+	while (__wsp(buf[--bsz]));
+	return strndup(--buf, ++bsz);
 }
 
 static void
@@ -454,7 +521,7 @@ static void
 src_ass_s(mddl_ctxcb_t ctx, const char *str, size_t len)
 {
 	struct __p_src_s *src = ctx->object;
-	src->value = strndup(str, len);
+	src->value = strndup_sans_ws(str, len);
 	return;
 }
 
@@ -462,7 +529,7 @@ static void
 name_ass_s(mddl_ctxcb_t ctx, const char *str, size_t len)
 {
 	mddl_p_name_t n = ctx->object;
-	n->value = strndup(str, len);
+	n->value = strndup_sans_ws(str, len);
 	return;
 }
 
@@ -470,7 +537,7 @@ static void
 code_ass_s(mddl_ctxcb_t ctx, const char *str, size_t len)
 {
 	mddl_p_code_t c = ctx->object;
-	c->value = strndup(str, len);
+	c->value = strndup_sans_ws(str, len);
 	return;
 }
 
@@ -478,7 +545,16 @@ static void
 ccy_ass_s(mddl_ctxcb_t ctx, const char *str, size_t len)
 {
 	mddl_p_currency_t c = ctx->object;
-	c->value = strndup(str, len);
+	c->value = strndup_sans_ws(str, len);
+	return;
+}
+
+static void
+obj_ass_s(mddl_ctxcb_t ctx, const char *str, size_t len)
+{
+	mddl_p_objective_t c = ctx->object;
+	fputs("objective ass'ment\n", stderr);
+	c->value = strndup_sans_ws(str, len);
 	return;
 }
 
@@ -509,6 +585,10 @@ static struct __ctxcb_s __code_cb = {
 
 static struct __ctxcb_s __ccy_cb = {
 	.sf = ccy_ass_s,
+};
+
+static struct __ctxcb_s __obj_cb = {
+	.sf = obj_ass_s,
 };
 
 static struct __ctxcb_s __issdate_cb = {
@@ -598,6 +678,7 @@ sax_bo_elt(mddl_ctx_t ctx, const char *name, const char **attrs)
 
 		if (m && (insdom = mddl_snap_add_dom_instr(m))) {
 			push_state(ctx, MDDL_TAG_INSTRUMENT_DOMAIN, insdom);
+			fprintf(stderr, "pushed insdom %p\n", insdom);
 		}
 		break;
 	}
@@ -620,6 +701,20 @@ sax_bo_elt(mddl_ctx_t ctx, const char *name, const char **attrs)
 
 		if (insdom && (id = mddl_dom_instr_add_issue_data(insdom))) {
 			push_state(ctx, MDDL_TAG_ISSUE_DATA, id);
+		}
+		break;
+	}
+	case MDDL_TAG_OBJECTIVE: {
+		/* check that we're in an insdom context */
+		mddl_dom_instr_t insdom =
+			get_state_object_if(ctx, MDDL_TAG_INSTRUMENT_DOMAIN);
+		mddl_p_objective_t objctv;
+		mddl_ctxcb_t cc;
+
+		if (insdom &&
+		    (objctv = mddl_dom_instr_add_objective(insdom)) &&
+		    (cc = push_state(ctx, MDDL_TAG_OBJECTIVE, objctv))) {
+			cc->cb[0] = __obj_cb;
 		}
 		break;
 	}
@@ -879,11 +974,12 @@ sax_eo_elt(mddl_ctx_t ctx, const char *name)
 		break;
 	}
 	case MDDL_TAG_OBJECTIVE: {
-		fputs("OBJECTIVE\n", stderr);
-		fputs(ctx->sbuf, stderr);
-		fputc('\n', stderr);
-		fputs("/OBJECTIVE\n", stderr);
-		stuff_buf_reset(ctx);
+		mddl_p_objective_t obj =
+			get_state_object_if(ctx, MDDL_TAG_OBJECTIVE);
+
+		if (LIKELY(obj != NULL && obj->value == NULL)) {
+			obj_ass_s(ctx->state, ctx->sbuf, ctx->sbsz);
+		}
 		break;
 	}
 	case MDDL_TAG_HEADER: {
@@ -914,19 +1010,22 @@ sax_eo_elt(mddl_ctx_t ctx, const char *name)
 		break;
 	}
 	case MDDL_TAG_INSTRUMENT_DOMAIN: {
-		fputs("instrumendDomain popped\n", stderr);
+		mddl_dom_instr_t id =
+			get_state_object_if(ctx, MDDL_TAG_INSTRUMENT_DOMAIN);
+		fprintf(stderr, "instrumentDomain popped %p\n", id);
+		if (LIKELY(id != NULL)) {
+			print_insdom(id, 0);
+		} else {
+			fprintf(stderr, "state is %u\n", get_state_otype(ctx));
+		}
 		break;
 	}
 	case MDDL_TAG_INSTRUMENT_IDENTIFIER: {
-		struct __p_instr_ident_s *iid = get_state_object(ctx);
 		fputs("instrumentIdentifier popped\n", stderr);
-		print_instr_ident(iid, 0);
 		break;
 	}
 	case MDDL_TAG_ISSUE_DATA: {
-		struct __p_issue_data_s *id = get_state_object(ctx);
 		fputs("issueData popped\n", stderr);
-		print_issue_data(id, 0);
 		break;
 	}
 	case MDDL_TAG_INSTRUMENT_DATA: {

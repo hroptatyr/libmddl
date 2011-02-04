@@ -226,6 +226,14 @@ mddl_dom_instr_add_issue_data(mddl_dom_instr_t insdom)
 	return res;
 }
 
+DEFUN mddl_p_objective_t
+mddl_dom_instr_add_objective(mddl_dom_instr_t insdom)
+{
+	mddl_p_objective_t res;
+
+	add_p(res, insdom, objective);
+	return res;
+}
 
 static struct __g_code_name_s*
 __instr_ident_find_code_name(mddl_p_instr_ident_t iid, enum code_name_e type)
