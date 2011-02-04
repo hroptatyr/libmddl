@@ -52,6 +52,8 @@ struct __ctxcb_s {
 	 * dt is for dateTime (and mdDateTime) */
 	void(*sf)(mddl_ctxcb_t ctx, const char *str, size_t len);
 	void(*dtf)(mddl_ctxcb_t ctx, time_t date_time);
+	void(*prif)(mddl_ctxcb_t ctx, double price);
+	void(*amtf)(mddl_ctxcb_t ctx, double amount);
 };
 
 struct mddl_ctxcb_s {
@@ -413,6 +415,14 @@ print_issue_data(mddl_p_issue_data_t id, size_t indent)
 			}
 		}
 	}
+	for (size_t i = 0; i < id->nissue_date; i++) {
+		struct __p_issue_date_s *idate = id->issue_date + i;
+		fprintf(stderr, "  issue date %ld\n", idate->value);
+	}
+	for (size_t i = 0; i < id->nissue_amount; i++) {
+		struct __p_issue_amount_s *iamt = id->issue_amount + i;
+		fprintf(stderr, "  issue amount %2.4f\n", iamt->value);
+	}
 	return;
 }
 
@@ -429,6 +439,14 @@ hdr_ass_dt(mddl_ctxcb_t ctx, time_t dt)
 {
 	struct __e_hdr_s *hdr = ctx->object;
 	hdr->stamp = dt;
+	return;
+}
+
+static void
+issdate_ass_dt(mddl_ctxcb_t ctx, time_t dt)
+{
+	struct __p_issue_date_s *id = ctx->object;
+	id->value = dt;
 	return;
 }
 
@@ -464,6 +482,14 @@ ccy_ass_s(mddl_ctxcb_t ctx, const char *str, size_t len)
 	return;
 }
 
+static void
+iamt_ass_pri(mddl_ctxcb_t ctx, double price)
+{
+	mddl_p_issue_amount_t amt = ctx->object;
+	amt->value = price;
+	return;
+}
+
 
 static struct __ctxcb_s __hdr_cb = {
 	.dtf = hdr_ass_dt,
@@ -483,6 +509,17 @@ static struct __ctxcb_s __code_cb = {
 
 static struct __ctxcb_s __ccy_cb = {
 	.sf = ccy_ass_s,
+};
+
+static struct __ctxcb_s __issdate_cb = {
+	.dtf = issdate_ass_dt,
+};
+
+static struct __ctxcb_s __issamt_cb = {
+	.prif = iamt_ass_pri,
+	/* for compatibility,
+	 * normally the issue amount is issue price times # of issues */
+	.amtf = iamt_ass_pri,
 };
 
 static mddl_tid_t
@@ -609,6 +646,32 @@ sax_bo_elt(mddl_ctx_t ctx, const char *name, const char **attrs)
 		}
 		break;
 	}
+	case MDDL_TAG_ISSUE_DATE: {
+		mddl_p_issue_data_t id =
+			get_state_object_if(ctx, MDDL_TAG_ISSUE_DATA);
+		mddl_p_issue_date_t issd;
+		mddl_ctxcb_t cc;
+
+		if (id &&
+		    (issd = mddl_issue_data_add_issue_date(id)) &&
+		    (cc = push_state(ctx, MDDL_TAG_ISSUE_DATE, issd))) {
+			cc->cb[0] = __issdate_cb;
+		}
+		break;
+	}
+	case MDDL_TAG_ISSUE_AMOUNT: {
+		mddl_p_issue_data_t id =
+			get_state_object_if(ctx, MDDL_TAG_ISSUE_DATA);
+		mddl_p_issue_amount_t iamt;
+		mddl_ctxcb_t cc;
+
+		if (id &&
+		    (iamt = mddl_issue_data_add_issue_amount(id)) &&
+		    (cc = push_state(ctx, MDDL_TAG_ISSUE_AMOUNT, iamt))) {
+			cc->cb[0] = __issamt_cb;
+		}
+		break;
+	}
 	case MDDL_TAG_NAME: {
 		/* allow names nearly everywhere */
 		mddl_p_name_t n = NULL;
@@ -690,6 +753,7 @@ sax_bo_elt(mddl_ctx_t ctx, const char *name, const char **attrs)
 	/* add up all the tags that need a stuff buf reset */
 	case MDDL_TAG_STRING:
 	case MDDL_TAG_DATETIME:
+	case MDDL_TAG_AMOUNT:
 	case MDDL_TAG_ROLE:
 	case MDDL_TAG_RANK:
 	case MDDL_TAG_INSTRUMENT_TYPE:
@@ -742,6 +806,24 @@ sax_eo_elt(mddl_ctx_t ctx, const char *name)
 		fprintf(stderr, "DATETIME: %s gave us %ld\n", ctx->sbuf, t);
 		if (ctx->state->cb->dtf) {
 			ctx->state->cb->dtf(ctx->state, t);
+		}
+		stuff_buf_reset(ctx);
+		break;
+	}
+	case MDDL_TAG_AMOUNT: {
+		double amt = strtod(ctx->sbuf, NULL);
+		fprintf(stderr, "AMOUNT: %s gave us %2.4f\n", ctx->sbuf, amt);
+		if (ctx->state->cb->amtf) {
+			ctx->state->cb->amtf(ctx->state, amt);
+		}
+		stuff_buf_reset(ctx);
+		break;
+	}
+	case MDDL_TAG_PRICE: {
+		double pri = strtod(ctx->sbuf, NULL);
+		fprintf(stderr, "PRICE: %s gave us %2.4f\n", ctx->sbuf, pri);
+		if (ctx->state->cb->prif) {
+			ctx->state->cb->prif(ctx->state, pri);
 		}
 		stuff_buf_reset(ctx);
 		break;
@@ -853,6 +935,10 @@ sax_eo_elt(mddl_ctx_t ctx, const char *name)
 	}
 	case MDDL_TAG_ISSUER_REF: {
 		fputs("issuerRef popped\n", stderr);
+		break;
+	}
+	case MDDL_TAG_ISSUE_DATE: {
+		fputs("issueDate popped\n", stderr);
 		break;
 	}
 	case MDDL_TAG_NAME: {

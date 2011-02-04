@@ -41,6 +41,7 @@ typedef struct __p_instr_data_s *mddl_p_instr_data_t;
 typedef struct __p_currency_s *mddl_p_currency_t;
 typedef struct __p_issuer_ref_s *mddl_p_issuer_ref_t;
 typedef struct __p_issue_date_s *mddl_p_issue_date_t;
+typedef struct __p_issue_amount_s *mddl_p_issue_amount_t;
 
 
 /* attributes */
@@ -61,6 +62,7 @@ typedef char *__a_scope_type_t;
 typedef time_t mddate_time_t;
 typedef char *mdstring_t;
 typedef char *mduri_t;
+typedef double mdprice_t;
 
 
 /* properties */
@@ -193,6 +195,18 @@ struct __p_issue_date_s {
 #endif	/* 0 */
 };
 
+struct __p_issue_amount_s {
+	mdprice_t value;
+
+	size_t nrank;
+	__a_rank_t *rank;
+
+#if 0
+	size_t ndebt_indicators_type;
+	__a_debt_ind_type_t debt_indicators_type;
+#endif	/* 0 */
+};
+
 
 struct __p_instr_ident_s {
 	size_t ncountry;
@@ -231,6 +245,9 @@ struct __p_issue_data_s {
 
 	size_t nissue_date;
 	struct __p_issue_date_s *issue_date;
+
+	size_t nissue_amount;
+	struct __p_issue_amount_s *issue_amount;
 };
 
 DEFMDDL_GROUP(
@@ -375,6 +392,8 @@ DECLF mddl_p_instr_data_t mddl_instr_ident_add_instr_data(mddl_p_instr_ident_t);
 
 DECLF mddl_p_issuer_ref_t mddl_issue_data_add_issuer_ref(mddl_p_issue_data_t);
 DECLF mddl_p_issue_date_t mddl_issue_data_add_issue_date(mddl_p_issue_data_t);
+DECLF mddl_p_issue_amount_t
+mddl_issue_data_add_issue_amount(mddl_p_issue_data_t);
 
 DECLF mddl_p_name_t mddl_issuer_ref_add_name(mddl_p_issuer_ref_t);
 DECLF mddl_p_code_t mddl_issuer_ref_add_code(mddl_p_issuer_ref_t);
