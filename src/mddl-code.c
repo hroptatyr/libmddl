@@ -342,13 +342,13 @@ print_instr_data(mddl_p_instr_data_t id, size_t indent)
 	fprintf(stderr, "instr data\n");
 	for (size_t i = 0; i < id->ninstr_type; i++) {
 		__a_instr_type_t t = id->instr_type[i];
-		print_indent(indent);
-		fprintf(stderr, "  type %s\n", t);
+		print_indent(indent + 2);
+		fprintf(stderr, "type %s\n", t);
 	}
 	for (size_t i = 0; i < id->ncurrency; i++) {
 		mddl_p_currency_t ccy = id->currency + i;
-		print_indent(indent);
-		fprintf(stderr, "  ccy %s\n", ccy->value);
+		print_indent(indent + 2);
+		fprintf(stderr, "ccy %s\n", ccy->value);
 	}
 	return;
 }
@@ -380,6 +380,30 @@ print_instr_ident(mddl_p_instr_ident_t iid, size_t indent)
 	}
 	for (size_t j = 0; j < iid->ninstr_data; j++) {
 		print_instr_data(iid->instr_data + j, indent + 2);
+	}
+	return;
+}
+
+static void
+print_issue_amount(mddl_p_issue_amount_t iamt, size_t indent)
+{
+	print_indent(indent);
+	fprintf(stderr, "issue amount %2.4f\n", iamt->value);
+	for (size_t i = 0; i < iamt->nclsf_price; i++) {
+		struct __g_clsf_price_s *cp = iamt->clsf_price + i;
+		print_indent(indent + 2);
+		fprintf(stderr, "clsf price type %u\n", cp->clsf_price_gt);
+		switch (cp->clsf_price_gt) {
+		case MDDL_CLSF_PRICE_CURRENCY:
+			for (size_t j = 0; j < cp->nclsf_price; j++) {
+				mddl_p_currency_t ccy = cp->currency + j;
+				print_indent(indent + 4);
+				fprintf(stderr, "ccy %s\n", ccy->value);
+			}
+			break;
+		default:
+			break;
+		}
 	}
 	return;
 }
@@ -418,11 +442,12 @@ print_issue_data(mddl_p_issue_data_t id, size_t indent)
 	}
 	for (size_t i = 0; i < id->nissue_date; i++) {
 		struct __p_issue_date_s *idate = id->issue_date + i;
-		fprintf(stderr, "  issue date %ld\n", idate->value);
+		print_indent(indent + 2);
+		fprintf(stderr, "issue date %ld\n", idate->value);
 	}
 	for (size_t i = 0; i < id->nissue_amount; i++) {
 		struct __p_issue_amount_s *iamt = id->issue_amount + i;
-		fprintf(stderr, "  issue amount %2.4f\n", iamt->value);
+		print_issue_amount(iamt, indent + 2);
 	}
 	return;
 }
@@ -485,6 +510,15 @@ print_insdom(mddl_dom_instr_t id, size_t indent)
 		__a_fund_strat_type_t fst = id->fund_strat_type[i];
 		print_indent(indent + 2);
 		fputs(fst, stderr);
+		fputc('\n', stderr);
+	}
+
+	print_indent(indent);
+	fprintf(stderr, "%zu distribution types\n", id->ndistri_type);
+	for (size_t i = 0; i < id->ndistri_type; i++) {
+		__a_distri_type_t dt = id->distri_type[i];
+		print_indent(indent + 2);
+		fputs(dt, stderr);
 		fputc('\n', stderr);
 	}
 	return;
@@ -845,14 +879,28 @@ sax_bo_elt(mddl_ctx_t ctx, const char *name, const char **attrs)
 		break;
 	}
 	case MDDL_TAG_CURRENCY: {
-		mddl_p_instr_data_t id =
-			get_state_object_if(ctx, MDDL_TAG_INSTRUMENT_DATA);
 		mddl_p_currency_t ccy;
 		mddl_ctxcb_t cc;
 
-		if (id &&
-		    (ccy = mddl_instr_data_add_currency(id)) &&
-		    (cc = push_state(ctx, MDDL_TAG_CURRENCY, ccy))) {
+		switch (get_state_otype(ctx)) {
+		case MDDL_TAG_INSTRUMENT_DATA: {
+			mddl_p_instr_data_t id = get_state_object(ctx);
+
+			ccy = mddl_instr_data_add_currency(id);
+			break;
+		}
+		case MDDL_TAG_ISSUE_AMOUNT: {
+			mddl_p_issue_amount_t iamt = get_state_object(ctx);
+
+			ccy = mddl_issue_amount_add_currency(iamt);
+			break;
+		}
+		default:
+			break;
+		}
+
+		if (LIKELY(ccy != NULL &&
+			   (cc = push_state(ctx, MDDL_TAG_CURRENCY, ccy)))) {
 			cc->cb[0] = __ccy_cb;
 			stuff_buf_reset(ctx);
 		}
@@ -865,6 +913,8 @@ sax_bo_elt(mddl_ctx_t ctx, const char *name, const char **attrs)
 	case MDDL_TAG_ROLE:
 	case MDDL_TAG_RANK:
 	case MDDL_TAG_INSTRUMENT_TYPE:
+	case MDDL_TAG_FUND_STRATEGY_TYPE:
+	case MDDL_TAG_DISTRIBUTION_TYPE:
 	default:
 		/* something fundamentally brilliant starts now */
 		stuff_buf_reset(ctx);
@@ -992,6 +1042,15 @@ sax_eo_elt(mddl_ctx_t ctx, const char *name)
 
 		if (LIKELY(idom != NULL)) {
 			mddl_dom_instr_add_fund_strat_type(idom, ctx->sbuf);
+		}
+		break;
+	}
+	case MDDL_TAG_DISTRIBUTION_TYPE: {
+		mddl_dom_instr_t idom =
+			get_state_object_if(ctx, MDDL_TAG_INSTRUMENT_DOMAIN);
+
+		if (LIKELY(idom != NULL)) {
+			mddl_dom_instr_add_distri_type(idom, ctx->sbuf);
 		}
 		break;
 	}

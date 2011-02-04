@@ -43,6 +43,8 @@ typedef struct __p_issuer_ref_s *mddl_p_issuer_ref_t;
 typedef struct __p_issue_date_s *mddl_p_issue_date_t;
 typedef struct __p_issue_amount_s *mddl_p_issue_amount_t;
 typedef struct __p_objective_s *mddl_p_objective_t;
+typedef struct __p_crossrate_s *mddl_p_crossrate_t;
+typedef struct __p_size_s *mddl_p_size_t;
 
 
 /* attributes */
@@ -61,6 +63,7 @@ typedef char *__a_instr_status_type_t;
 typedef char *__a_scope_type_t;
 typedef char *__a_objctv_type_t;
 typedef char *__a_fund_strat_type_t;
+typedef char *__a_distri_type_t;
 
 typedef time_t mddate_time_t;
 typedef char *mdstring_t;
@@ -198,6 +201,37 @@ struct __p_issue_date_s {
 #endif	/* 0 */
 };
 
+struct __p_crossrate_s {
+	__a_scheme_t scheme;
+	/* the actual contents */
+	mdstring_t value;
+
+#if 0
+/* um */
+	size_t nmultiplier;
+	struct __p_multiplier_s *multiplier;
+#endif	/* 0 */
+};
+
+struct __p_size_s {
+/* not implemented yet */
+};
+
+DEFMDDL_GROUP(
+	clsf_price,
+	ENUM(
+		MDDL_CLSF_PRICE_UNK,
+		MDDL_CLSF_PRICE_CURRENCY,
+		MDDL_CLSF_PRICE_CROSSRATE,
+		MDDL_CLSF_PRICE_SIZE,
+		MDDL_CLSF_PRICE_CLSF_RATE,
+		),
+	STRUCT(
+		struct __p_currency_s *currency;
+		struct __p_crossrate_s *crossrate;
+		struct __p_size_s *size;
+		));
+
 struct __p_issue_amount_s {
 	mdprice_t value;
 
@@ -208,6 +242,9 @@ struct __p_issue_amount_s {
 	size_t ndebt_indicators_type;
 	__a_debt_ind_type_t debt_indicators_type;
 #endif	/* 0 */
+
+	size_t nclsf_price;
+	struct __g_clsf_price_s *clsf_price;
 };
 
 
@@ -290,6 +327,9 @@ struct __dom_instr_s {
 
 	size_t nfund_strat_type;
 	__a_fund_strat_type_t *fund_strat_type;
+
+	size_t ndistri_type;
+	__a_distri_type_t *distri_type;
 };
 
 struct __dom_index_s {
@@ -404,6 +444,8 @@ DECLF mddl_p_issue_data_t mddl_dom_instr_add_issue_data(mddl_dom_instr_t);
 DECLF mddl_p_objective_t mddl_dom_instr_add_objective(mddl_dom_instr_t);
 DECLF __a_fund_strat_type_t
 mddl_dom_instr_add_fund_strat_type(mddl_dom_instr_t, const char *fst);
+DECLF __a_distri_type_t
+mddl_dom_instr_add_distri_type(mddl_dom_instr_t, const char *dt);
 
 DECLF mddl_p_name_t mddl_instr_ident_add_name(mddl_p_instr_ident_t);
 DECLF mddl_p_code_t mddl_instr_ident_add_code(mddl_p_instr_ident_t);
@@ -416,6 +458,10 @@ mddl_issue_data_add_issue_amount(mddl_p_issue_data_t);
 
 DECLF mddl_p_name_t mddl_issuer_ref_add_name(mddl_p_issuer_ref_t);
 DECLF mddl_p_code_t mddl_issuer_ref_add_code(mddl_p_issuer_ref_t);
+
+DEFUN mddl_p_currency_t mddl_issue_amount_add_currency(mddl_p_issue_amount_t);
+DEFUN mddl_p_crossrate_t mddl_issue_amount_add_crossrate(mddl_p_issue_amount_t);
+DEFUN mddl_p_size_t mddl_issue_amount_add_size(mddl_p_issue_amount_t);
 
 DECLF __a_instr_type_t
 mddl_instr_data_add_instr_type(mddl_p_instr_data_t, const char *type);
