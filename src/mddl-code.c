@@ -54,6 +54,7 @@ struct __ctxcb_s {
 	void(*dtf)(mddl_ctxcb_t ctx, time_t date_time);
 	void(*prif)(mddl_ctxcb_t ctx, double price);
 	void(*amtf)(mddl_ctxcb_t ctx, double amount);
+	void(*rtf)(mddl_ctxcb_t ctx, double rate);
 };
 
 struct mddl_ctxcb_s {
@@ -409,6 +410,30 @@ print_issue_amount(mddl_p_issue_amount_t iamt, size_t indent)
 }
 
 static void
+print_issue_fees(mddl_p_issue_fees_t ifee, size_t indent)
+{
+	print_indent(indent);
+	fprintf(stderr, "issue fees %2.4f\n", ifee->value);
+	for (size_t i = 0; i < ifee->nclsf_price; i++) {
+		struct __g_clsf_price_s *cp = ifee->clsf_price + i;
+		print_indent(indent + 2);
+		fprintf(stderr, "clsf price type %u\n", cp->clsf_price_gt);
+		switch (cp->clsf_price_gt) {
+		case MDDL_CLSF_PRICE_CURRENCY:
+			for (size_t j = 0; j < cp->nclsf_price; j++) {
+				mddl_p_currency_t ccy = cp->currency + j;
+				print_indent(indent + 4);
+				fprintf(stderr, "ccy %s\n", ccy->value);
+			}
+			break;
+		default:
+			break;
+		}
+	}
+	return;
+}
+
+static void
 print_issue_data(mddl_p_issue_data_t id, size_t indent)
 {
 	print_indent(indent);
@@ -448,6 +473,10 @@ print_issue_data(mddl_p_issue_data_t id, size_t indent)
 	for (size_t i = 0; i < id->nissue_amount; i++) {
 		struct __p_issue_amount_s *iamt = id->issue_amount + i;
 		print_issue_amount(iamt, indent + 2);
+	}
+	for (size_t i = 0; i < id->nissue_fees; i++) {
+		struct __p_issue_fees_s *ifee = id->issue_fees + i;
+		print_issue_fees(ifee, indent + 2);
 	}
 	return;
 }
@@ -611,6 +640,14 @@ iamt_ass_pri(mddl_ctxcb_t ctx, double price)
 	return;
 }
 
+static void
+ifee_ass_pri(mddl_ctxcb_t ctx, double price)
+{
+	mddl_p_issue_fees_t amt = ctx->object;
+	amt->value = price;
+	return;
+}
+
 
 static struct __ctxcb_s __hdr_cb = {
 	.dtf = hdr_ass_dt,
@@ -645,6 +682,13 @@ static struct __ctxcb_s __issamt_cb = {
 	/* for compatibility,
 	 * normally the issue amount is issue price times # of issues */
 	.amtf = iamt_ass_pri,
+};
+
+static struct __ctxcb_s __issfee_cb = {
+	.prif = ifee_ass_pri,
+	/* for compatibility,
+	 * normally the issue fees is absolute */
+	.rtf = ifee_ass_pri,
 };
 
 static mddl_tid_t
@@ -812,6 +856,19 @@ sax_bo_elt(mddl_ctx_t ctx, const char *name, const char **attrs)
 		}
 		break;
 	}
+	case MDDL_TAG_ISSUE_FEES: {
+		mddl_p_issue_data_t id =
+			get_state_object_if(ctx, MDDL_TAG_ISSUE_DATA);
+		mddl_p_issue_fees_t ifee;
+		mddl_ctxcb_t cc;
+
+		if (id &&
+		    (ifee = mddl_issue_data_add_issue_fees(id)) &&
+		    (cc = push_state(ctx, MDDL_TAG_ISSUE_FEES, ifee))) {
+			cc->cb[0] = __issfee_cb;
+		}
+		break;
+	}
 	case MDDL_TAG_CLEARING_SETTLEMENT: {
 		mddl_p_issue_data_t id =
 			get_state_object_if(ctx, MDDL_TAG_ISSUE_DATA);
@@ -911,6 +968,12 @@ sax_bo_elt(mddl_ctx_t ctx, const char *name, const char **attrs)
 			ccy = mddl_issue_amount_add_currency(iamt);
 			break;
 		}
+		case MDDL_TAG_ISSUE_FEES: {
+			mddl_p_issue_fees_t ifee = get_state_object(ctx);
+
+			ccy = mddl_issue_fees_add_currency(ifee);
+			break;
+		}
 		default:
 			break;
 		}
@@ -926,6 +989,8 @@ sax_bo_elt(mddl_ctx_t ctx, const char *name, const char **attrs)
 	case MDDL_TAG_STRING:
 	case MDDL_TAG_DATETIME:
 	case MDDL_TAG_AMOUNT:
+	case MDDL_TAG_PRICE:
+	case MDDL_TAG_RATE:
 	case MDDL_TAG_ROLE:
 	case MDDL_TAG_RANK:
 	case MDDL_TAG_INSTRUMENT_TYPE:
@@ -998,6 +1063,14 @@ sax_eo_elt(mddl_ctx_t ctx, const char *name)
 		double pri = strtod(ctx->sbuf, NULL);
 		if (ctx->state->cb->prif) {
 			ctx->state->cb->prif(ctx->state, pri);
+		}
+		stuff_buf_reset(ctx);
+		break;
+	}
+	case MDDL_TAG_RATE: {
+		double rt = strtod(ctx->sbuf, NULL);
+		if (ctx->state->cb->rtf) {
+			ctx->state->cb->rtf(ctx->state, rt);
 		}
 		stuff_buf_reset(ctx);
 		break;

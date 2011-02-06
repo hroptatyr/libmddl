@@ -42,6 +42,7 @@ typedef struct __p_currency_s *mddl_p_currency_t;
 typedef struct __p_issuer_ref_s *mddl_p_issuer_ref_t;
 typedef struct __p_issue_date_s *mddl_p_issue_date_t;
 typedef struct __p_issue_amount_s *mddl_p_issue_amount_t;
+typedef struct __p_issue_fees_s *mddl_p_issue_fees_t;
 typedef struct __p_objective_s *mddl_p_objective_t;
 typedef struct __p_crossrate_s *mddl_p_crossrate_t;
 typedef struct __p_size_s *mddl_p_size_t;
@@ -71,6 +72,7 @@ typedef time_t mddate_time_t;
 typedef char *mdstring_t;
 typedef char *mduri_t;
 typedef double mdprice_t;
+typedef double mdrate_t;
 
 
 /* properties */
@@ -281,6 +283,13 @@ struct __p_issue_amount_s {
 	struct __g_clsf_price_s *clsf_price;
 };
 
+struct __p_issue_fees_s {
+	mdprice_t value;
+
+	size_t nclsf_price;
+	struct __g_clsf_price_s *clsf_price;
+};
+
 
 struct __p_instr_ident_s {
 	size_t ncountry;
@@ -325,6 +334,9 @@ struct __p_issue_data_s {
 
 	size_t nclearing_settlement;
 	struct __p_clearing_stlmnt_s *clearing_settlement;
+
+	size_t nissue_fees;
+	struct __p_issue_fees_s *issue_fees;
 };
 
 DEFMDDL_GROUP(
@@ -492,6 +504,8 @@ DECLF mddl_p_issuer_ref_t mddl_issue_data_add_issuer_ref(mddl_p_issue_data_t);
 DECLF mddl_p_issue_date_t mddl_issue_data_add_issue_date(mddl_p_issue_data_t);
 DECLF mddl_p_issue_amount_t
 mddl_issue_data_add_issue_amount(mddl_p_issue_data_t);
+DECLF mddl_p_issue_fees_t
+mddl_issue_data_add_issue_fees(mddl_p_issue_data_t);
 DECLF mddl_p_clearing_stlmnt_t
 mddl_issue_data_add_clearing_stlmnt(mddl_p_issue_data_t);
 
@@ -501,6 +515,10 @@ DECLF mddl_p_code_t mddl_issuer_ref_add_code(mddl_p_issuer_ref_t);
 DEFUN mddl_p_currency_t mddl_issue_amount_add_currency(mddl_p_issue_amount_t);
 DEFUN mddl_p_crossrate_t mddl_issue_amount_add_crossrate(mddl_p_issue_amount_t);
 DEFUN mddl_p_size_t mddl_issue_amount_add_size(mddl_p_issue_amount_t);
+
+DEFUN mddl_p_currency_t mddl_issue_fees_add_currency(mddl_p_issue_fees_t);
+DEFUN mddl_p_crossrate_t mddl_issue_fees_add_crossrate(mddl_p_issue_fees_t);
+DEFUN mddl_p_size_t mddl_issue_fees_add_size(mddl_p_issue_fees_t);
 
 DECLF __a_instr_type_t
 mddl_instr_data_add_instr_type(mddl_p_instr_data_t, const char *type);

@@ -355,6 +355,15 @@ mddl_issue_data_add_issue_amount(mddl_p_issue_data_t id)
 	return res;
 }
 
+DEFUN mddl_p_issue_fees_t
+mddl_issue_data_add_issue_fees(mddl_p_issue_data_t id)
+{
+	mddl_p_issue_fees_t res = NULL;
+
+	add_p(res, id, issue_fees);
+	return res;
+}
+
 DEFUN mddl_p_clearing_stlmnt_t
 mddl_issue_data_add_clearing_stlmnt(mddl_p_issue_data_t id)
 {
@@ -508,6 +517,98 @@ mddl_issue_amount_add_size(mddl_p_issue_amount_t iamt)
 		      iamt, MDDL_CLSF_PRICE_SIZE)) &&
 	    !(cp = __issue_amount_add_clsf_price(
 		      iamt, MDDL_CLSF_PRICE_SIZE))) {
+		return NULL;
+	}
+
+	idx = cp->nclsf_price++;
+	cp->size = realloc(
+		cp->size, cp->nclsf_price * sizeof(*cp->size));
+	res = cp->size + idx;
+	/* initialise res somehow */
+	memset(res, 0, sizeof(*res));
+	return res;
+}
+
+static struct __g_clsf_price_s*
+__issue_fees_find_clsf_price(mddl_p_issue_fees_t ia, enum clsf_price_e type)
+{
+	for (size_t i = 0; i < ia->nclsf_price; i++) {
+		struct __g_clsf_price_s *p = ia->clsf_price + i;
+		if (p->clsf_price_gt == type) {
+			return p;
+		}
+	}
+	return NULL;
+}
+
+static struct __g_clsf_price_s*
+__issue_fees_add_clsf_price(mddl_p_issue_fees_t ia, enum clsf_price_e type)
+{
+	struct __g_clsf_price_s *p;
+
+	add_p(p, ia, clsf_price);
+	p->clsf_price_gt = type;
+	p->nclsf_price = 0;
+	return p;
+}
+
+DEFUN mddl_p_currency_t
+mddl_issue_fees_add_currency(mddl_p_issue_fees_t ifee)
+{
+	mddl_p_currency_t res = NULL;
+	struct __g_clsf_price_s *cp = NULL;
+	size_t idx;
+
+	if (!(cp = __issue_fees_find_clsf_price(
+		      ifee, MDDL_CLSF_PRICE_CURRENCY)) &&
+	    !(cp = __issue_fees_add_clsf_price(
+		      ifee, MDDL_CLSF_PRICE_CURRENCY))) {
+		return NULL;
+	}
+
+	idx = cp->nclsf_price++;
+	cp->currency = realloc(
+		cp->currency, cp->nclsf_price * sizeof(*cp->currency));
+	res = cp->currency + idx;
+	/* initialise res somehow */
+	memset(res, 0, sizeof(*res));
+	return res;
+}
+
+DEFUN mddl_p_crossrate_t
+mddl_issue_fees_add_crossrate(mddl_p_issue_fees_t ifee)
+{
+	mddl_p_crossrate_t res = NULL;
+	struct __g_clsf_price_s *cp = NULL;
+	size_t idx;
+
+	if (!(cp = __issue_fees_find_clsf_price(
+		      ifee, MDDL_CLSF_PRICE_CROSSRATE)) &&
+	    !(cp = __issue_fees_add_clsf_price(
+		      ifee, MDDL_CLSF_PRICE_CROSSRATE))) {
+		return NULL;
+	}
+
+	idx = cp->nclsf_price++;
+	cp->crossrate = realloc(
+		cp->crossrate, cp->nclsf_price * sizeof(*cp->crossrate));
+	res = cp->crossrate + idx;
+	/* initialise res somehow */
+	memset(res, 0, sizeof(*res));
+	return res;
+}
+
+DEFUN mddl_p_size_t
+mddl_issue_fees_add_size(mddl_p_issue_fees_t ifee)
+{
+	mddl_p_size_t res = NULL;
+	struct __g_clsf_price_s *cp = NULL;
+	size_t idx;
+
+	if (!(cp = __issue_fees_find_clsf_price(
+		      ifee, MDDL_CLSF_PRICE_SIZE)) &&
+	    !(cp = __issue_fees_add_clsf_price(
+		      ifee, MDDL_CLSF_PRICE_SIZE))) {
 		return NULL;
 	}
 
