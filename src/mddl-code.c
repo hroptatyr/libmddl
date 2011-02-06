@@ -931,9 +931,11 @@ sax_bo_elt(mddl_ctx_t ctx, const char *name, const char **attrs)
 	case MDDL_TAG_INSTRUMENT_TYPE:
 	case MDDL_TAG_FUND_STRATEGY_TYPE:
 	case MDDL_TAG_DISTRIBUTION_TYPE:
-	default:
 		/* something fundamentally brilliant starts now */
 		stuff_buf_reset(ctx);
+		break;
+	default:
+		fprintf(stderr, "WARN: unknown tag %s\n", name);
 		break;
 	}
 	return;
@@ -1093,7 +1095,6 @@ sax_eo_elt(mddl_ctx_t ctx, const char *name)
 	case MDDL_TAG_INSTRUMENT_DOMAIN: {
 		mddl_dom_instr_t id =
 			get_state_object_if(ctx, MDDL_TAG_INSTRUMENT_DOMAIN);
-		fprintf(stderr, "instrumentDomain popped %p\n", id);
 		if (LIKELY(id != NULL)) {
 			print_insdom(id, 0);
 		}
