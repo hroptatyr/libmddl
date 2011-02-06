@@ -35,6 +35,7 @@ typedef struct __e_snap_s *mddl_snap_t;
 typedef struct __dom_instr_s *mddl_dom_instr_t;
 typedef struct __p_instr_ident_s *mddl_p_instr_ident_t;
 typedef struct __p_issue_data_s *mddl_p_issue_data_t;
+typedef struct __p_indus_ident_s *mddl_p_indus_ident_t;
 typedef struct __p_code_s *mddl_p_code_t;
 typedef struct __p_name_s *mddl_p_name_t;
 typedef struct __p_instr_data_s *mddl_p_instr_data_t;
@@ -529,5 +530,8 @@ DECLF __a_rank_t mddl_code_add_rank(mddl_p_code_t code, int rank);
 
 DECLF __a_role_t mddl_name_add_role(mddl_p_name_t name, const char *role);
 DECLF __a_rank_t mddl_name_add_rank(mddl_p_name_t name, int rank);
+
+/* print service */
+DECLF void mddl_print(void *out, mddl_doc_t doc);
 
 #endif	/* INCLUDED_mddl_h_ */

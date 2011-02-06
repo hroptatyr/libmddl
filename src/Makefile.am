@@ -12,6 +12,7 @@ libmddl_la_SOURCES = mddl.c mddl.h
 libmddl_la_CPPFLAGS = $(AM_CPPFLAGS) $(LIBXML_CFLAGS)
 
 bin_PROGRAMS += mddl-code
+mddl_code_SOURCES = mddl-code.c mddl-print.c
 mddl_code_CPPFLAGS = $(AM_CPPFLAGS) $(LIBXML_CFLAGS)
 mddl_code_LDADD = libmddl.la
 mddl_code_LDFLAGS = $(AM_LDFLAGS) $(LIBXML_LIBS)
