@@ -28,6 +28,15 @@
 #define STRUCT(structs...)	structs
 #define ENUM(types...)		types
 
+#define MDDL_MANY_CNT(name)	n##name
+#define MDDL_MANY_SLOT(name)	name
+#define MDDL_MANY_OF(name, type)		\
+	size_t MDDL_MANY_CNT(name);		\
+	type *MDDL_MANY_SLOT(name)
+#define MDDL_N_OF(name, type, n)		\
+	type MDDL_MANY_SLOT(name)[n]
+#define MDDL_ONE_OF(name, type)	MDDL_N_OF(name, type, 1)
+
 /* teh main thing */
 typedef struct __e_mddl_s *mddl_doc_t;
 typedef struct __e_hdr_s *mddl_hdr_t;
@@ -91,33 +100,22 @@ struct __p_snap_type_s {
 };
 
 struct __p_name_s {
-	size_t nrank;
-	__a_rank_t *rank;
-
-	size_t nrole;
-	__a_role_t *role;
+	MDDL_MANY_OF(rank, __a_rank_t);
+	MDDL_MANY_OF(role, __a_role_t);
 
 	/* the actual name contents */
 	mdstring_t value;
 #if 0
 /* not impl'd */
-	size_t nperiod;
-	struct __p_period_s *period;
+	MDDL_MANY_OF(period, struct __p_period_s);
 #endif	/* 0 */
 };
 
 struct __p_code_s {
-	size_t nrank;
-	__a_rank_t *rank;
-
-	size_t nnameref;
-	__a_nref_t *nameref;
-
-	size_t ndescr;
-	__a_descr_t *descr;
-
-	size_t ncode_type;
-	__a_code_type_t *code_type;
+	MDDL_MANY_OF(rank, __a_rank_t);
+	MDDL_MANY_OF(nameref, __a_nref_t);
+	MDDL_MANY_OF(descr, __a_descr_t);
+	MDDL_MANY_OF(code_type, __a_code_type_t);
 
 	/* the scheme, variable in this one */
 	__a_scheme_t scheme;
@@ -126,8 +124,7 @@ struct __p_code_s {
 	mdstring_t value;
 #if 0
 /* not impl'd */
-	size_t nperiod;
-	struct __p_period_s *period;
+	MDDL_MANY_OF(period, struct __p_period_s);
 #endif	/* 0 */
 };
 
@@ -156,8 +153,7 @@ struct __p_currency_s {
 
 #if 0
 /* um */
-	size_t nmultiplier;
-	struct __p_multiplier_s *multiplier;
+	MDDL_MANY_OF(multiplier, struct __p_multiplier_s);
 #endif	/* 0 */
 };
 
@@ -166,75 +162,45 @@ struct __p_mkt_ident_s {
 };
 
 struct __p_instr_data_s {
-	size_t ninstr_type;
-	__a_instr_type_t *instr_type;
-
-	size_t ninstr_form_type;
-	__a_instr_form_type_t *instr_form_type;
-
-	size_t nbackground;
-	__a_background_t *background;
-
-	size_t ncomment;
-	__a_comment_t *comment;
-
-	size_t ncurrency;
-	struct __p_currency_s *currency;
+	MDDL_MANY_OF(instr_type, __a_instr_type_t);
+	MDDL_MANY_OF(instr_form_type, __a_instr_form_type_t);
+	MDDL_MANY_OF(background, __a_background_t);
+	MDDL_MANY_OF(comment, __a_comment_t);
+	MDDL_MANY_OF(currency, struct __p_currency_s);
 
 #if 0
-	size_t ntra_restr_type;
-	struct __p_tra_restr_type_s *tra_restr_type;
-
-	size_t nlast_cae;
-	struct __p_last_cae_s *last_cae;
+	MDDL_MANY_OF(tra_restr_type, struct __p_tra_restr_type_s);
+	MDDL_MANY_OF(last_cae, struct __p_last_cae_s);
 #endif	/* 0 */
 };
 
 struct __p_issuer_ref_s {
 	mduri_t value;
 	
-	size_t ncode_name;
-	struct __g_code_name_s *code_name;
+	MDDL_MANY_OF(code_name, struct __g_code_name_s);
 };
 
 struct __p_issue_date_s {
 	mddate_time_t value;
 
 #if 0
-	size_t nclassification_date_time;
-	struct __g_clsf_date_time_s classification_date_time;
+	MDDL_MANY_OF(clsf_date_time, struct __g_clsf_date_time_s);
 #endif	/* 0 */
 };
 
 struct __p_clearing_stlmnt_s {
-	size_t nsettlement_type;
-	__a_stlmnt_type_t *settlement_type;
-
-	size_t nmkt_ident;
-	struct __p_mkt_ident_s *mkt_ident;
-
-	size_t ncurrency;
-	struct __p_currency_s *currency;
+	MDDL_MANY_OF(settlement_type, __a_stlmnt_type_t);
+	MDDL_MANY_OF(mkt_ident, struct __p_mkt_ident_s);
+	MDDL_MANY_OF(currency, struct __p_currency_s);
 
 #if 0
 /* soon */
-	size_t nclearing_house;
-	struct __p_clearing_house_s *clearing_house;
-
-	size_t nclearing_process;
-	struct __p_clearing_proc_s *clearing_process;
-
-	size_t nclearing_system;
-	struct __p_clearing_sys_s *clearing_system;
-
-	size_t ndepository_name;
-	struct __p_depo_name_s *depositary_name;
-
-	size_t ndepository_system;
-	struct __p_depo_sys_s *depositary_system;
-
-	size_t nparties_involved;
-	struct __p_parties_invlv_s *parties_involved;
+	MDDL_MANY_OF(clearing_house, struct __p_clearing_house_s);
+	MDDL_MANY_OF(clearing_process, struct __p_clearing_proc_s);
+	MDDL_MANY_OF(clearing_system, struct __p_clearing_sys_s);
+	MDDL_MANY_OF(depository_name, struct __p_depo_name_s);
+	MDDL_MANY_OF(depository_system, struct __p_depo_sys_s);
+	MDDL_MANY_OF(parties_involved, struct __p_parties_invlv_s);
 #endif	/* 0 */
 };
 
@@ -244,9 +210,7 @@ struct __p_crossrate_s {
 	mdstring_t value;
 
 #if 0
-/* um */
-	size_t nmultiplier;
-	struct __p_multiplier_s *multiplier;
+	MDDL_MANY_OF(multiplier, struct __p_multiplier_s);
 #endif	/* 0 */
 };
 
@@ -272,51 +236,32 @@ DEFMDDL_GROUP(
 struct __p_issue_amount_s {
 	mdprice_t value;
 
-	size_t nrank;
-	__a_rank_t *rank;
+	MDDL_MANY_OF(rank, __a_rank_t);
+	MDDL_MANY_OF(clsf_price, struct __g_clsf_price_s);
 
 #if 0
-	size_t ndebt_indicators_type;
-	__a_debt_ind_type_t debt_indicators_type;
+	MDDL_MANY_OF(debt_indicators_type, __a_debt_ind_type_t);
 #endif	/* 0 */
-
-	size_t nclsf_price;
-	struct __g_clsf_price_s *clsf_price;
 };
 
 struct __p_issue_fees_s {
 	mdprice_t value;
 
-	size_t nclsf_price;
-	struct __g_clsf_price_s *clsf_price;
+	MDDL_MANY_OF(clsf_price, struct __g_clsf_price_s);
 };
 
 
 struct __p_instr_ident_s {
-	size_t ncountry;
-	__a_country_t *country;
-
-	size_t ninstr_status_type;
-	__a_instr_status_type_t *instr_status_type;
-
-	size_t nscope_type;
-	__a_scope_type_t *scope_type;
-
-	size_t ncode_name;
-	struct __g_code_name_s *code_name;
-
-	size_t nmkt_ident;
-	struct __p_mkt_ident_s *mkt_ident;
-
-	size_t ninstr_data;
-	struct __p_instr_data_s *instr_data;
+	MDDL_MANY_OF(country, __a_country_t);
+	MDDL_MANY_OF(instr_status_type, __a_instr_status_type_t);
+	MDDL_MANY_OF(scope_type, __a_scope_type_t);
+	MDDL_MANY_OF(code_name, struct __g_code_name_s);
+	MDDL_MANY_OF(mkt_ident, struct __p_mkt_ident_s);
+	MDDL_MANY_OF(instr_data, struct __p_instr_data_s);
 
 #if 0
-	size_t ntranche;
-	struct __p_tranche_s *tranche;
-
-	size_t nseg_ident;
-	struct __p_seg_ident_s *seg_ident;
+	MDDL_MANY_OF(tranche, struct __p_tranche_s);
+	MDDL_MANY_OF(seg_ident, struct __p_seg_ident_s);
 #endif
 };
 
@@ -324,20 +269,11 @@ struct __p_indus_ident_s {
 };
 
 struct __p_issue_data_s {
-	size_t nissuer_ref;
-	struct __p_issuer_ref_s *issuer_ref;
-
-	size_t nissue_date;
-	struct __p_issue_date_s *issue_date;
-
-	size_t nissue_amount;
-	struct __p_issue_amount_s *issue_amount;
-
-	size_t nclearing_settlement;
-	struct __p_clearing_stlmnt_s *clearing_settlement;
-
-	size_t nissue_fees;
-	struct __p_issue_fees_s *issue_fees;
+	MDDL_MANY_OF(issuer_ref, struct __p_issuer_ref_s);
+	MDDL_MANY_OF(issue_date, struct __p_issue_date_s);
+	MDDL_MANY_OF(issue_amount, struct __p_issue_amount_s);
+	MDDL_MANY_OF(clearing_settlement, struct __p_clearing_stlmnt_s);
+	MDDL_MANY_OF(issue_fees, struct __p_issue_fees_s);
 };
 
 DEFMDDL_GROUP(
@@ -355,8 +291,7 @@ DEFMDDL_GROUP(
 		));
 
 struct __p_objective_s {
-	size_t nobjective_type;
-	__a_objctv_type_t objective_type;
+	MDDL_MANY_OF(objective_type, __a_objctv_type_t);
 
 	mdstring_t value;
 };
@@ -364,22 +299,15 @@ struct __p_objective_s {
 
 /* domains */
 struct __dom_instr_s {
-	size_t nbasic_idents;
-	struct __g_basic_idents_s *basic_idents;
+	MDDL_MANY_OF(basic_idents, struct __g_basic_idents_s);
 #if 0
 /* not implemented */
-	size_t nbasic_quotes;
-	struct __g_basic_quotes_s *basic_quotes;
+	MDDL_MANY_OF(basic_quotes, struct __g_basic_quotes_s);
 #endif	/* 0 */
 
-	size_t nobjective;
-	struct __p_objective_s *objective;
-
-	size_t nfund_strat_type;
-	__a_fund_strat_type_t *fund_strat_type;
-
-	size_t ndistri_type;
-	__a_distri_type_t *distri_type;
+	MDDL_MANY_OF(objective, struct __p_objective_s);
+	MDDL_MANY_OF(fund_strat_type, __a_fund_strat_type_t);
+	MDDL_MANY_OF(distri_type, __a_distri_type_t);
 };
 
 struct __dom_index_s {
@@ -453,7 +381,7 @@ DEFMDDL_GROUP(
 		));
 
 struct __e_snap_s {
-	struct __g_snap_choi_s choice[1];
+	MDDL_ONE_OF(choice, struct __g_snap_choi_s);
 };
 
 struct __e_tser_s {
@@ -462,7 +390,7 @@ struct __e_tser_s {
 
 struct __e_hdr_s {
 	mddate_time_t stamp;
-	struct __p_src_s source[1];
+	MDDL_ONE_OF(source, struct __p_src_s);
 };
 
 
@@ -479,8 +407,8 @@ DEFMDDL_GROUP(
 		));
 
 struct __e_mddl_s {
-	struct __e_hdr_s hdr[1];
-	struct __g_mddl_choi_s choice[1];
+	MDDL_ONE_OF(hdr, struct __e_hdr_s);
+	MDDL_ONE_OF(choice, struct __g_mddl_choi_s);
 };
 
 
