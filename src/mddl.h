@@ -77,14 +77,46 @@ typedef char *__a_objctv_type_t;
 typedef char *__a_fund_strat_type_t;
 typedef char *__a_distri_type_t;
 typedef char *__a_stlmnt_type_t;
+typedef char *__a_seg_type_t;
+typedef char *__a_tranche_type_t;
+typedef char *__a_cap_type_t;
+typedef char *__a_day_rule_type_t;
+typedef char *__a_period_type_t;
+typedef enum __a_dow_e __a_dow_t;
 
 typedef time_t mddate_time_t;
+typedef time_t mdtime_t;
 typedef char *mdstring_t;
 typedef char *mduri_t;
 typedef double mdprice_t;
 typedef double mdrate_t;
+typedef struct __t_dura_s *__t_dura_t;
+/* special bool, -1 means unset, 0 means false, 1 means true */
+typedef int mdbool_t;
+typedef int mdint_t;
 
 
+/* data types and enums*/
+struct __t_dura_s {
+	int y;
+	int m;
+	int d;
+	int hr;
+	int min;
+	int sec;
+	int ns;
+};
+
+enum __a_dow_e {
+	SUNDAY,
+	MONDAY,
+	TUESDAY,
+	WEDNESDAY,
+	THURSDAY,
+	FRIDAY,
+	SATURDAY,
+};
+
 /* properties */
 struct __p_src_s {
 	mdstring_t value;
@@ -99,16 +131,59 @@ struct __p_snap_type_s {
 	} snap_type_voc;
 };
 
+struct __p_hours_s {
+	MDDL_MANY_OF(duration, struct __t_dura_s);
+	MDDL_MANY_OF(period_type, __a_period_type_t);
+	MDDL_MANY_OF(start_time, mddate_time_t);
+	MDDL_MANY_OF(end_time, mddate_time_t);
+};
+
+struct __p_day_of_week_s {
+	__a_dow_t value;
+
+	MDDL_MANY_OF(hours, struct __p_hours_s);
+};
+
+struct __p_ordinal_day_s {
+	MDDL_MANY_OF(day_rule_type, __a_day_rule_type_t);
+	MDDL_MANY_OF(duration, struct __t_dura_s);
+
+	mdint_t value;
+
+	MDDL_MANY_OF(day_of_week, struct __p_day_of_week_s);
+};
+
+struct __p_start_s {
+	mddate_time_t value;
+
+	MDDL_MANY_OF(ordinal_day, struct __p_ordinal_day_s);
+};
+
+struct __p_end_s {
+	mddate_time_t value;
+
+	MDDL_MANY_OF(ordinal_day, struct __p_ordinal_day_s);
+};
+
+struct __p_period_s {
+	MDDL_MANY_OF(day_rule_type, __a_day_rule_type_t);
+	MDDL_MANY_OF(duration, struct __t_dura_s);
+	MDDL_MANY_OF(period_type, __a_period_type_t);
+	/* spec says this is 0..* but that hardly makes sense */
+	mdbool_t recurring;
+
+	MDDL_MANY_OF(start, struct __p_start_s);
+	MDDL_MANY_OF(end, struct __p_end_s);
+};
+
 struct __p_name_s {
 	MDDL_MANY_OF(rank, __a_rank_t);
 	MDDL_MANY_OF(role, __a_role_t);
 
 	/* the actual name contents */
 	mdstring_t value;
-#if 0
-/* not impl'd */
+
 	MDDL_MANY_OF(period, struct __p_period_s);
-#endif	/* 0 */
 };
 
 struct __p_code_s {
@@ -122,10 +197,8 @@ struct __p_code_s {
 
 	/* the actual code contents */
 	mdstring_t value;
-#if 0
-/* not impl'd */
+
 	MDDL_MANY_OF(period, struct __p_period_s);
-#endif	/* 0 */
 };
 
 struct __p_prev_code_s {
@@ -250,7 +323,36 @@ struct __p_issue_fees_s {
 	MDDL_MANY_OF(clsf_price, struct __g_clsf_price_s);
 };
 
+struct __p_seg_ident_s {
+	MDDL_MANY_OF(seg_type, __a_seg_type_t);
+	MDDL_MANY_OF(code_name, struct __g_code_name_s);
+};
 
+struct __p_tranche_s {
+	MDDL_MANY_OF(nameref, __a_nref_t);
+	MDDL_MANY_OF(rank, __a_rank_t);
+
+	__a_tranche_type_t value;
+};
+
+DEFMDDL_GROUP(
+	sum_amt,
+	ENUM(
+		MDDL_SUM_AMT_UNK,
+		MDDL_SUM_AMT_CLSF_AMT,
+		MDDL_SUM_AMT_PERIOD,
+		),
+	STRUCT(
+		struct __g_clsf_amt_s *clsf_amt;
+		struct __p_period_s *period;
+		));
+
+struct __p_mkt_cap_s {
+	MDDL_MANY_OF(cap_type, __a_cap_type_t);
+	MDDL_MANY_OF(summarised_amount, struct __g_sum_amt_s);
+};
+
+
 struct __p_instr_ident_s {
 	MDDL_MANY_OF(country, __a_country_t);
 	MDDL_MANY_OF(instr_status_type, __a_instr_status_type_t);
@@ -258,11 +360,8 @@ struct __p_instr_ident_s {
 	MDDL_MANY_OF(code_name, struct __g_code_name_s);
 	MDDL_MANY_OF(mkt_ident, struct __p_mkt_ident_s);
 	MDDL_MANY_OF(instr_data, struct __p_instr_data_s);
-
-#if 0
-	MDDL_MANY_OF(tranche, struct __p_tranche_s);
 	MDDL_MANY_OF(seg_ident, struct __p_seg_ident_s);
-#endif
+	MDDL_MANY_OF(tranche, struct __p_tranche_s);
 };
 
 struct __p_indus_ident_s {
@@ -294,6 +393,16 @@ struct __p_objective_s {
 	MDDL_MANY_OF(objective_type, __a_objctv_type_t);
 
 	mdstring_t value;
+};
+
+struct __p_issuer_s {
+	MDDL_MANY_OF(comment, __a_comment_t);
+
+	MDDL_MANY_OF(instr_ident, struct __p_instr_ident_s);
+	MDDL_MANY_OF(mkt_cap, struct __p_mkt_cap_s);
+#if 0
+	MDDL_MANY_OF(entity_grp, struct __g_entity_grp_s);
+#endif	/* 0 */
 };
 
 
