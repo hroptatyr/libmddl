@@ -29,6 +29,21 @@
 #define STRUCT(structs...)	structs
 #define ENUM(types...)		types
 
+#define MDDL_PROP(name)		struct __p_##name##_s
+#define MDDL_GROUP(name)	struct __g_##name##_s
+
+#define DECL_ADD_F(name, nty, slot, slotty)				\
+	DECLF slotty(slot) *mddl_##name##_add_##slot(nty(name)*)
+
+#define DECLP_ADD_PROPF(name, prop)					\
+	DECL_ADD_F(name, MDDL_PROP, prop, MDDL_PROP)
+#define DECLP_ADD_GROUPF(name, grp)					\
+	DECL_ADD_F(name, MDDL_PROP, grp, MDDL_GROUP)
+#define DECLG_ADD_PROPF(name, prop)					\
+	DECL_ADD_F(name, MDDL_GROUP, prop, MDDL_PROP)
+#define DECLG_ADD_GROUPF(name, grp)					\
+	DECL_ADD_F(name, MDDL_GROUP, grp, MDDL_GROUP)
+
 #define MDDL_MANY_CNT(name)	n##name
 #define MDDL_MANY_SLOT(name)	name
 #define MDDL_MANY_OF(name, type)		\
@@ -838,10 +853,14 @@ DEFMDDL_GROUP(
 struct __p_issuer_s {
 	MDDL_MANY_OF(comment, __a_comment_t);
 
-	MDDL_MANY_OF(instr_ident, struct __p_instr_ident_s);
-	MDDL_MANY_OF(mkt_cap, struct __p_mkt_cap_s);
-	MDDL_MANY_OF(entity_grp, struct __g_entity_grp_s);
-};
+	MDDL_MANY_OF(instr_ident, MDDL_PROP(instr_ident));
+	MDDL_MANY_OF(mkt_cap, MDDL_PROP(mkt_cap));
+	MDDL_MANY_OF(entity_grp, MDDL_GROUP(entity_grp));
+};	
+
+DECLP_ADD_PROPF(issuer, instr_ident);
+DECLP_ADD_PROPF(issuer, mkt_cap);
+DECLP_ADD_GROUPF(issuer, entity_grp);
 
 
 /* domains */

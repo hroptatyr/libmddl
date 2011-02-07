@@ -31,6 +31,27 @@ typedef struct __g_mddl_choi_s *mddl_g_mddl_choi_t;
 		memset(res, 0, sizeof(*res));	\
 	} while (0)
 
+#define DEF_ADD_F(name, nty, slot, slotty, body...)			\
+	DEFUN slotty(slot)*						\
+	mddl_##name##_add_##slot(nty(name) *name)			\
+	{								\
+		slotty(slot) *res = NULL;				\
+		add_p(res, name, slot);					\
+		body							\
+		return res;						\
+	}								\
+	/* just to get rid of stray semicolon warnings */		\
+	typedef void mddl_##name##_add_##slot##_f
+
+#define DEFP_ADD_PROPF(name, prop, body...)				\
+	DEF_ADD_F(name, MDDL_PROP, prop, MDDL_PROP, body)
+#define DEFP_ADD_GROUPF(name, grp, body...)				\
+	DEF_ADD_F(name, MDDL_PROP, grp, MDDL_GROUP, body)
+#define DEFG_ADD_PROPF(name, prop, body...)				\
+	DEF_ADD_F(name, MDDL_GROUP, prop, MDDL_PROP, body)
+#define DEFG_ADD_GROUPF(name, grp, body...)				\
+	DEF_ADD_F(name, MDDL_GROUP, grp, MDDL_GROUP, body)
+
 
 static mddl_g_mddl_choi_t
 __mddl_find_choice(mddl_doc_t m, enum mddl_choi_e mtype)
@@ -673,5 +694,9 @@ mddl_name_add_rank(mddl_p_name_t name, int rank)
 	name->rank = realloc(name->rank, (name->nrank) * sizeof(*name->rank));
 	return name->rank[idx] = rank;
 }
+
+DEFP_ADD_PROPF(issuer, instr_ident);
+DEFP_ADD_PROPF(issuer, mkt_cap);
+DEFP_ADD_GROUPF(issuer, entity_grp);
 
 /* mddl.c ends here */
