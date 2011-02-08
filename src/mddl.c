@@ -31,12 +31,12 @@ typedef struct __g_mddl_choi_s *mddl_g_mddl_choi_t;
 		memset(res, 0, sizeof(*res));	\
 	} while (0)
 
-#define DEF_ADD_F(name, nty, slot, slotty, body...)			\
+#define DEF_ADD_F(name, nty, slot, slotty, slotname, body...)		\
 	DEFUN slotty(slot)*						\
 	mddl_##name##_add_##slot(nty(name) *name)			\
 	{								\
 		slotty(slot) *res = NULL;				\
-		add_p(res, name, slot);					\
+		add_p(res, name, slotname);					\
 		body							\
 		return res;						\
 	}								\
@@ -44,13 +44,23 @@ typedef struct __g_mddl_choi_s *mddl_g_mddl_choi_t;
 	typedef void mddl_##name##_add_##slot##_f
 
 #define DEFP_ADD_PROPF(name, prop, body...)				\
-	DEF_ADD_F(name, MDDL_PROP, prop, MDDL_PROP, body)
+	DEF_ADD_F(name, MDDL_PROP, prop, MDDL_PROP, prop, body)
 #define DEFP_ADD_GROUPF(name, grp, body...)				\
-	DEF_ADD_F(name, MDDL_PROP, grp, MDDL_GROUP, body)
+	DEF_ADD_F(name, MDDL_PROP, grp, MDDL_GROUP, grp, body)
 #define DEFG_ADD_PROPF(name, prop, body...)				\
-	DEF_ADD_F(name, MDDL_GROUP, prop, MDDL_PROP, body)
+	DEF_ADD_F(name, MDDL_GROUP, prop, MDDL_PROP, prop, body)
 #define DEFG_ADD_GROUPF(name, grp, body...)				\
-	DEF_ADD_F(name, MDDL_GROUP, grp, MDDL_GROUP, body)
+	DEF_ADD_F(name, MDDL_GROUP, grp, MDDL_GROUP, grp, body)
+
+/* for when slot type and slot name are not the same */
+#define DEFP_ADD_PROPF_SN(name, prop, sn, body...)		\
+	DEF_ADD_F(name, MDDL_PROP, prop, MDDL_PROP, sn, body)
+#define DEFP_ADD_GROUPF_SN(name, grp, sn, body...)		\
+	DEF_ADD_F(name, MDDL_PROP, grp, MDDL_GROUP, sn, body)
+#define DEFG_ADD_PROPF_SN(name, prop, sn, body...)			\
+	DEF_ADD_F(name, MDDL_GROUP, prop, MDDL_PROP, sn, body)
+#define DEFG_ADD_GROUPF_SN(name, grp, sn, body...)		\
+	DEF_ADD_F(name, MDDL_GROUP, grp, MDDL_GROUP, sn, body)
 
 
 static mddl_g_mddl_choi_t
@@ -340,60 +350,27 @@ mddl_instr_ident_add_code(mddl_p_instr_ident_t iid)
 	return res;
 }
 
-DEFUN mddl_p_instr_data_t
-mddl_instr_ident_add_instr_data(mddl_p_instr_ident_t iid)
-{
-	mddl_p_instr_data_t res = NULL;
+DEFP_ADD_PROPF(instr_ident, mkt_ident);
+DEFP_ADD_PROPF(instr_ident, instr_data);
+DEFP_ADD_PROPF(instr_ident, seg_ident);
+DEFP_ADD_PROPF(instr_ident, tranche);
 
-	add_p(res, iid, instr_data);
-	return res;
-}
+DEFP_ADD_PROPF(issue_data, issuer_ref);
+DEFP_ADD_PROPF(issue_data, issue_date);
+DEFP_ADD_PROPF(issue_data, issue_amount);
+DEFP_ADD_PROPF(issue_data, issue_fees);
+DEFP_ADD_PROPF(issue_data, clearing_stlmnt);
 
-DEFUN mddl_p_issuer_ref_t
-mddl_issue_data_add_issuer_ref(mddl_p_issue_data_t id)
-{
-	mddl_p_issuer_ref_t res = NULL;
+DEFP_ADD_PROPF(clearing_stlmnt, mkt_ident);
+DEFP_ADD_PROPF(clearing_stlmnt, currency);
+DEFP_ADD_PROPF(clearing_stlmnt, clearing_house);
+DEFP_ADD_PROPF_SN(clearing_stlmnt, clearing_proc, clearing_process);
+DEFP_ADD_PROPF_SN(clearing_stlmnt, clearing_sys, clearing_system);
+DEFP_ADD_PROPF_SN(clearing_stlmnt, depo_name, depository_name);
+DEFP_ADD_PROPF_SN(clearing_stlmnt, depo_sys, depository_system);
+DEFP_ADD_PROPF_SN(clearing_stlmnt, parties_invlv, parties_involved);
 
-	add_p(res, id, issuer_ref);
-	return res;
-}
-
-DEFUN mddl_p_issue_date_t
-mddl_issue_data_add_issue_date(mddl_p_issue_data_t id)
-{
-	mddl_p_issue_date_t res = NULL;
-
-	add_p(res, id, issue_date);
-	return res;
-}
-
-DEFUN mddl_p_issue_amount_t
-mddl_issue_data_add_issue_amount(mddl_p_issue_data_t id)
-{
-	mddl_p_issue_amount_t res = NULL;
-
-	add_p(res, id, issue_amount);
-	return res;
-}
-
-DEFUN mddl_p_issue_fees_t
-mddl_issue_data_add_issue_fees(mddl_p_issue_data_t id)
-{
-	mddl_p_issue_fees_t res = NULL;
-
-	add_p(res, id, issue_fees);
-	return res;
-}
-
-DEFUN mddl_p_clearing_stlmnt_t
-mddl_issue_data_add_clearing_stlmnt(mddl_p_issue_data_t id)
-{
-	mddl_p_clearing_stlmnt_t res = NULL;
-
-	add_p(res, id, clearing_settlement);
-	return res;
-}
-
+DEFP_ADD_PROPF(crossrate, multiplier);
 
 static struct __g_code_name_s*
 __issuer_ref_find_code_name(mddl_p_issuer_ref_t ir, enum code_name_e type)
@@ -655,14 +632,9 @@ mddl_instr_data_add_instr_type(mddl_p_instr_data_t id, const char *type)
 	return id->instr_type[idx] = strdup(type);
 }
 
-DEFUN mddl_p_currency_t
-mddl_instr_data_add_currency(mddl_p_instr_data_t id)
-{
-	mddl_p_currency_t res = NULL;
-
-	add_p(res, id, currency);
-	return res;
-}
+DEFP_ADD_PROPF(instr_data, currency);
+DEFP_ADD_PROPF(instr_data, tra_restr_type);
+DEFP_ADD_PROPF(instr_data, last_cae);
 
 
 DEFUN __a_scheme_t
@@ -697,6 +669,37 @@ mddl_name_add_rank(mddl_p_name_t name, int rank)
 
 DEFP_ADD_PROPF(issuer, instr_ident);
 DEFP_ADD_PROPF(issuer, mkt_cap);
-DEFP_ADD_GROUPF(issuer, entity_grp);
+
+DEFP_ADD_PROPF(day_of_week, hours);
+DEFP_ADD_PROPF(ordinal_day, day_of_week);
+DEFP_ADD_PROPF(start, ordinal_day);
+DEFP_ADD_PROPF(end, ordinal_day);
+
+DEFP_ADD_PROPF(period, start);
+DEFP_ADD_PROPF(period, end);
+
+DEFP_ADD_PROPF(name, period);
+DEFP_ADD_PROPF(code, period);
+
+DEFP_ADD_PROPF(days, day_of_week);
+
+DEFP_ADD_PROPF(mkt_cond, period);
+DEFP_ADD_PROPF(mkt_cond, days);
+
+DEFP_ADD_PROPF(valua_ref, valua_base);
+
+DEFP_ADD_PROPF(currency, multiplier);
+
+DEFP_ADD_PROPF(clearing_house, period);
+DEFP_ADD_PROPF(clearing_proc, period);
+DEFP_ADD_PROPF(clearing_sys, period);
+DEFP_ADD_PROPF(depo_name, period);
+DEFP_ADD_PROPF(depo_sys, period);
+DEFP_ADD_PROPF(parties_invlv, agent);
+
+DEFP_ADD_PROPF(post_code, period);
+
+DEFP_ADD_PROPF(orderbook, bid);
+DEFP_ADD_PROPF(orderbook, ask);
 
 /* mddl.c ends here */

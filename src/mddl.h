@@ -194,6 +194,8 @@ struct __p_day_of_week_s {
 	MDDL_MANY_OF(hours, struct __p_hours_s);
 };
 
+DECLP_ADD_PROPF(day_of_week, hours);
+
 struct __p_ordinal_day_s {
 	MDDL_MANY_OF(day_rule_type, __a_day_rule_type_t);
 	MDDL_MANY_OF(duration, struct __t_dura_s);
@@ -203,17 +205,23 @@ struct __p_ordinal_day_s {
 	MDDL_MANY_OF(day_of_week, struct __p_day_of_week_s);
 };
 
+DECLP_ADD_PROPF(ordinal_day, day_of_week);
+
 struct __p_start_s {
 	mddate_time_t value;
 
 	MDDL_MANY_OF(ordinal_day, struct __p_ordinal_day_s);
 };
 
+DECLP_ADD_PROPF(start, ordinal_day);
+
 struct __p_end_s {
 	mddate_time_t value;
 
 	MDDL_MANY_OF(ordinal_day, struct __p_ordinal_day_s);
 };
+
+DECLP_ADD_PROPF(end, ordinal_day);
 
 struct __p_period_s {
 	MDDL_MANY_OF(day_rule_type, __a_day_rule_type_t);
@@ -226,6 +234,9 @@ struct __p_period_s {
 	MDDL_MANY_OF(end, struct __p_end_s);
 };
 
+DECLP_ADD_PROPF(period, start);
+DECLP_ADD_PROPF(period, end);
+
 struct __p_name_s {
 	MDDL_MANY_OF(rank, __a_rank_t);
 	MDDL_MANY_OF(role, __a_role_t);
@@ -235,6 +246,8 @@ struct __p_name_s {
 
 	MDDL_MANY_OF(period, struct __p_period_s);
 };
+
+DECLP_ADD_PROPF(name, period);
 
 struct __p_code_s {
 	MDDL_MANY_OF(rank, __a_rank_t);
@@ -250,6 +263,8 @@ struct __p_code_s {
 
 	MDDL_MANY_OF(period, struct __p_period_s);
 };
+
+DECLP_ADD_PROPF(code, period);
 
 struct __p_prev_code_s {
 /* not implemented */
@@ -307,6 +322,8 @@ struct __p_days_s {
 	MDDL_MANY_OF(day_of_week, struct __p_day_of_week_s);
 };
 
+DECLP_ADD_PROPF(days, day_of_week);
+
 struct __p_valua_base_s {
 	mdprice_t value;
 
@@ -330,11 +347,16 @@ struct __p_mkt_cond_s {
 	MDDL_MANY_OF(days, struct __p_days_s);
 };
 
+DECLP_ADD_PROPF(mkt_cond, period);
+DECLP_ADD_PROPF(mkt_cond, days);
+
 struct __p_valua_ref_s {
 	mduri_t value;
 
 	MDDL_MANY_OF(valua_base, struct __p_valua_base_s);
 };
+
+DECLP_ADD_PROPF(valua_ref, valua_base);
 
 DEFMDDL_GROUP(
 	clsf_rate,
@@ -375,6 +397,8 @@ struct __p_currency_s {
 	MDDL_MANY_OF(multiplier, struct __p_multiplier_s);
 };
 
+DECLP_ADD_PROPF(currency, multiplier);
+
 struct __p_tra_restr_type_s {
 	MDDL_MANY_OF(incl_type, __a_incl_type_t);
 
@@ -413,11 +437,15 @@ struct __p_instr_data_s {
 	MDDL_MANY_OF(instr_form_type, __a_instr_form_type_t);
 	MDDL_MANY_OF(background, __a_background_t);
 	MDDL_MANY_OF(comment, __a_comment_t);
-	MDDL_MANY_OF(currency, struct __p_currency_s);
 
+	MDDL_MANY_OF(currency, struct __p_currency_s);
 	MDDL_MANY_OF(tra_restr_type, struct __p_tra_restr_type_s);
 	MDDL_MANY_OF(last_cae, struct __p_last_cae_s);
 };
+
+DECLP_ADD_PROPF(instr_data, currency);
+DECLP_ADD_PROPF(instr_data, tra_restr_type);
+DECLP_ADD_PROPF(instr_data, last_cae);
 
 struct __p_issuer_ref_s {
 	mduri_t value;
@@ -437,11 +465,15 @@ struct __p_clearing_house_s {
 	MDDL_MANY_OF(period, struct __p_period_s);
 };
 
+DECLP_ADD_PROPF(clearing_house, period);
+
 struct __p_clearing_proc_s {
 	mdstring_t value;
 
 	MDDL_MANY_OF(period, struct __p_period_s);
 };
+
+DECLP_ADD_PROPF(clearing_proc, period);
 
 struct __p_clearing_sys_s {
 	mdstring_t value;
@@ -449,11 +481,15 @@ struct __p_clearing_sys_s {
 	MDDL_MANY_OF(period, struct __p_period_s);
 };
 
+DECLP_ADD_PROPF(clearing_sys, period);
+
 struct __p_depo_name_s {
 	mdstring_t value;
 
 	MDDL_MANY_OF(period, struct __p_period_s);
 };
+
+DECLP_ADD_PROPF(depo_name, period);
 
 struct __p_depo_sys_s {
 	mdstring_t value;
@@ -461,9 +497,13 @@ struct __p_depo_sys_s {
 	MDDL_MANY_OF(period, struct __p_period_s);
 };
 
+DECLP_ADD_PROPF(depo_sys, period);
+
 struct __p_parties_invlv_s {
 	MDDL_MANY_OF(agent, struct __p_agent_s);
 };
+
+DECLP_ADD_PROPF(parties_invlv, agent);
 
 struct __p_agent_s {
 	MDDL_MANY_OF(agent_type, __a_agt_type_t);
@@ -508,6 +548,8 @@ struct __p_post_code_s {
 
 	MDDL_MANY_OF(period, struct __p_period_s);
 };
+
+DECLP_ADD_PROPF(post_code, period);
 
 DEFMDDL_GROUP(
 	loc_data,
@@ -556,9 +598,9 @@ DEFMDDL_GROUP(
 
 struct __p_clearing_stlmnt_s {
 	MDDL_MANY_OF(settlement_type, __a_stlmnt_type_t);
+
 	MDDL_MANY_OF(mkt_ident, struct __p_mkt_ident_s);
 	MDDL_MANY_OF(currency, struct __p_currency_s);
-
 	MDDL_MANY_OF(clearing_house, struct __p_clearing_house_s);
 	MDDL_MANY_OF(clearing_process, struct __p_clearing_proc_s);
 	MDDL_MANY_OF(clearing_system, struct __p_clearing_sys_s);
@@ -567,6 +609,15 @@ struct __p_clearing_stlmnt_s {
 	MDDL_MANY_OF(parties_involved, struct __p_parties_invlv_s);
 };
 
+DECLP_ADD_PROPF(clearing_stlmnt, mkt_ident);
+DECLP_ADD_PROPF(clearing_stlmnt, currency);
+DECLP_ADD_PROPF(clearing_stlmnt, clearing_house);
+DECLP_ADD_PROPF(clearing_stlmnt, clearing_proc);
+DECLP_ADD_PROPF(clearing_stlmnt, clearing_sys);
+DECLP_ADD_PROPF(clearing_stlmnt, depo_name);
+DECLP_ADD_PROPF(clearing_stlmnt, depo_sys);
+DECLP_ADD_PROPF(clearing_stlmnt, parties_invlv);
+
 struct __p_crossrate_s {
 	__a_scheme_t scheme;
 	/* the actual contents */
@@ -574,6 +625,8 @@ struct __p_crossrate_s {
 
 	MDDL_MANY_OF(multiplier, struct __p_multiplier_s);
 };
+
+DECLP_ADD_PROPF(crossrate, multiplier);
 
 struct __p_size_s {
 /* not implemented yet */
@@ -655,12 +708,18 @@ struct __p_instr_ident_s {
 	MDDL_MANY_OF(country, __a_country_t);
 	MDDL_MANY_OF(instr_status_type, __a_instr_status_type_t);
 	MDDL_MANY_OF(scope_type, __a_scope_type_t);
+
 	MDDL_MANY_OF(code_name, struct __g_code_name_s);
 	MDDL_MANY_OF(mkt_ident, struct __p_mkt_ident_s);
 	MDDL_MANY_OF(instr_data, struct __p_instr_data_s);
 	MDDL_MANY_OF(seg_ident, struct __p_seg_ident_s);
 	MDDL_MANY_OF(tranche, struct __p_tranche_s);
 };
+
+DECLP_ADD_PROPF(instr_ident, mkt_ident);
+DECLP_ADD_PROPF(instr_ident, instr_data);
+DECLP_ADD_PROPF(instr_ident, seg_ident);
+DECLP_ADD_PROPF(instr_ident, tranche);
 
 struct __p_indus_ident_s {
 };
@@ -669,9 +728,16 @@ struct __p_issue_data_s {
 	MDDL_MANY_OF(issuer_ref, struct __p_issuer_ref_s);
 	MDDL_MANY_OF(issue_date, struct __p_issue_date_s);
 	MDDL_MANY_OF(issue_amount, struct __p_issue_amount_s);
-	MDDL_MANY_OF(clearing_settlement, struct __p_clearing_stlmnt_s);
+	MDDL_MANY_OF(clearing_stlmnt, struct __p_clearing_stlmnt_s);
 	MDDL_MANY_OF(issue_fees, struct __p_issue_fees_s);
 };
+
+DECLP_ADD_PROPF(issue_data, issuer_ref);
+DECLP_ADD_PROPF(issue_data, issue_date);
+DECLP_ADD_PROPF(issue_data, issue_amount);
+DECLP_ADD_PROPF(issue_data, issue_fees);
+DECLP_ADD_PROPF(issue_data, clearing_stlmnt);
+
 
 struct __p_mid_s {
 	MDDL_MANY_OF(mid_spread, struct __g_mid_spread_s);
@@ -699,6 +765,9 @@ struct __p_orderbook_s {
 	MDDL_MANY_OF(bid, struct __p_bid_s);
 	MDDL_MANY_OF(ask, struct __p_ask_s);
 };
+
+DECLP_ADD_PROPF(orderbook, bid);
+DECLP_ADD_PROPF(orderbook, ask);
 
 struct __p_yield_s {
 	MDDL_MANY_OF(yield_type, __a_yield_type_t);
@@ -853,24 +922,23 @@ DEFMDDL_GROUP(
 struct __p_issuer_s {
 	MDDL_MANY_OF(comment, __a_comment_t);
 
-	MDDL_MANY_OF(instr_ident, MDDL_PROP(instr_ident));
-	MDDL_MANY_OF(mkt_cap, MDDL_PROP(mkt_cap));
-	MDDL_MANY_OF(entity_grp, MDDL_GROUP(entity_grp));
-};	
+	MDDL_MANY_OF(instr_ident, struct __p_instr_ident_s);
+	MDDL_MANY_OF(mkt_cap, struct __p_mkt_cap_s);
+	MDDL_MANY_OF(entity_grp, struct __g_entity_grp_s);
+};
 
 DECLP_ADD_PROPF(issuer, instr_ident);
 DECLP_ADD_PROPF(issuer, mkt_cap);
-DECLP_ADD_GROUPF(issuer, entity_grp);
 
 
 /* domains */
 struct __dom_instr_s {
 	MDDL_MANY_OF(basic_idents, struct __g_basic_idents_s);
 	MDDL_MANY_OF(basic_quotes, struct __g_basic_quotes_s);
-
-	MDDL_MANY_OF(objective, struct __p_objective_s);
 	MDDL_MANY_OF(fund_strat_type, __a_fund_strat_type_t);
 	MDDL_MANY_OF(distri_type, __a_distri_type_t);
+
+	MDDL_MANY_OF(objective, struct __p_objective_s);
 };
 
 struct __dom_index_s {
@@ -994,16 +1062,6 @@ mddl_dom_instr_add_distri_type(mddl_dom_instr_t, const char *dt);
 
 DECLF mddl_p_name_t mddl_instr_ident_add_name(mddl_p_instr_ident_t);
 DECLF mddl_p_code_t mddl_instr_ident_add_code(mddl_p_instr_ident_t);
-DECLF mddl_p_instr_data_t mddl_instr_ident_add_instr_data(mddl_p_instr_ident_t);
-
-DECLF mddl_p_issuer_ref_t mddl_issue_data_add_issuer_ref(mddl_p_issue_data_t);
-DECLF mddl_p_issue_date_t mddl_issue_data_add_issue_date(mddl_p_issue_data_t);
-DECLF mddl_p_issue_amount_t
-mddl_issue_data_add_issue_amount(mddl_p_issue_data_t);
-DECLF mddl_p_issue_fees_t
-mddl_issue_data_add_issue_fees(mddl_p_issue_data_t);
-DECLF mddl_p_clearing_stlmnt_t
-mddl_issue_data_add_clearing_stlmnt(mddl_p_issue_data_t);
 
 DECLF mddl_p_name_t mddl_issuer_ref_add_name(mddl_p_issuer_ref_t);
 DECLF mddl_p_code_t mddl_issuer_ref_add_code(mddl_p_issuer_ref_t);
@@ -1018,7 +1076,6 @@ DEFUN mddl_p_size_t mddl_issue_fees_add_size(mddl_p_issue_fees_t);
 
 DECLF __a_instr_type_t
 mddl_instr_data_add_instr_type(mddl_p_instr_data_t, const char *type);
-DECLF mddl_p_currency_t mddl_instr_data_add_currency(mddl_p_instr_data_t);
 
 DECLF __a_scheme_t mddl_code_add_scheme(mddl_p_code_t code, const char *scheme);
 DECLF __a_rank_t mddl_code_add_rank(mddl_p_code_t code, int rank);
