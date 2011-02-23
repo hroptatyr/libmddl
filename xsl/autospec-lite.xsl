@@ -61,6 +61,16 @@
     <xsl:text>_s</xsl:text>
   </xsl:template>
 
+  <xsl:template match="xsd:element[@type and @name]" mode="tdef">
+    <xsl:text>typedef </xsl:text>
+    <xsl:call-template name="make_type">
+      <xsl:with-param name="type" select="@name"/>
+    </xsl:call-template>
+    <xsl:text> *mddl_</xsl:text>
+    <xsl:value-of select="@name"/>
+    <xsl:text>_t;&#0010;</xsl:text>
+  </xsl:template>
+
   <xsl:template match="xsd:element[@type and xsd:annotation]">
     <xsl:variable name="type" select="@type"/>
     <xsl:variable name="type_nons">
@@ -317,7 +327,9 @@
   <!-- catch all -->
   <xsl:template match="text()"/>
   <xsl:template match="text()" mode="porn"/>
+  <xsl:template match="text()" mode="tdef"/>
   <xsl:template match="xsd:*"/>
   <xsl:template match="xsd:*" mode="porn"/>
+  <xsl:template match="xsd:*" mode="tdef"/>
 
 </xsl:stylesheet>
