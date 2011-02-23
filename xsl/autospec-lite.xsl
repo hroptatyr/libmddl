@@ -12,24 +12,19 @@
     <xsl:text>/* AUTO-GENERATED, DO NOT MODIFY */&#0010;&#0010;</xsl:text>
     <xsl:text>#if !defined mddl_lite_h_&#0010;</xsl:text>
     <xsl:text>#define mddl_lite_h_&#0010;&#0010;</xsl:text>
-    <xsl:apply-templates mode="tdef"/>
-    <xsl:apply-templates/>
-    <xsl:text>#endif  /* !mddl_lite_h_*/&#0010;</xsl:text>
-  </xsl:template>
 
-  <xsl:template name="make_prefix">
-    <xsl:param name="type"/>
-    <xsl:choose>
-      <xsl:when test="$type = 'domain'">
-        <xsl:text>d</xsl:text>
-      </xsl:when>
-      <xsl:when test="$type = 'property'">
-        <xsl:text>p</xsl:text>
-      </xsl:when>
-      <xsl:otherwise>
-        <xsl:value-of select="$type"/>
-      </xsl:otherwise>
-    </xsl:choose>
+    <xsl:apply-templates mode="tdef"/>
+    <xsl:text>&#0010;</xsl:text>
+
+    <!-- treat source and sequence specially -->
+    <xsl:apply-templates
+      select="xsd:element[@name='sequence' or @name='source']"/>
+
+    <!-- and now the rest -->
+    <xsl:apply-templates
+      select="xsd:element[not(@name='source' or @name='sequence')]"/>
+
+    <xsl:text>#endif  /* !mddl_lite_h_*/&#0010;</xsl:text>
   </xsl:template>
 
   <xsl:template name="make_stem">
@@ -71,22 +66,13 @@
     <xsl:text>_t;&#0010;</xsl:text>
   </xsl:template>
 
-  <xsl:template match="xsd:element[@type and xsd:annotation]">
+  <xsl:template match="xsd:element[@type and @name]">
     <xsl:variable name="type" select="@type"/>
     <xsl:variable name="type_nons">
       <xsl:call-template name="make_stem">
         <xsl:with-param name="type" select="$type"/>
       </xsl:call-template>
     </xsl:variable>
-
-    <!-- not using this crap as it would be too difficult for the parser
-    <xsl:call-template name="make_prefix">
-      <xsl:with-param
-        name="type"
-        select="xsd:annotation/xsd:appinfo/mddl:schema-classification"/>
-    </xsl:call-template>
-    <xsl:text>_</xsl:text>
-    -->
 
     <xsl:call-template name="make_type">
       <xsl:with-param name="type" select="@name"/>
@@ -163,8 +149,23 @@
       <xsl:with-param name="type" select="@ref"/>
     </xsl:call-template>
 
-    <xsl:text> *</xsl:text>
+    <xsl:text> </xsl:text>
+    <xsl:if test="$maxocc = 'unbounded'">
+      <xsl:text>*</xsl:text>
+    </xsl:if>
     <xsl:value-of select="$stem"/>
+    <xsl:if test="not($maxocc = 'unbounded')">
+      <xsl:text>[</xsl:text>
+      <xsl:choose>
+        <xsl:when test="@maxOccurs">
+          <xsl:value-of select="@maxOccurs"/>
+        </xsl:when>
+        <xsl:otherwise>
+          <xsl:value-of select="$maxocc"/>
+        </xsl:otherwise>
+      </xsl:choose>
+      <xsl:text>]</xsl:text>
+    </xsl:if>
     <xsl:text>;&#0010;</xsl:text>
   </xsl:template>
   <!-- catchalls for when's and other's -->
@@ -204,13 +205,21 @@
     </xsl:apply-templates>
   </xsl:template>
 
-  <xsl:template match="xsd:sequence" mode="porn">
+  <xsl:template match="xsd:sequence[@maxOccurs]" mode="porn">
     <xsl:param name="indent"/>
     <xsl:param name="maxocc" select="@maxOccurs"/>
 
     <xsl:apply-templates mode="porn">
       <xsl:with-param name="indent" select="$indent"/>
       <xsl:with-param name="maxocc" select="$maxocc"/>
+    </xsl:apply-templates>
+  </xsl:template>
+
+  <xsl:template match="xsd:sequence" mode="porn">
+    <xsl:param name="indent"/>
+
+    <xsl:apply-templates mode="porn">
+      <xsl:with-param name="indent" select="$indent"/>
     </xsl:apply-templates>
   </xsl:template>
 
@@ -256,6 +265,24 @@
         <xsl:text>&#0010;&#0010;</xsl:text>
       </xsl:otherwise>
     </xsl:choose>
+  </xsl:template>
+
+  <!-- special treatment for source/sequence -->
+  <xsl:template match="xsd:choice[
+                       xsd:element/@ref='mddl:sequence' and
+                       xsd:element/@ref='mddl:source' and
+                       count(xsd:element) = 2]" mode="porn">
+    <xsl:param name="indent"/>
+
+    <xsl:text>&#0010;</xsl:text>
+    <xsl:value-of select="$indent"/>
+    <xsl:text>/* seq/src */</xsl:text>
+    <xsl:text>&#0010;</xsl:text>
+    <xsl:value-of select="$indent"/>
+    <xsl:text>struct __sequence_s sequence[1];&#0010;</xsl:text>
+    <xsl:value-of select="$indent"/>
+    <xsl:text>struct __source_s source[1];&#0010;</xsl:text>
+    <xsl:text>&#0010;</xsl:text>
   </xsl:template>
 
   <xsl:template match="xsd:attribute[@type]" mode="porn">
