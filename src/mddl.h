@@ -27,6 +27,10 @@ struct __mdDecimal_s {
 	double value;
 };
 
+struct __mdNonNegativeDecimal_s {
+	double value;
+};
+
 struct __mdUri_s {
 	char *value;
 };
@@ -72,5 +76,8 @@ struct __QualityEnumeration_s {
 
 /* print service */
 DECLF void mddl_print(void *out, mddl_doc_t doc);
+
+/* add a snap */
+DECLF mddl_snap_t mddl_add_snap(mddl_doc_t doc);
 
 #endif	/* INCLUDED_mddl_h_ */

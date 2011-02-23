@@ -63,45 +63,15 @@ typedef struct __g_mddl_choi_s *mddl_g_mddl_choi_t;
 	DEF_ADD_F(name, MDDL_GROUP, grp, MDDL_GROUP, sn, body)
 
 
-static mddl_g_mddl_choi_t
-__mddl_find_choice(mddl_doc_t m, enum mddl_choi_e mtype)
-{
-	mddl_g_mddl_choi_t p = m->choice;
-	if (p->mddl_choi_gt == mtype) {
-		return p;
-	}
-	return NULL;
-}
-
-static mddl_g_mddl_choi_t
-__mddl_add_choice(mddl_doc_t m, enum mddl_choi_e mtype)
-{
-	mddl_g_mddl_choi_t p;
-
-	/* already alloc'd */
-	p = m->choice;
-	/* initialise p somehow, we need a named enum here it seems */
-	memset(p, 0, sizeof(*p));
-	p->mddl_choi_gt = mtype;
-	return p;
-}
-
 DEFUN mddl_snap_t
 mddl_add_snap(mddl_doc_t doc)
 {
-	mddl_g_mddl_choi_t choi;
 	mddl_snap_t snap;
 	size_t idx;
 
-	if (!(choi = __mddl_find_choice(doc, MDDL_CHOICE_SNAP)) &&
-	    !(choi = __mddl_add_choice(doc, MDDL_CHOICE_SNAP))) {
-		return NULL;
-	}
-
-	idx = choi->nmddl_choi++;
-	choi->snap = realloc(
-		choi->snap, choi->nmddl_choi * sizeof(*choi->snap));
-	snap = choi->snap + idx;
+	idx = doc->nsnap++;
+	doc->snap = realloc(doc->snap, doc->nsnap * sizeof(*doc->snap));
+	snap = doc->snap + idx;
 	/* intialise snap */
 	memset(snap, 0, sizeof(*snap));
 	return snap;
