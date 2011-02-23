@@ -16,7 +16,11 @@ mddl_code_SOURCES = mddl-code.c mddl-print.c
 mddl_code_CPPFLAGS = $(AM_CPPFLAGS) $(LIBXML_CFLAGS)
 mddl_code_LDADD = libmddl.la
 mddl_code_LDFLAGS = $(AM_LDFLAGS) $(LIBXML_LIBS)
-BUILT_SOURCES += mddl-code-opt.c mddl-tag.c mddl-attr.c
+BUILT_SOURCES += mddl-code-opt.c mddl-tag.c mddl-attr.c mddl-3.0-beta-lite.h
+
+## rule for mddl-lite.h
+%.h: %.xsd $(top_srcdir)/xsl/autospec-lite.xsl
+	xsltproc $(top_srcdir)/xsl/autospec-lite.xsl $< > $@
 
 ## our rule for gengetopt
 %.c: %.ggo
