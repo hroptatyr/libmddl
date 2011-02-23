@@ -9,7 +9,12 @@
   <xsl:output method="text"/>
 
   <xsl:template match="/xsd:schema">
+    <xsl:text>/* AUTO-GENERATED, DO NOT MODIFY */&#0010;&#0010;</xsl:text>
+    <xsl:text>#if !defined mddl_lite_h_&#0010;</xsl:text>
+    <xsl:text>#define mddl_lite_h_&#0010;&#0010;</xsl:text>
+    <xsl:apply-templates mode="tdef"/>
     <xsl:apply-templates/>
+    <xsl:text>#endif  /* !mddl_lite_h_*/&#0010;</xsl:text>
   </xsl:template>
 
   <xsl:template name="make_prefix">
