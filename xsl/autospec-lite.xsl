@@ -309,7 +309,7 @@
     <xsl:text>&#0010;</xsl:text>
   </xsl:template>
 
-  <xsl:template match="xsd:attribute[@type]" mode="porn">
+  <xsl:template match="xsd:attribute[@name]" mode="porn">
     <xsl:param name="indent"/>
 
     <xsl:value-of select="$indent"/>
