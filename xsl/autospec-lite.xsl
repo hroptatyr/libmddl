@@ -20,9 +20,23 @@
     <xsl:apply-templates
       select="xsd:element[@name='sequence' or @name='source']"/>
 
+    <!-- treat snap, qref and qsttype specially -->
+    <xsl:apply-templates select="xsd:element[@name='snap']"/>
+    <xsl:apply-templates select="xsd:element[@name='queryReference']"/>
+    <xsl:apply-templates select="xsd:element[@name='queryStatusType']"/>
+    <xsl:apply-templates select="xsd:element[@name='mddlQuerySource']"/>
+    <xsl:apply-templates select="xsd:element[@name='query']"/>
+
     <!-- and now the rest -->
     <xsl:apply-templates
-      select="xsd:element[not(@name='source' or @name='sequence')]"/>
+      select="xsd:element[not(
+              @name='source' or
+              @name='sequence' or
+              @name='snap' or
+              @name='queryReference' or
+              @name='queryStatusType' or
+              @name='mddlQuerySource' or
+              @name='query')]"/>
 
     <xsl:text>#endif  /* !mddl_lite_h_*/&#0010;</xsl:text>
   </xsl:template>
