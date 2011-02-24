@@ -260,7 +260,7 @@ mddl_init(mddl_ctx_t ctx, const char **attrs)
 	init_ctxcb(ctx);
 	/* alloc some space for our document */
 	{
-		struct __e_mddl_s *m = calloc(sizeof(*m), 1);
+		struct __mddl_s *m = calloc(sizeof(*m), 1);
 		mddl_ctxcb_t cc = pop_ctxcb(ctx);
 
 		ctx->doc = m;
@@ -325,7 +325,7 @@ strndup_sans_ws(const char *buf, size_t bsz)
 static void
 hdr_ass_dt(mddl_ctxcb_t ctx, time_t dt)
 {
-	struct __e_hdr_s *hdr = ctx->object;
+	mddl_header_t hdr = ctx->object;
 	hdr->stamp = dt;
 	return;
 }
@@ -333,7 +333,7 @@ hdr_ass_dt(mddl_ctxcb_t ctx, time_t dt)
 static void
 issdate_ass_dt(mddl_ctxcb_t ctx, time_t dt)
 {
-	struct __p_issue_date_s *id = ctx->object;
+	mddl_issueDate_t id = ctx->object;
 	id->value = dt;
 	return;
 }
@@ -341,7 +341,7 @@ issdate_ass_dt(mddl_ctxcb_t ctx, time_t dt)
 static void
 src_ass_s(mddl_ctxcb_t ctx, const char *str, size_t len)
 {
-	struct __p_src_s *src = ctx->object;
+	mddl_source_t src = ctx->object;
 	src->value = strndup_sans_ws(str, len);
 	return;
 }
@@ -349,7 +349,7 @@ src_ass_s(mddl_ctxcb_t ctx, const char *str, size_t len)
 static void
 name_ass_s(mddl_ctxcb_t ctx, const char *str, size_t len)
 {
-	mddl_p_name_t n = ctx->object;
+	mddl_name_t n = ctx->object;
 	n->value = strndup_sans_ws(str, len);
 	return;
 }
@@ -357,7 +357,7 @@ name_ass_s(mddl_ctxcb_t ctx, const char *str, size_t len)
 static void
 code_ass_s(mddl_ctxcb_t ctx, const char *str, size_t len)
 {
-	mddl_p_code_t c = ctx->object;
+	mddl_code_t c = ctx->object;
 	c->value = strndup_sans_ws(str, len);
 	return;
 }
@@ -365,7 +365,7 @@ code_ass_s(mddl_ctxcb_t ctx, const char *str, size_t len)
 static void
 ccy_ass_s(mddl_ctxcb_t ctx, const char *str, size_t len)
 {
-	mddl_p_currency_t c = ctx->object;
+	mddl_currency_t c = ctx->object;
 	c->value = strndup_sans_ws(str, len);
 	return;
 }
@@ -373,7 +373,7 @@ ccy_ass_s(mddl_ctxcb_t ctx, const char *str, size_t len)
 static void
 obj_ass_s(mddl_ctxcb_t ctx, const char *str, size_t len)
 {
-	mddl_p_objective_t c = ctx->object;
+	mddl_objective_t c = ctx->object;
 	c->value = strndup_sans_ws(str, len);
 	return;
 }
@@ -381,7 +381,7 @@ obj_ass_s(mddl_ctxcb_t ctx, const char *str, size_t len)
 static void
 iamt_ass_pri(mddl_ctxcb_t ctx, double price)
 {
-	mddl_p_issue_amount_t amt = ctx->object;
+	mddl_issueAmount_t amt = ctx->object;
 	amt->value = price;
 	return;
 }
@@ -389,7 +389,7 @@ iamt_ass_pri(mddl_ctxcb_t ctx, double price)
 static void
 ifee_ass_pri(mddl_ctxcb_t ctx, double price)
 {
-	mddl_p_issue_fees_t amt = ctx->object;
+	mddl_issueFees_t amt = ctx->object;
 	amt->value = price;
 	return;
 }
@@ -475,18 +475,18 @@ sax_bo_elt(mddl_ctx_t ctx, const char *name, const char **attrs)
 	switch (tid) {
 	case MDDL_TAG_HEADER: {
 		/* check that we're inside an mddl context */
-		struct __e_mddl_s *m =
+		mddl_doc_t m =
 			get_state_object_if(ctx, MDDL_TAG_MDDL);
 		mddl_ctxcb_t cc;
 
-		if (m && (cc = push_state(ctx, MDDL_TAG_HEADER, m->hdr))) {
+		if (m && (cc = push_state(ctx, MDDL_TAG_HEADER, m->header))) {
 			cc->cb[0] = __hdr_cb;
 		}
 		break;
 	}
 	case MDDL_TAG_SOURCE: {
 		/* check that we're in a header context */
-		struct __e_hdr_s *hdr =
+		mddl_header_t hdr =
 			get_state_object_if(ctx, MDDL_TAG_HEADER);
 		mddl_ctxcb_t cc;
 
@@ -501,7 +501,7 @@ sax_bo_elt(mddl_ctx_t ctx, const char *name, const char **attrs)
 		mddl_doc_t m = get_state_object_if(ctx, MDDL_TAG_MDDL);
 		mddl_snap_t s;
 
-		if (m && (s = mddl_add_snap(m))) {
+		if (m && (s = mddl_mddl_add_snap(m))) {
 			push_state(ctx, MDDL_TAG_SNAP, s);
 		}
 		break;
@@ -509,44 +509,47 @@ sax_bo_elt(mddl_ctx_t ctx, const char *name, const char **attrs)
 	case MDDL_TAG_INSTRUMENT_DOMAIN: {
 		/* check that we're in a snap context */
 		mddl_snap_t m = get_state_object_if(ctx, MDDL_TAG_SNAP);
-		struct __dom_instr_s *insdom;
+		mddl_instrumentDomain_t insdom;
 
-		if (m && (insdom = mddl_snap_add_dom_instr(m))) {
+		if (m && (insdom = mddl_snap_add_instrumentDomain(m))) {
 			push_state(ctx, MDDL_TAG_INSTRUMENT_DOMAIN, insdom);
 		}
 		break;
 	}
 	case MDDL_TAG_INSTRUMENT_IDENTIFIER: {
 		/* check that we're in a insdom context */
-		mddl_dom_instr_t insdom =
+		mddl_instrumentDomain_t insdom =
 			get_state_object_if(ctx, MDDL_TAG_INSTRUMENT_DOMAIN);
-		mddl_p_instr_ident_t iid;
+		mddl_instrumentIdentifier_t iid;
 
-		if (insdom && (iid = mddl_dom_instr_add_instr_ident(insdom))) {
+		if (insdom &&
+		    (iid = mddl_instrumentDomain_add\
+_instrumentIdentifier(insdom))) {
 			push_state(ctx, MDDL_TAG_INSTRUMENT_IDENTIFIER, iid);
 		}
 		break;
 	}
 	case MDDL_TAG_ISSUE_DATA: {
 		/* check that we're in a insdom context */
-		mddl_dom_instr_t insdom =
+		mddl_instrumentDomain_t insdom =
 			get_state_object_if(ctx, MDDL_TAG_INSTRUMENT_DOMAIN);
-		mddl_p_issue_data_t id;
+		mddl_issueData_t id;
 
-		if (insdom && (id = mddl_dom_instr_add_issue_data(insdom))) {
+		if (insdom &&
+		    (id = mddl_instrumentDomain_add_issueData(insdom))) {
 			push_state(ctx, MDDL_TAG_ISSUE_DATA, id);
 		}
 		break;
 	}
 	case MDDL_TAG_OBJECTIVE: {
 		/* check that we're in an insdom context */
-		mddl_dom_instr_t insdom =
+		mddl_instrumentDomain_t insdom =
 			get_state_object_if(ctx, MDDL_TAG_INSTRUMENT_DOMAIN);
-		mddl_p_objective_t objctv;
+		mddl_objective_t objctv;
 		mddl_ctxcb_t cc;
 
 		if (insdom &&
-		    (objctv = mddl_dom_instr_add_objective(insdom)) &&
+		    (objctv = mddl_instrumentDomain_add_objective(insdom)) &&
 		    (cc = push_state(ctx, MDDL_TAG_OBJECTIVE, objctv))) {
 			cc->cb[0] = __obj_cb;
 		}
@@ -556,98 +559,100 @@ sax_bo_elt(mddl_ctx_t ctx, const char *name, const char **attrs)
 
 /* depth 4 */
 	case MDDL_TAG_INSTRUMENT_DATA: {
-		mddl_p_instr_ident_t iid =
+		mddl_instrumentIdentifier_t iid =
 			get_state_object_if(
 				ctx, MDDL_TAG_INSTRUMENT_IDENTIFIER);
-		mddl_p_instr_data_t id;
+		mddl_instrumentData_t id;
 
-		if (iid && (id = mddl_instr_ident_add_instr_data(iid))) {
+		if (iid &&
+		    (id = mddl_instrumentIdentifier_add_instrumentData(iid))) {
 			push_state(ctx, MDDL_TAG_INSTRUMENT_DATA, id);
 		}
 		break;
 	}
 	case MDDL_TAG_ISSUER_REF: {
-		mddl_p_issue_data_t id =
+		mddl_issueData_t id =
 			get_state_object_if(ctx, MDDL_TAG_ISSUE_DATA);
-		mddl_p_issuer_ref_t iref;
+		mddl_issuerRef_t iref;
 
-		if (id && (iref = mddl_issue_data_add_issuer_ref(id))) {
+		if (id && (iref = mddl_issueData_add_issuerRef(id))) {
 			push_state(ctx, MDDL_TAG_ISSUER_REF, iref);
 		}
 		break;
 	}
 	case MDDL_TAG_ISSUE_DATE: {
-		mddl_p_issue_data_t id =
+		mddl_issueData_t id =
 			get_state_object_if(ctx, MDDL_TAG_ISSUE_DATA);
-		mddl_p_issue_date_t issd;
+		mddl_issueDate_t issd;
 		mddl_ctxcb_t cc;
 
 		if (id &&
-		    (issd = mddl_issue_data_add_issue_date(id)) &&
+		    (issd = mddl_issueData_add_issueDate(id)) &&
 		    (cc = push_state(ctx, MDDL_TAG_ISSUE_DATE, issd))) {
 			cc->cb[0] = __issdate_cb;
 		}
 		break;
 	}
 	case MDDL_TAG_ISSUE_AMOUNT: {
-		mddl_p_issue_data_t id =
+		mddl_issueData_t id =
 			get_state_object_if(ctx, MDDL_TAG_ISSUE_DATA);
-		mddl_p_issue_amount_t iamt;
+		mddl_issueAmount_t iamt;
 		mddl_ctxcb_t cc;
 
 		if (id &&
-		    (iamt = mddl_issue_data_add_issue_amount(id)) &&
+		    (iamt = mddl_issueData_add_issueAmount(id)) &&
 		    (cc = push_state(ctx, MDDL_TAG_ISSUE_AMOUNT, iamt))) {
 			cc->cb[0] = __issamt_cb;
 		}
 		break;
 	}
 	case MDDL_TAG_ISSUE_FEES: {
-		mddl_p_issue_data_t id =
+		mddl_issueData_t id =
 			get_state_object_if(ctx, MDDL_TAG_ISSUE_DATA);
-		mddl_p_issue_fees_t ifee;
+		mddl_issueFees_t ifee;
 		mddl_ctxcb_t cc;
 
 		if (id &&
-		    (ifee = mddl_issue_data_add_issue_fees(id)) &&
+		    (ifee = mddl_issueData_add_issueFees(id)) &&
 		    (cc = push_state(ctx, MDDL_TAG_ISSUE_FEES, ifee))) {
 			cc->cb[0] = __issfee_cb;
 		}
 		break;
 	}
 	case MDDL_TAG_CLEARING_SETTLEMENT: {
-		mddl_p_issue_data_t id =
+		mddl_issueData_t id =
 			get_state_object_if(ctx, MDDL_TAG_ISSUE_DATA);
-		mddl_p_clearing_stlmnt_t cs;
+		mddl_clearingSettlement_t cs;
 
-		if (id && (cs = mddl_issue_data_add_clearing_stlmnt(id))) {
+		if (id && (cs = mddl_issueData_add_clearingSettlement(id))) {
 			push_state(ctx, MDDL_TAG_CLEARING_SETTLEMENT, cs);
 		}
 		break;
 	}
 	case MDDL_TAG_SETTLEMENT_TYPE: {
-		mddl_p_clearing_stlmnt_t cs =
+		mddl_clearingSettlement_t cs =
 			get_state_object_if(ctx, MDDL_TAG_CLEARING_SETTLEMENT);
 
-		cs->settlement_type = NULL;
+		/* todo */
+		cs->settlementType = NULL;
 		break;
 	}
 
 	case MDDL_TAG_NAME: {
 		/* allow names nearly everywhere */
-		mddl_p_name_t n = NULL;
+		mddl_name_t n = NULL;
 
 		switch (get_state_otype(ctx)) {
 		case MDDL_TAG_INSTRUMENT_IDENTIFIER: {
-			struct __p_instr_ident_s *iid = get_state_object(ctx);
+			mddl_instrumentIdentifier_t iid = get_state_object(ctx);
 
-			n = mddl_instr_ident_add_name(iid);
+			n = mddl_instrumentIdentifier_add_name(iid);
 			break;
 		}
 		case MDDL_TAG_ISSUER_REF: {
-			struct __p_issuer_ref_s *iref = get_state_object(ctx);
+			mddl_issuerRef_t iref = get_state_object(ctx);
 
-			n = mddl_issuer_ref_add_name(iref);
+			n = mddl_issuerRef_add_name(iref);
 			break;
 		}
 		default:
@@ -662,19 +667,19 @@ sax_bo_elt(mddl_ctx_t ctx, const char *name, const char **attrs)
 	}
 	case MDDL_TAG_CODE: {
 		/* allow codes nearly everywhere */
-		mddl_p_code_t c = NULL;
+		mddl_code_t c = NULL;
 
 		switch (get_state_otype(ctx)) {
 		case MDDL_TAG_INSTRUMENT_IDENTIFIER: {
-			struct __p_instr_ident_s *iid = get_state_object(ctx);
+			mddl_instrumentIdentifier_t iid = get_state_object(ctx);
 
-			c = mddl_instr_ident_add_code(iid);
+			c = mddl_instrumentIdentifier_add_code(iid);
 			break;
 		}
 		case MDDL_TAG_ISSUER_REF: {
-			struct __p_issuer_ref_s *iref = get_state_object(ctx);
+			mddl_issuerRef_t iref = get_state_object(ctx);
 
-			c = mddl_issuer_ref_add_code(iref);
+			c = mddl_issuerRef_add_code(iref);
 			break;
 		}
 		default:
@@ -688,7 +693,7 @@ sax_bo_elt(mddl_ctx_t ctx, const char *name, const char **attrs)
 			for (int i = 0; attrs[i] != NULL; i += 2) {
 				switch (sax_aid_from_attr(attrs[i])) {
 				case MDDL_ATTR_SCHEME:
-					mddl_code_add_scheme(c, attrs[i + 1]);
+					mddl_code_set_scheme(c, attrs[i + 1]);
 					break;
 				default:
 					break;
@@ -698,26 +703,26 @@ sax_bo_elt(mddl_ctx_t ctx, const char *name, const char **attrs)
 		break;
 	}
 	case MDDL_TAG_CURRENCY: {
-		mddl_p_currency_t ccy;
+		mddl_currency_t ccy;
 		mddl_ctxcb_t cc;
 
 		switch (get_state_otype(ctx)) {
 		case MDDL_TAG_INSTRUMENT_DATA: {
-			mddl_p_instr_data_t id = get_state_object(ctx);
+			mddl_instrumentData_t id = get_state_object(ctx);
 
-			ccy = mddl_instr_data_add_currency(id);
+			ccy = mddl_instrumentData_add_currency(id);
 			break;
 		}
 		case MDDL_TAG_ISSUE_AMOUNT: {
-			mddl_p_issue_amount_t iamt = get_state_object(ctx);
+			mddl_issueAmount_t iamt = get_state_object(ctx);
 
-			ccy = mddl_issue_amount_add_currency(iamt);
+			ccy = mddl_issueAmount_add_currency(iamt);
 			break;
 		}
 		case MDDL_TAG_ISSUE_FEES: {
-			mddl_p_issue_fees_t ifee = get_state_object(ctx);
+			mddl_issueFees_t ifee = get_state_object(ctx);
 
-			ccy = mddl_issue_fees_add_currency(ifee);
+			ccy = mddl_issueFees_add_currency(ifee);
 			break;
 		}
 		default:
@@ -810,7 +815,7 @@ sax_eo_elt(mddl_ctx_t ctx, const char *name)
 	case MDDL_TAG_ROLE: {
 		switch (get_state_otype(ctx)) {
 		case MDDL_TAG_NAME: {
-			mddl_p_name_t n = get_state_object(ctx);
+			mddl_name_t n = get_state_object(ctx);
 			mddl_name_add_role(n, ctx->sbuf);
 		}
 		default:
@@ -822,15 +827,17 @@ sax_eo_elt(mddl_ctx_t ctx, const char *name)
 	case MDDL_TAG_RANK: {
 		switch (get_state_otype(ctx)) {
 		case MDDL_TAG_NAME: {
-			mddl_p_name_t n = get_state_object(ctx);
-			long int rk = strtol(ctx->sbuf, NULL, 10);
-			mddl_name_add_rank(n, rk);
+			mddl_name_t n = get_state_object(ctx);
+			mddl_rank_t rk = mddl_name_add_rank(n);
+			long int v = strtol(ctx->sbuf, NULL, 10);
+			rk->Simple->value = (double)v;
 			break;
 		}
 		case MDDL_TAG_CODE: {
-			mddl_p_code_t c = get_state_object(ctx);
-			long int rk = strtol(ctx->sbuf, NULL, 10);
-			mddl_code_add_rank(c, rk);
+			mddl_code_t c = get_state_object(ctx);
+			mddl_rank_t rk = mddl_code_add_rank(c);
+			long int v = strtol(ctx->sbuf, NULL, 10);
+			rk->Simple->value = (double)v;
 			break;
 		}
 		default:
@@ -840,16 +847,16 @@ sax_eo_elt(mddl_ctx_t ctx, const char *name)
 		break;
 	}
 	case MDDL_TAG_INSTRUMENT_TYPE: {
-		mddl_p_instr_data_t id =
+		mddl_instrumentData_t id =
 			get_state_object_if(ctx, MDDL_TAG_INSTRUMENT_DATA);
 
 		if (LIKELY(id != NULL)) {
-			mddl_instr_data_add_instr_type(id, ctx->sbuf);
+			mddl_instrumentData_add_instrumentType(id, ctx->sbuf);
 		}
 		break;
 	}
 	case MDDL_TAG_CURRENCY: {
-		mddl_p_currency_t ccy =
+		mddl_currency_t ccy =
 			get_state_object_if(ctx, MDDL_TAG_CURRENCY);
 
 		if (LIKELY(ccy != NULL && ccy->value == NULL)) {
@@ -858,25 +865,27 @@ sax_eo_elt(mddl_ctx_t ctx, const char *name)
 		break;
 	}
 	case MDDL_TAG_FUND_STRATEGY_TYPE: {
-		mddl_dom_instr_t idom =
+		mddl_instrumentDomain_t idom =
 			get_state_object_if(ctx, MDDL_TAG_INSTRUMENT_DOMAIN);
 
 		if (LIKELY(idom != NULL)) {
-			mddl_dom_instr_add_fund_strat_type(idom, ctx->sbuf);
+			mddl_instrumentDomain_add_fundStrategyType(
+				idom, ctx->sbuf);
 		}
 		break;
 	}
 	case MDDL_TAG_DISTRIBUTION_TYPE: {
-		mddl_dom_instr_t idom =
+		mddl_instrumentDomain_t idom =
 			get_state_object_if(ctx, MDDL_TAG_INSTRUMENT_DOMAIN);
 
 		if (LIKELY(idom != NULL)) {
-			mddl_dom_instr_add_distri_type(idom, ctx->sbuf);
+			mddl_instrumentDomain_add_distributionType(
+				idom, ctx->sbuf);
 		}
 		break;
 	}
 	case MDDL_TAG_OBJECTIVE: {
-		mddl_p_objective_t obj =
+		mddl_objective_t obj =
 			get_state_object_if(ctx, MDDL_TAG_OBJECTIVE);
 
 		if (LIKELY(obj != NULL && obj->value == NULL)) {
@@ -885,16 +894,6 @@ sax_eo_elt(mddl_ctx_t ctx, const char *name)
 		break;
 	}
 	case MDDL_TAG_SNAP: {
-#if 0
-		struct __e_snap_s *snap = get_state_object(ctx);
-		fputs("snap popped\n", stderr);
-		fprintf(stderr, "%zu domains\n", snap->choice->nsnap_choi);
-		for (size_t i = 0; i < snap->choice->nsnap_choi; i++) {
-			struct __g_domains_s *dom = snap->choice->domains + i;
-			fprintf(stderr, "  type %u %zu %p\n",
-				dom->domains_gt, dom->ndomains, dom->ptr);
-		}
-#endif
 		break;
 	}
 	default:
