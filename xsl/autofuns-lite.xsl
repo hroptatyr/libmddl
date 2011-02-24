@@ -192,6 +192,48 @@
     </xsl:apply-templates>
   </xsl:template>
 
+  <xsl:template name="make_setter">
+    <xsl:param name="super"/>
+    <xsl:param name="stem"/>
+    <xsl:param name="type"/>
+
+    <xsl:choose>
+      <xsl:when test="$hdr">
+        <xsl:text>DECLF void </xsl:text>
+      </xsl:when>
+      <xsl:otherwise>
+        <xsl:text>DEFUN void&#0010;</xsl:text>
+      </xsl:otherwise>
+    </xsl:choose>
+    <xsl:text>mddl_</xsl:text>
+    <xsl:value-of select="$super"/>
+    <xsl:text>_set_</xsl:text>
+    <xsl:value-of select="$stem"/>
+
+    <xsl:text>(mddl_</xsl:text>
+    <xsl:value-of select="$super"/>
+    <xsl:text>_t to, </xsl:text>
+    <xsl:value-of select="$type"/>
+    <xsl:text> from)</xsl:text>
+
+    <xsl:choose>
+      <xsl:when test="$hdr">
+        <xsl:text>;</xsl:text>
+      </xsl:when>
+      <xsl:otherwise>
+        <xsl:text>&#0010;{&#0010;</xsl:text>
+        <xsl:text>&#0009;SET_</xsl:text>
+        <xsl:value-of select="$type"/>
+        <xsl:text>_F(</xsl:text>
+        <xsl:value-of select="$stem"/>
+        <xsl:text>);&#0010;</xsl:text>
+        <xsl:text>}&#0010;</xsl:text>
+      </xsl:otherwise>
+    </xsl:choose>
+
+    <xsl:text>&#0010;</xsl:text>
+  </xsl:template>
+
   <xsl:template match="xsd:attribute[@name]" mode="porn">
     <xsl:param name="super"/>
     <xsl:variable name="type">
@@ -214,39 +256,14 @@
       </xsl:call-template>
     </xsl:variable>
 
-    <xsl:choose>
-      <xsl:when test="$hdr">
-        <xsl:text>DECLF void </xsl:text>
-      </xsl:when>
-      <xsl:otherwise>
-        <xsl:text>DEFUN void&#0010;</xsl:text>
-      </xsl:otherwise>
-    </xsl:choose>
-    <xsl:text>mddl_</xsl:text>
-    <xsl:value-of select="$super"/>
-    <xsl:text>_set_</xsl:text>
-    <xsl:value-of select="$stem"/>
-
-    <xsl:text>(mddl_</xsl:text>
-    <xsl:value-of select="$super"/>
-    <xsl:text>_t to, </xsl:text>
-    <xsl:value-of select="$type"/>
-    <xsl:text> from)</xsl:text>
-
-    <xsl:choose>
-      <xsl:when test="$hdr">
-        <xsl:text>;</xsl:text>
-      </xsl:when>
-      <xsl:otherwise>
-        <xsl:text>&#0010;{&#0010;}&#0010;</xsl:text>
-      </xsl:otherwise>
-    </xsl:choose>
-
-    <xsl:text>&#0010;</xsl:text>
+    <xsl:call-template name="make_setter">
+      <xsl:with-param name="super" select="$super"/>
+      <xsl:with-param name="stem" select="$stem"/>
+      <xsl:with-param name="type" select="$type"/>
+    </xsl:call-template>
   </xsl:template>
 
   <xsl:template match="xsd:attribute[@ref]" mode="porn">
-    <xsl:param name="super"/>
     <xsl:param name="super"/>
     <xsl:variable name="type">
       <xsl:call-template name="make_type">
@@ -261,35 +278,11 @@
       </xsl:call-template>
     </xsl:variable>
 
-    <xsl:choose>
-      <xsl:when test="$hdr">
-        <xsl:text>DECLF void </xsl:text>
-      </xsl:when>
-      <xsl:otherwise>
-        <xsl:text>DEFUN void&#0010;</xsl:text>
-      </xsl:otherwise>
-    </xsl:choose>
-    <xsl:text>mddl_</xsl:text>
-    <xsl:value-of select="$super"/>
-    <xsl:text>_set_</xsl:text>
-    <xsl:value-of select="$stem"/>
-
-    <xsl:text>(mddl_</xsl:text>
-    <xsl:value-of select="$super"/>
-    <xsl:text>_t to, </xsl:text>
-    <xsl:value-of select="$type"/>
-    <xsl:text> from)</xsl:text>
-
-    <xsl:choose>
-      <xsl:when test="$hdr">
-        <xsl:text>;</xsl:text>
-      </xsl:when>
-      <xsl:otherwise>
-        <xsl:text>&#0010;{&#0010;}&#0010;</xsl:text>
-      </xsl:otherwise>
-    </xsl:choose>
-
-    <xsl:text>&#0010;</xsl:text>
+    <xsl:call-template name="make_setter">
+      <xsl:with-param name="super" select="$super"/>
+      <xsl:with-param name="stem" select="$stem"/>
+      <xsl:with-param name="type" select="$type"/>
+    </xsl:call-template>
   </xsl:template>
 
   <!-- catch all -->

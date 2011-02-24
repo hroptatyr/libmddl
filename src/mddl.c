@@ -7,10 +7,26 @@
 
 #if defined __INTEL_COMPILER
 # pragma warning (disable:177)
+# pragma warning (disable:869)
 #endif	/* __INTEL_COMPILER */
 #if !defined UNUSED
 # define UNUSED(_x)	__attribute__((unused)) _x
 #endif	/* !UNUSED */
+
+static bool
+__wsp(char c)
+{
+	return c == ' ' || c == '\t' || c == '\r' || c == '\n';
+}
+
+static char*
+strndup_sans_ws(const char *buf, size_t bsz)
+{
+/* like strndup() but skip leading whitespace */
+	while (__wsp(*buf++));
+	while (__wsp(buf[--bsz]));
+	return strndup(--buf, ++bsz);
+}
 
 #define ADDF(rt)				\
 	mddl_##rt##_t res;			\
@@ -24,6 +40,49 @@
 	/* initialise the result */		\
 	memset(res, 0, sizeof(*res));		\
 	return res
+
+/* for strings */
+#define SET_S_F(slot)				\
+	size_t len = strlen(from);		\
+						\
+	if (to->##slot) {			\
+		free(to->##slot);		\
+	}					\
+	to->##slot =				\
+		strndup_sans_ws(from, len);	\
+	return
+
+/* for integers */
+#define SET_I_F(slot)				\
+	to->##slot = from;			\
+	return
+
+/* for doubles */
+#define SET_D_F(slot)				\
+	to->##slot = from;			\
+	return
+
+/* for time_t's */
+#define SET_t_F(slot)				\
+	to->##slot = from;			\
+	return
+
+#define SET_mddl_mdString_t_F		SET_S_F
+#define SET_mddl_string_t_F		SET_S_F
+#define SET_mddl_ID_t_F			SET_S_F
+#define SET_mddl_mdUri_t_F		SET_S_F
+#define SET_mddl_anyURI_t_F		SET_S_F
+
+#define SET_mddl_QualityEnumeration_t_F	SET_I_F
+#define SET_mddl_mdInteger_t_F		SET_I_F
+#define SET_mddl_integer_t_F		SET_I_F
+#define SET_mddl_mdBoolean_t_F		SET_I_F
+
+#define SET_mddl_mdDateTime_t_F		SET_t_F
+#define SET_mddl_mdDuration_t_F		SET_t_F
+
+#define SET_mddl_mdDecimal_t_F		SET_D_F
+#define SET_mddl_mdNonNegativeDecimal_t_F	SET_D_F
 
 #include "mddl-3.0-beta-funs.c"
 
