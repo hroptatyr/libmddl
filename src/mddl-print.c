@@ -353,9 +353,9 @@ print_header(FILE *out, mddl_header_t hdr, size_t indent)
 	fputs("<header>\n", out);
 
 	print_indent(out, indent + 2);
-	fputs("<mdDateTime>", out);
+	fputs("<dateTime>", out);
 	print_zulu(out, hdr->dateTime->AnyDateTime);
-	fputs("</mdDateTime>\n", out);
+	fputs("</dateTime>\n", out);
 
 	print_indent(out, indent + 2);
 	fputs("<source>\n", out);
