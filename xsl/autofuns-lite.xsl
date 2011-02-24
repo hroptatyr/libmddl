@@ -238,7 +238,7 @@
         <xsl:text>;</xsl:text>
       </xsl:when>
       <xsl:otherwise>
-        <xsl:text>&#0010;{&#0010;}</xsl:text>
+        <xsl:text>&#0010;{&#0010;}&#0010;</xsl:text>
       </xsl:otherwise>
     </xsl:choose>
 
@@ -285,7 +285,7 @@
         <xsl:text>;</xsl:text>
       </xsl:when>
       <xsl:otherwise>
-        <xsl:text>&#0010;{&#0010;}</xsl:text>
+        <xsl:text>&#0010;{&#0010;}&#0010;</xsl:text>
       </xsl:otherwise>
     </xsl:choose>
 
