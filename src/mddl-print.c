@@ -350,6 +350,19 @@ print_objective(FILE *out, mddl_objective_t obj, size_t indent)
 }
 
 static void
+print_bnchm_strat(FILE *out, mddl_benchmarkStrategy_t bs, size_t indent)
+{
+	print_indent(out, indent);
+	fputs("<benchmarkStrategy>\n", out);
+	print_indent(out, indent + 2);
+	fputs_enc(bs->Simple, out);
+	fputc('\n', out);
+	print_indent(out, indent);
+	fputs("</benchmarkStrategy>\n", out);
+	return;
+}
+
+static void
 print_fund_strat_type(FILE *out, mddl_fundStrategyType_t fst, size_t indent)
 {
 	print_indent(out, indent);
@@ -393,6 +406,11 @@ print_insdom(FILE *out, mddl_instrumentDomain_t id, size_t indent)
 	for (size_t i = 0; i < id->nobjective; i++) {
 		mddl_objective_t o = id->objective + i;
 		print_objective(out, o, indent + 2);
+	}
+
+	for (size_t i = 0; i < id->nbenchmarkStrategy; i++) {
+		mddl_benchmarkStrategy_t bs = id->benchmarkStrategy + i;
+		print_bnchm_strat(out, bs, indent + 2);
 	}
 
 	for (size_t i = 0; i < id->nfundStrategyType; i++) {

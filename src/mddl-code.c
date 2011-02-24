@@ -369,6 +369,14 @@ obj_ass_s(mddl_ctxcb_t ctx, const char *str, size_t len)
 }
 
 static void
+bs_ass_s(mddl_ctxcb_t ctx, const char *str, size_t len)
+{
+	mddl_benchmarkStrategy_t bs = ctx->object;
+	mddl_benchmarkStrategy_set_Simple(bs, str);
+	return;
+}
+
+static void
 iamt_ass_pri(mddl_ctxcb_t ctx, double price)
 {
 	mddl_issueAmount_t amt = ctx->object;
@@ -407,6 +415,10 @@ static struct __ctxcb_s __ccy_cb = {
 
 static struct __ctxcb_s __obj_cb = {
 	.sf = obj_ass_s,
+};
+
+static struct __ctxcb_s __bs_cb = {
+	.sf = bs_ass_s,
 };
 
 static struct __ctxcb_s __issdate_cb = {
@@ -542,6 +554,21 @@ _instrumentIdentifier(insdom))) {
 		    (objctv = mddl_instrumentDomain_add_objective(insdom)) &&
 		    (cc = push_state(ctx, MDDL_TAG_OBJECTIVE, objctv))) {
 			cc->cb[0] = __obj_cb;
+		}
+		stuff_buf_reset(ctx);
+		break;
+	}
+	case MDDL_TAG_BENCHMARK_STRATEGY: {
+		/* check that we're in an insdom context */
+		mddl_instrumentDomain_t id =
+			get_state_object_if(ctx, MDDL_TAG_INSTRUMENT_DOMAIN);
+		mddl_benchmarkStrategy_t bs;
+		mddl_ctxcb_t cc;
+
+		if (id &&
+		    (bs = mddl_instrumentDomain_add_benchmarkStrategy(id)) &&
+		    (cc = push_state(ctx, MDDL_TAG_BENCHMARK_STRATEGY, bs))) {
+			cc->cb[0] = __bs_cb;
 		}
 		stuff_buf_reset(ctx);
 		break;
@@ -885,6 +912,15 @@ sax_eo_elt(mddl_ctx_t ctx, const char *name)
 
 		if (LIKELY(obj != NULL && obj->Simple == NULL)) {
 			obj_ass_s(ctx->state, ctx->sbuf, ctx->sbsz);
+		}
+		break;
+	}
+	case MDDL_TAG_BENCHMARK_STRATEGY: {
+		mddl_benchmarkStrategy_t bs =
+			get_state_object_if(ctx, MDDL_TAG_BENCHMARK_STRATEGY);
+
+		if (LIKELY(bs != NULL && bs->Simple == NULL)) {
+			bs_ass_s(ctx->state, ctx->sbuf, ctx->sbsz);
 		}
 		break;
 	}
