@@ -134,6 +134,7 @@
         </xsl:otherwise>
       </xsl:choose>
 
+      <xsl:text>mddl_</xsl:text>
       <xsl:value-of select="$super"/>
       <xsl:text>_add_</xsl:text>
       <xsl:value-of select="$stem"/>
