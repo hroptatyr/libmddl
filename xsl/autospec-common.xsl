@@ -55,6 +55,9 @@
       <xsl:when test="$stem = 'mdDateTime'">
         <xsl:text>mddl_mdDateTime_t</xsl:text>
       </xsl:when>
+      <xsl:when test="$stem = 'AnyDateTime'">
+        <xsl:text>mddl_AnyDateTime_t</xsl:text>
+      </xsl:when>
       <xsl:when test="$stem = 'mdDuration'">
         <xsl:text>mddl_mdDuration_t</xsl:text>
       </xsl:when>

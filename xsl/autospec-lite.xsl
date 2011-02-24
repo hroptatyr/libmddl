@@ -224,6 +224,42 @@
     </xsl:apply-templates>
   </xsl:template>
 
+  <xsl:template match="xsd:simpleContent" mode="porn">
+    <xsl:param name="indent"/>
+
+    <xsl:apply-templates mode="porn">
+      <xsl:with-param name="indent" select="$indent"/>
+    </xsl:apply-templates>
+  </xsl:template>
+
+  <xsl:template match="xsd:extension" mode="porn">
+    <xsl:param name="indent"/>
+
+    <xsl:variable name="stem">
+      <xsl:call-template name="make_stem">
+        <xsl:with-param name="type" select="@base"/>
+      </xsl:call-template>
+    </xsl:variable>
+
+    <xsl:value-of select="$indent"/>
+    <xsl:text>/* EXT </xsl:text>
+    <xsl:value-of select="@base"/>
+    <xsl:text> */&#0010;</xsl:text>
+
+    <xsl:value-of select="$indent"/>
+    <xsl:call-template name="make_type">
+      <xsl:with-param name="type" select="@base"/>
+    </xsl:call-template>
+    <xsl:text> </xsl:text>
+    <xsl:value-of select="$stem"/>
+    <xsl:text>;&#0010;</xsl:text>
+
+    <!-- more to come -->
+    <xsl:apply-templates mode="porn">
+      <xsl:with-param name="indent" select="$indent"/>
+    </xsl:apply-templates>
+  </xsl:template>
+
   <xsl:template match="xsd:choice[count(*) = 1]" mode="porn">
     <xsl:param name="indent"/>
     <xsl:param name="maxocc" select="@maxOccurs"/>
