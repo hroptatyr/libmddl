@@ -55,6 +55,68 @@ print_date(FILE *out, mddl_mdDateTime_t stamp)
 }
 
 static void
+fputs_enc(const char *s, FILE *out)
+{
+/* like fputs() but encode special chars */
+	static const char stpset[] = "<>&";
+
+	for (size_t idx; idx = strcspn(s, stpset); s += idx + sizeof(*s)) {
+		/* write what we've got */
+		fwrite(s, sizeof(*s), idx, out);
+		/* inspect the character */
+		switch (s[idx]) {
+		default:
+		case '\0':
+			return;
+		case '<':
+			fputs("&lt;", out);
+			break;
+		case '>':
+			fputs("&gt;", out);
+			break;
+		case '&':
+			fputs("&amp;", out);
+			break;
+		}
+	}
+	return;
+}
+
+static void
+fputs_encq(const char *s, FILE *out)
+{
+/* like fputs() but encode special chars */
+	static const char stpset[] = "<>&'\"";
+
+	for (size_t idx; idx = strcspn(s, stpset); s += idx + sizeof(*s)) {
+		/* write what we've got */
+		fwrite(s, sizeof(*s), idx, out);
+		/* inspect the character */
+		switch (s[idx]) {
+		default:
+		case '\0':
+			return;
+		case '<':
+			fputs("&lt;", out);
+			break;
+		case '>':
+			fputs("&gt;", out);
+			break;
+		case '&':
+			fputs("&amp;", out);
+			break;
+		case '\'':
+			fputs("&apos;", out);
+			break;
+		case '"':
+			fputs("&quot;", out);
+			break;
+		}
+	}
+	return;
+}
+
+static void
 print_name(FILE *out, mddl_name_t name, size_t indent)
 {
 	print_indent(out, indent);
@@ -62,13 +124,13 @@ print_name(FILE *out, mddl_name_t name, size_t indent)
 
 	print_indent(out, indent + 2);
 	fputs("<mdString>", out);
-	fputs(name->Simple, out);
+	fputs_enc(name->Simple, out);
 	fputs("</mdString>\n", out);
 
 	for (size_t i = 0; i < name->nrole; i++) {
 		print_indent(out, indent + 2);
 		fputs("<role>", out);
-		fputs(name->role[i].Enumeration, out);
+		fputs_enc(name->role[i].Enumeration, out);
 		fputs("</role>\n", out);
 	}
 	for (size_t i = 0; i < name->nrank; i++) {
@@ -85,11 +147,13 @@ static void
 print_code(FILE *out, mddl_code_t code, size_t indent)
 {
 	print_indent(out, indent);
-	fprintf(out, "<code scheme=\"%s\">\n", code->scheme);
+	fputs("<code scheme=\"", out);
+	fputs_encq(code->scheme, out);
+	fputs("\">\n", out);
 
 	print_indent(out, indent + 2);
 	fputs("<mdString>", out);
-	fputs(code->Enumeration, out);
+	fputs_enc(code->Enumeration, out);
 	fputs("</mdString>\n", out);
 	for (size_t i = 0; i < code->nrank; i++) {
 		print_indent(out, indent + 2);
@@ -106,7 +170,7 @@ print_currency(FILE *out, mddl_currency_t ccy, size_t indent)
 {
 	print_indent(out, indent);
 	fputs("<currency>", out);
-	fputs(ccy->Enumeration, out);
+	fputs_enc(ccy->Enumeration, out);
 	fputs("</currency>\n", out);
 	return;
 }
@@ -116,7 +180,7 @@ print_instr_type(FILE *out, mddl_instrumentType_t type, size_t indent)
 {
 	print_indent(out, indent);
 	fputs("<instrumentType>", out);
-	fputs(type->Enumeration, out);
+	fputs_enc(type->Enumeration, out);
 	fputs("</instrumentType>\n", out);
 	return;
 }
@@ -278,7 +342,7 @@ print_objective(FILE *out, mddl_objective_t obj, size_t indent)
 	print_indent(out, indent);
 	fputs("<objective>\n", out);
 	print_indent(out, indent + 2);
-	fputs(obj->Simple, out);
+	fputs_enc(obj->Simple, out);
 	fputc('\n', out);
 	print_indent(out, indent);
 	fputs("</objective>\n", out);
@@ -290,7 +354,7 @@ print_fund_strat_type(FILE *out, mddl_fundStrategyType_t fst, size_t indent)
 {
 	print_indent(out, indent);
 	fputs("<fundStrategyType>", out);
-	fputs(fst->Enumeration, out);
+	fputs_enc(fst->Enumeration, out);
 	fputs("</fundStrategyType>\n", out);
 	return;
 }
@@ -300,7 +364,7 @@ print_distri_type(FILE *out, mddl_distributionType_t dt, size_t indent)
 {
 	print_indent(out, indent);
 	fputs("<distributionType>", out);
-	fputs(dt->Enumeration, out);
+	fputs_enc(dt->Enumeration, out);
 	fputs("</distributionType>\n", out);
 	return;
 }
@@ -361,7 +425,7 @@ print_header(FILE *out, mddl_header_t hdr, size_t indent)
 	fputs("<source>\n", out);
 	print_indent(out, indent + 4);
 	fputs("<mdString>", out);
-	fputs(hdr->source->Simple, out);
+	fputs_enc(hdr->source->Simple, out);
 	fputs("</mdString>\n", out);
 	print_indent(out, indent + 2);
 	fputs("</source>\n", out);
