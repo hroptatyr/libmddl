@@ -164,15 +164,16 @@
 
   <xsl:template match="xsd:group[@name]" mode="porn">
     <xsl:param name="super"/>
+    <xsl:param name="maxocc"/>
 
     <xsl:apply-templates mode="porn">
       <xsl:with-param name="super" select="$super"/>
+      <xsl:with-param name="maxocc" select="$maxocc"/>
     </xsl:apply-templates>
   </xsl:template>
 
   <xsl:template match="xsd:group[@ref]" mode="porn">
     <xsl:param name="super"/>
-    <xsl:param name="maxocc"/>
 
     <xsl:variable name="ref" select="@ref"/>
     <xsl:variable name="ref_nons">
@@ -184,7 +185,7 @@
     <xsl:apply-templates
       select="/xsd:schema/xsd:group[@name=$ref_nons]" mode="porn">
       <xsl:with-param name="super" select="$super"/>
-      <xsl:with-param name="maxocc" select="$maxocc"/>
+      <xsl:with-param name="maxocc" select="@maxOccurs"/>
     </xsl:apply-templates>
   </xsl:template>
 
