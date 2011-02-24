@@ -57,6 +57,8 @@
     <xsl:text>&#0010;&#0010;</xsl:text>
   </xsl:template>
 
+  <xsl:template match="xsd:element[contains(@name, 'Group')]"/>
+
   <!-- do not process these -->
   <xsl:template match="xsd:simpleType"/>
   <xsl:template match="xsd:element[@name = 'mdMath']"/>
