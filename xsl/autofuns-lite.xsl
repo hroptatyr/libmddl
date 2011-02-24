@@ -79,6 +79,11 @@
         </xsl:otherwise>
       </xsl:choose>
     </xsl:variable>
+    <xsl:variable name="__type">
+      <xsl:call-template name="make_type">
+        <xsl:with-param name="type" select="@ref"/>
+      </xsl:call-template>
+    </xsl:variable>
     <xsl:variable name="super_type">
       <xsl:text>mddl_</xsl:text>
       <xsl:value-of select="$super"/>
@@ -90,52 +95,81 @@
       <xsl:text>_t</xsl:text>
     </xsl:variable>
 
-    <xsl:if test="$maxocc = 'unbounded'">
-      <xsl:choose>
-        <xsl:when test="$hdr">
-          <xsl:text>DECLF </xsl:text>
-        </xsl:when>
-        <xsl:otherwise>
-          <xsl:text>DEFUN </xsl:text>
-        </xsl:otherwise>
-      </xsl:choose>
-      <xsl:value-of select="$return_type"/>
-      <xsl:choose>
-        <xsl:when test="$hdr">
-          <xsl:text> </xsl:text>
-        </xsl:when>
-        <xsl:otherwise>
-          <xsl:text>&#0010;</xsl:text>
-        </xsl:otherwise>
-      </xsl:choose>
+    <xsl:choose>
+      <xsl:when test="$maxocc = 'unbounded'">
+        <xsl:choose>
+          <xsl:when test="$hdr">
+            <xsl:text>DECLF </xsl:text>
+          </xsl:when>
+          <xsl:otherwise>
+            <xsl:text>DEFUN </xsl:text>
+          </xsl:otherwise>
+        </xsl:choose>
+        <xsl:value-of select="$return_type"/>
+        <xsl:choose>
+          <xsl:when test="$hdr">
+            <xsl:text> </xsl:text>
+          </xsl:when>
+          <xsl:otherwise>
+            <xsl:text>&#0010;</xsl:text>
+          </xsl:otherwise>
+        </xsl:choose>
 
-      <xsl:text>mddl_</xsl:text>
-      <xsl:value-of select="$super"/>
-      <xsl:text>_add_</xsl:text>
-      <xsl:value-of select="$stem"/>
+        <xsl:text>mddl_</xsl:text>
+        <xsl:value-of select="$super"/>
+        <xsl:text>_add_</xsl:text>
+        <xsl:value-of select="$stem"/>
 
-      <xsl:text>(</xsl:text>
-      <xsl:value-of select="$super_type"/>
-      <xsl:text> to</xsl:text>
-      <xsl:text>)</xsl:text>
+        <xsl:text>(</xsl:text>
+        <xsl:value-of select="$super_type"/>
+        <xsl:text> to</xsl:text>
+        <xsl:text>)</xsl:text>
 
-      <xsl:choose>
-        <xsl:when test="$hdr">
-          <xsl:text>;&#0010;</xsl:text>
-        </xsl:when>
-        <xsl:otherwise>
-          <xsl:text>&#0010;{&#0010;</xsl:text>
-          <xsl:text>&#0009;ADDF(</xsl:text>	
-          <xsl:value-of select="$stem"/>
-          <xsl:text>);&#0010;</xsl:text>
-          <xsl:text>}&#0010;&#0010;</xsl:text>
-        </xsl:otherwise>
-      </xsl:choose>
-    </xsl:if>
+        <xsl:choose>
+          <xsl:when test="$hdr">
+            <xsl:text>;&#0010;</xsl:text>
+          </xsl:when>
+          <xsl:otherwise>
+            <xsl:text>&#0010;{&#0010;</xsl:text>
+            <xsl:text>&#0009;ADDF(</xsl:text>	
+            <xsl:value-of select="$stem"/>
+            <xsl:text>);&#0010;</xsl:text>
+            <xsl:text>}&#0010;&#0010;</xsl:text>
+          </xsl:otherwise>
+        </xsl:choose>
+      </xsl:when>
+
+      <xsl:otherwise>
+        <xsl:call-template name="make_setter">
+          <xsl:with-param name="super" select="$super"/>
+          <xsl:with-param name="stem" select="$stem"/>
+          <xsl:with-param name="type" select="$__type"/>
+          <xsl:with-param name="cnt">
+            <xsl:choose>
+              <xsl:when test="@maxOccurs">
+                <xsl:value-of select="@maxOccurs"/>
+              </xsl:when>
+              <xsl:otherwise>
+                <xsl:value-of select="$maxocc"/>
+              </xsl:otherwise>
+            </xsl:choose>
+          </xsl:with-param>
+        </xsl:call-template>
+      </xsl:otherwise>
+    </xsl:choose>
   </xsl:template>
   <!-- catchalls for when's and other's -->
   <xsl:template match="xsd:element[@ref = 'mddl:when']" mode="porn"/>
   <xsl:template match="xsd:element[@ref = 'mddl:other']" mode="porn"/>
+
+  <!-- no setters for the seq/src slots in seq or src -->
+  <xsl:template match="xsd:element[@ref = 'mddl:sequence' and
+                       (../../../@name='Sequence' or
+                       ../../../@name='Source')]" mode="porn"/>
+  <xsl:template match="xsd:element[@ref = 'mddl:source' and
+                       (../../../@name='Sequence' or
+                       ../../../@name='Source')]" mode="porn"/>
+
 
   <xsl:template match="xsd:group[@name]" mode="porn">
     <xsl:param name="super"/>
@@ -233,6 +267,7 @@
     <xsl:param name="super"/>
     <xsl:param name="stem"/>
     <xsl:param name="type"/>
+    <xsl:param name="cnt"/>
 
     <xsl:choose>
       <xsl:when test="$hdr">
@@ -251,7 +286,13 @@
     <xsl:value-of select="$super"/>
     <xsl:text>_t to, </xsl:text>
     <xsl:value-of select="$type"/>
-    <xsl:text> from)</xsl:text>
+    <xsl:text> from</xsl:text>
+    <xsl:if test="$cnt > 0 and not(starts-with($type, 'mddl'))">
+      <xsl:text>[</xsl:text>
+      <xsl:value-of select="$cnt"/>
+      <xsl:text>]</xsl:text>
+    </xsl:if>
+    <xsl:text>)</xsl:text>
 
     <xsl:choose>
       <xsl:when test="$hdr">
@@ -260,7 +301,14 @@
       <xsl:otherwise>
         <xsl:text>&#0010;{&#0010;</xsl:text>
         <xsl:text>&#0009;SET_</xsl:text>
-        <xsl:value-of select="$type"/>
+        <xsl:choose>
+          <xsl:when test="starts-with($type, 'struct ')">
+            <xsl:text>struct</xsl:text>
+          </xsl:when>
+          <xsl:otherwise>
+            <xsl:value-of select="$type"/>
+          </xsl:otherwise>
+        </xsl:choose>
         <xsl:text>_F(</xsl:text>
         <xsl:value-of select="$stem"/>
         <xsl:text>);&#0010;</xsl:text>

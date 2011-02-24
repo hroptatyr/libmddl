@@ -67,6 +67,11 @@ strndup_sans_ws(const char *buf, size_t bsz)
 	to->##slot = from;			\
 	return
 
+/* for structs */
+#define SET_struct_F(slot)			\
+	*to->##slot = *from;			\
+	return
+
 #define SET_mddl_mdString_t_F		SET_S_F
 #define SET_mddl_string_t_F		SET_S_F
 #define SET_mddl_ID_t_F			SET_S_F
