@@ -79,6 +79,7 @@ strndup_sans_ws(const char *buf, size_t bsz)
 #define SET_mddl_mdBoolean_t_F		SET_I_F
 
 #define SET_mddl_mdDateTime_t_F		SET_t_F
+#define SET_mddl_AnyDateTime_t_F	SET_t_F
 #define SET_mddl_mdDuration_t_F		SET_t_F
 
 #define SET_mddl_mdDecimal_t_F		SET_D_F

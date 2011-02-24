@@ -182,6 +182,43 @@
     </xsl:apply-templates>
   </xsl:template>
 
+  <xsl:template match="xsd:simpleContent" mode="porn">
+    <xsl:param name="super"/>
+
+    <xsl:apply-templates mode="porn">
+      <xsl:with-param name="super" select="$super"/>
+    </xsl:apply-templates>
+  </xsl:template>
+
+  <xsl:template match="xsd:extension" mode="porn">
+    <xsl:param name="super"/>
+    <xsl:variable name="type">
+      <xsl:call-template name="make_type">
+        <xsl:with-param name="type" select="@base"/>
+      </xsl:call-template>
+    </xsl:variable>
+    <xsl:variable name="stem">
+      <xsl:call-template name="make_stem">
+        <xsl:with-param name="type" select="@base"/>
+      </xsl:call-template>
+    </xsl:variable>
+
+    <xsl:text>/* EXT </xsl:text>
+    <xsl:value-of select="@base"/>
+    <xsl:text> */&#0010;</xsl:text>
+
+    <xsl:call-template name="make_setter">
+      <xsl:with-param name="super" select="$super"/>
+      <xsl:with-param name="stem" select="$stem"/>
+      <xsl:with-param name="type" select="$type"/>
+    </xsl:call-template>
+
+    <!-- more to come -->
+    <xsl:apply-templates mode="porn">
+      <xsl:with-param name="super" select="$super"/>
+    </xsl:apply-templates>
+  </xsl:template>
+
   <xsl:template match="xsd:choice" mode="porn">
     <xsl:param name="super"/>
     <xsl:param name="maxocc" select="@maxOccurs"/>

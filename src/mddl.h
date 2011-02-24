@@ -28,6 +28,7 @@ typedef int mddl_mdBoolean_t;
 typedef long int mddl_mdInteger_t;
 typedef long int mddl_integer_t;
 
+typedef time_t mddl_AnyDateTime_t;
 typedef time_t mddl_mdDateTime_t;
 typedef time_t mddl_mdDuration_t;
 
