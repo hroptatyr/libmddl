@@ -17,6 +17,7 @@
 #if defined __INTEL_COMPILER
 # pragma warning (disable:181)
 # pragma warning (disable:593)
+# pragma warning (disable:869)
 #endif	/* __INTEL_COMPILER */
 #include "mddl-code-opt.h"
 #include "mddl-code-opt.c"
@@ -307,26 +308,14 @@ stuff_buf_reset(mddl_ctx_t ctx)
 	return;
 }
 
-static bool
-__wsp(char c)
-{
-	return c == ' ' || c == '\t' || c == '\r' || c == '\n';
-}
-
-static char*
-strndup_sans_ws(const char *buf, size_t bsz)
-{
-/* like strndup() but skip leading whitespace */
-	while (__wsp(*buf++));
-	while (__wsp(buf[--bsz]));
-	return strndup(--buf, ++bsz);
-}
-
 static void
 hdr_ass_dt(mddl_ctxcb_t ctx, time_t dt)
 {
 	mddl_header_t hdr = ctx->object;
-	hdr->stamp = dt;
+	struct __dateTime_s tmp[1] = {{0}};
+
+	mddl_dateTime_set_AnyDateTime(tmp, dt);
+	mddl_header_set_dateTime(hdr, tmp);
 	return;
 }
 
@@ -334,7 +323,8 @@ static void
 issdate_ass_dt(mddl_ctxcb_t ctx, time_t dt)
 {
 	mddl_issueDate_t id = ctx->object;
-	id->value = dt;
+
+	mddl_issueDate_set_DateTime(id, dt);
 	return;
 }
 
@@ -342,7 +332,7 @@ static void
 src_ass_s(mddl_ctxcb_t ctx, const char *str, size_t len)
 {
 	mddl_source_t src = ctx->object;
-	src->value = strndup_sans_ws(str, len);
+	mddl_source_set_Simple(src, str);
 	return;
 }
 
@@ -350,7 +340,7 @@ static void
 name_ass_s(mddl_ctxcb_t ctx, const char *str, size_t len)
 {
 	mddl_name_t n = ctx->object;
-	n->value = strndup_sans_ws(str, len);
+	mddl_name_set_Simple(n, str);
 	return;
 }
 
@@ -358,7 +348,7 @@ static void
 code_ass_s(mddl_ctxcb_t ctx, const char *str, size_t len)
 {
 	mddl_code_t c = ctx->object;
-	c->value = strndup_sans_ws(str, len);
+	mddl_code_set_Enumeration(c, str);
 	return;
 }
 
@@ -366,15 +356,15 @@ static void
 ccy_ass_s(mddl_ctxcb_t ctx, const char *str, size_t len)
 {
 	mddl_currency_t c = ctx->object;
-	c->value = strndup_sans_ws(str, len);
+	mddl_currency_set_Enumeration(c, str);
 	return;
 }
 
 static void
 obj_ass_s(mddl_ctxcb_t ctx, const char *str, size_t len)
 {
-	mddl_objective_t c = ctx->object;
-	c->value = strndup_sans_ws(str, len);
+	mddl_objective_t o = ctx->object;
+	mddl_objective_set_Simple(o, str);
 	return;
 }
 
@@ -382,15 +372,15 @@ static void
 iamt_ass_pri(mddl_ctxcb_t ctx, double price)
 {
 	mddl_issueAmount_t amt = ctx->object;
-	amt->value = price;
+	mddl_issueAmount_set_Price(amt, price);
 	return;
 }
 
 static void
 ifee_ass_pri(mddl_ctxcb_t ctx, double price)
 {
-	mddl_issueFees_t amt = ctx->object;
-	amt->value = price;
+	mddl_issueFees_t fee = ctx->object;
+	mddl_issueFees_set_Price(fee, price);
 	return;
 }
 
@@ -816,7 +806,8 @@ sax_eo_elt(mddl_ctx_t ctx, const char *name)
 		switch (get_state_otype(ctx)) {
 		case MDDL_TAG_NAME: {
 			mddl_name_t n = get_state_object(ctx);
-			mddl_name_add_role(n, ctx->sbuf);
+			mddl_role_t r = mddl_name_add_role(n);
+			mddl_role_set_Enumeration(r, ctx->sbuf);
 		}
 		default:
 			break;
@@ -830,14 +821,14 @@ sax_eo_elt(mddl_ctx_t ctx, const char *name)
 			mddl_name_t n = get_state_object(ctx);
 			mddl_rank_t rk = mddl_name_add_rank(n);
 			long int v = strtol(ctx->sbuf, NULL, 10);
-			rk->Simple->value = (double)v;
+			mddl_rank_set_Simple(rk, (mddl_mdDecimal_t)v);
 			break;
 		}
 		case MDDL_TAG_CODE: {
 			mddl_code_t c = get_state_object(ctx);
 			mddl_rank_t rk = mddl_code_add_rank(c);
 			long int v = strtol(ctx->sbuf, NULL, 10);
-			rk->Simple->value = (double)v;
+			mddl_rank_set_Simple(rk, (mddl_mdDecimal_t)v);
 			break;
 		}
 		default:
@@ -851,7 +842,9 @@ sax_eo_elt(mddl_ctx_t ctx, const char *name)
 			get_state_object_if(ctx, MDDL_TAG_INSTRUMENT_DATA);
 
 		if (LIKELY(id != NULL)) {
-			mddl_instrumentData_add_instrumentType(id, ctx->sbuf);
+			mddl_instrumentType_t it =
+				mddl_instrumentData_add_instrumentType(id);
+			mddl_instrumentType_set_Enumeration(it, ctx->sbuf);
 		}
 		break;
 	}
@@ -859,28 +852,30 @@ sax_eo_elt(mddl_ctx_t ctx, const char *name)
 		mddl_currency_t ccy =
 			get_state_object_if(ctx, MDDL_TAG_CURRENCY);
 
-		if (LIKELY(ccy != NULL && ccy->value == NULL)) {
+		if (LIKELY(ccy != NULL && ccy->Enumeration == NULL)) {
 			ccy_ass_s(ctx->state, ctx->sbuf, ctx->sbsz);
 		}
 		break;
 	}
 	case MDDL_TAG_FUND_STRATEGY_TYPE: {
-		mddl_instrumentDomain_t idom =
+		mddl_instrumentDomain_t id =
 			get_state_object_if(ctx, MDDL_TAG_INSTRUMENT_DOMAIN);
 
-		if (LIKELY(idom != NULL)) {
-			mddl_instrumentDomain_add_fundStrategyType(
-				idom, ctx->sbuf);
+		if (LIKELY(id != NULL)) {
+			mddl_fundStrategyType_t fst =
+				mddl_instrumentDomain_add_fundStrategyType(id);
+			mddl_fundStrategyType_set_Enumeration(fst, ctx->sbuf);
 		}
 		break;
 	}
 	case MDDL_TAG_DISTRIBUTION_TYPE: {
-		mddl_instrumentDomain_t idom =
+		mddl_instrumentDomain_t id =
 			get_state_object_if(ctx, MDDL_TAG_INSTRUMENT_DOMAIN);
 
-		if (LIKELY(idom != NULL)) {
-			mddl_instrumentDomain_add_distributionType(
-				idom, ctx->sbuf);
+		if (LIKELY(id != NULL)) {
+			mddl_distributionType_t dt =
+				mddl_instrumentDomain_add_distributionType(id);
+			mddl_distributionType_set_Enumeration(dt, ctx->sbuf);
 		}
 		break;
 	}
@@ -888,7 +883,7 @@ sax_eo_elt(mddl_ctx_t ctx, const char *name)
 		mddl_objective_t obj =
 			get_state_object_if(ctx, MDDL_TAG_OBJECTIVE);
 
-		if (LIKELY(obj != NULL && obj->value == NULL)) {
+		if (LIKELY(obj != NULL && obj->Simple == NULL)) {
 			obj_ass_s(ctx->state, ctx->sbuf, ctx->sbsz);
 		}
 		break;
