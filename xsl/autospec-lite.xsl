@@ -285,6 +285,16 @@
     <xsl:text>&#0010;</xsl:text>
   </xsl:template>
 
+  <!-- and now even more special treatment due to recurcurcurcursion -->
+  <xsl:template match="xsd:choice[
+                       xsd:element/@ref='mddl:sequence' and
+                       xsd:element/@ref='mddl:source' and
+                       count(xsd:element) = 2 and
+                       (../../@name='Source' or ../../@name='Sequence')]"
+    mode="porn">
+    <xsl:text>&#0010;</xsl:text>
+  </xsl:template>
+
   <xsl:template match="xsd:attribute[@type]" mode="porn">
     <xsl:param name="indent"/>
 
