@@ -9,38 +9,11 @@
   <xsl:output method="text"/>
   <xsl:param name="hdr"/>
 
+  <xsl:include href="autospec-common.xsl"/>
+
   <xsl:template match="/xsd:schema">
     <xsl:text>/* AUTO-GENERATED, DO NOT MODIFY */&#0010;&#0010;</xsl:text>
     <xsl:apply-templates select="xsd:element"/>
-  </xsl:template>
-
-  <xsl:template name="make_stem">
-    <xsl:param name="type"/>
-
-    <xsl:choose>
-      <xsl:when test="starts-with($type, 'mddl:')">
-        <xsl:value-of select="substring($type, 6)"/>
-      </xsl:when>
-      <xsl:when test="starts-with($type, 'xsd:')">
-        <xsl:value-of select="substring($type, 5)"/>
-      </xsl:when>
-      <xsl:when test="starts-with($type, 'xml:')">
-        <xsl:value-of select="substring($type, 5)"/>
-      </xsl:when>
-      <xsl:otherwise>
-        <xsl:value-of select="$type"/>
-      </xsl:otherwise>
-    </xsl:choose>
-  </xsl:template>
-
-  <xsl:template name="make_type">
-    <xsl:param name="type"/>
-
-    <xsl:text>struct __</xsl:text>
-    <xsl:call-template name="make_stem">
-      <xsl:with-param name="type" select="$type"/>
-    </xsl:call-template>
-    <xsl:text>_s</xsl:text>
   </xsl:template>
 
   <xsl:template match="xsd:element[@type and @name]">

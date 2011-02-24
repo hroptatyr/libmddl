@@ -8,6 +8,8 @@
 
   <xsl:output method="text"/>
 
+  <xsl:include href="autospec-common.xsl"/>
+
   <xsl:template match="/xsd:schema">
     <xsl:text>/* AUTO-GENERATED, DO NOT MODIFY */&#0010;&#0010;</xsl:text>
     <xsl:text>#if !defined mddl_lite_h_&#0010;</xsl:text>
@@ -39,35 +41,6 @@
               @name='query')]"/>
 
     <xsl:text>#endif  /* !mddl_lite_h_*/&#0010;</xsl:text>
-  </xsl:template>
-
-  <xsl:template name="make_stem">
-    <xsl:param name="type"/>
-
-    <xsl:choose>
-      <xsl:when test="starts-with($type, 'mddl:')">
-        <xsl:value-of select="substring($type, 6)"/>
-      </xsl:when>
-      <xsl:when test="starts-with($type, 'xsd:')">
-        <xsl:value-of select="substring($type, 5)"/>
-      </xsl:when>
-      <xsl:when test="starts-with($type, 'xml:')">
-        <xsl:value-of select="substring($type, 5)"/>
-      </xsl:when>
-      <xsl:otherwise>
-        <xsl:value-of select="$type"/>
-      </xsl:otherwise>
-    </xsl:choose>
-  </xsl:template>
-
-  <xsl:template name="make_type">
-    <xsl:param name="type"/>
-
-    <xsl:text>struct __</xsl:text>
-    <xsl:call-template name="make_stem">
-      <xsl:with-param name="type" select="$type"/>
-    </xsl:call-template>
-    <xsl:text>_s</xsl:text>
   </xsl:template>
 
   <xsl:template match="xsd:element[@type and @name]" mode="tdef">
@@ -116,6 +89,16 @@
   <xsl:template match="xsd:element[@name = 'mdDuration']"/>
   <xsl:template match="xsd:element[@name = 'mdUri']"/>
 
+  <xsl:template match="xsd:element[@name = 'mdMath']" mode="tdef"/>
+  <xsl:template match="xsd:element[@name = 'mdDecimal']" mode="tdef"/>
+  <xsl:template match="xsd:element[@name = 'mdDateTime']" mode="tdef"/>
+  <xsl:template match="xsd:element[@name = 'mdString']" mode="tdef"/>
+  <xsl:template match="xsd:element[@name = 'mdNonNegativeDecimal']" mode="tdef"/>
+  <xsl:template match="xsd:element[@name = 'mdInteger']" mode="tdef"/>
+  <xsl:template match="xsd:element[@name = 'mdBoolean']" mode="tdef"/>
+  <xsl:template match="xsd:element[@name = 'mdDuration']" mode="tdef"/>
+  <xsl:template match="xsd:element[@name = 'mdUri']" mode="tdef"/>
+
   <xsl:template match="xsd:complexType" mode="porn">
     <xsl:param name="indent"/>
 
@@ -150,6 +133,11 @@
         </xsl:otherwise>
       </xsl:choose>
     </xsl:variable>
+    <xsl:variable name="__type">
+      <xsl:call-template name="make_type">
+        <xsl:with-param name="type" select="@ref"/>
+      </xsl:call-template>
+    </xsl:variable>
 
     <xsl:if test="$maxocc = 'unbounded'">
       <xsl:value-of select="$indent"/>
@@ -159,16 +147,15 @@
     </xsl:if>
 
     <xsl:value-of select="$indent"/>
-    <xsl:call-template name="make_type">
-      <xsl:with-param name="type" select="@ref"/>
-    </xsl:call-template>
+    <xsl:value-of select="$__type"/>
 
     <xsl:text> </xsl:text>
     <xsl:if test="$maxocc = 'unbounded'">
       <xsl:text>*</xsl:text>
     </xsl:if>
     <xsl:value-of select="$stem"/>
-    <xsl:if test="not($maxocc = 'unbounded')">
+    <xsl:if test="not($maxocc = 'unbounded') and
+                  not(starts-with($__type, 'mddl'))">
       <xsl:text>[</xsl:text>
       <xsl:choose>
         <xsl:when test="@maxOccurs">
@@ -326,21 +313,22 @@
     <xsl:text> */&#0010;</xsl:text>
 
     <xsl:value-of select="$indent"/>
-    <xsl:call-template name="make_type">
-      <xsl:with-param name="type">
-        <xsl:choose>
-          <xsl:when test="@type">
+    <xsl:text>mddl_</xsl:text>
+    <xsl:choose>
+      <xsl:when test="@type">
+        <xsl:call-template name="make_stem">
+          <xsl:with-param name="type">
             <xsl:value-of select="@type"/>
-          </xsl:when>
-          <xsl:otherwise>
-            <xsl:text>mdString</xsl:text>
-          </xsl:otherwise>
-        </xsl:choose>
-      </xsl:with-param>
-    </xsl:call-template>
-    <xsl:text> </xsl:text>
+          </xsl:with-param>
+        </xsl:call-template>
+      </xsl:when>
+      <xsl:otherwise>
+        <xsl:text>mdString</xsl:text>
+      </xsl:otherwise>
+    </xsl:choose>
+    <xsl:text>_t </xsl:text>
     <xsl:value-of select="@name"/>
-    <xsl:text>[1];&#0010;</xsl:text>
+    <xsl:text>;&#0010;</xsl:text>
   </xsl:template>
 
   <xsl:template match="xsd:attribute[@ref]" mode="porn">
@@ -372,7 +360,7 @@
     </xsl:call-template>
     <xsl:text> </xsl:text>
     <xsl:value-of select="$stem"/>
-    <xsl:text>[1];&#0010;</xsl:text>
+    <xsl:text>;&#0010;</xsl:text>
   </xsl:template>
 
   <!-- catch all -->
