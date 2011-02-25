@@ -81,4 +81,16 @@
     </xsl:choose>
   </xsl:template>
 
+  <xsl:template name="make_tag">
+    <xsl:param name="name"/>
+    <xsl:text>MDDL_TAG_</xsl:text>
+    <xsl:value-of select="$name"/>
+  </xsl:template>
+
+  <xsl:template name="make_attr">
+    <xsl:param name="name"/>
+    <xsl:text>MDDL_ATTR_</xsl:text>
+    <xsl:value-of select="$name"/>
+  </xsl:template>
+
 </xsl:stylesheet>
