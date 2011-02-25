@@ -46,6 +46,13 @@ struct mddl_tag_s {
 </xsl:text>
 
     <xsl:apply-templates mode="lookup"/>
+
+    <!-- custom bollocks that we erroneously created -->
+    <xsl:text>/* compat */
+mdPrice,	MDDL_TAG_mdDecimal
+mdAmount,	MDDL_TAG_mdDecimal
+mdRate,	MDDL_TAG_mdDecimal
+</xsl:text>
   </xsl:template>
 
   <xsl:template match="xsd:element[@name]" mode="enum">
