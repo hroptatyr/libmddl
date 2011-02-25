@@ -19,6 +19,8 @@ mddl_code_LDFLAGS = $(AM_LDFLAGS) $(LIBXML_LIBS)
 BUILT_SOURCES += mddl-code-opt.c mddl-tag.c mddl-attr.c
 BUILT_SOURCES += mddl-3.0-beta-spec.h
 BUILT_SOURCES += mddl-3.0-beta-funs.h mddl-3.0-beta-funs.c
+BUILT_SOURCES += mddl-3.0-beta-tag.gperf mddl-3.0-beta-tag.c
+BUILT_SOURCES += mddl-3.0-beta-attr.gperf mddl-3.0-beta-attr.c
 
 ## rule for mddl-lite.h
 mddl-3.0-beta-spec.h: $(top_srcdir)/xsl/autospec-lite.xsl mddl-3.0-beta-lite.xsd
@@ -28,6 +30,12 @@ mddl-3.0-beta-funs.h: $(top_srcdir)/xsl/autofuns-lite.xsl mddl-3.0-beta-lite.xsd
 	xsltproc --stringparam hdr yes $+ > $@
 
 mddl-3.0-beta-funs.c: $(top_srcdir)/xsl/autofuns-lite.xsl mddl-3.0-beta-lite.xsd
+	xsltproc $+ > $@
+
+mddl-3.0-beta-tag.gperf: $(top_srcdir)/xsl/autogperf-tag.xsl mddl-3.0-beta-lite.xsd
+	xsltproc $+ > $@
+
+mddl-3.0-beta-attr.gperf: $(top_srcdir)/xsl/autogperf-attr.xsl mddl-3.0-beta-lite.xsd
 	xsltproc $+ > $@
 
 ## our rule for gengetopt
