@@ -4,6 +4,7 @@
   xmlns:xsd="http://www.w3.org/2001/XMLSchema"
   xmlns:mddl="http://www.mddl.org/mddl/3.0-beta"
   xmlns:xlink="http://www.w3.org/1999/xlink"
+  xmlns:str="http://exslt.org/strings"
   version="1.0">
 
   <xsl:output method="xml" indent="yes"/>
@@ -89,6 +90,9 @@
                 @name='queryStatusType' or
                 @name='mddlQuerySource' or
                 @name='query')]"/>
+
+      <!-- finally them unions and shite -->
+      <xsl:apply-templates select="xsd:simpleType"/>
     </xsl:element>
   </xsl:template>
 
@@ -115,11 +119,70 @@
     </xsl:element>
   </xsl:template>
 
+  <xsl:template match="xsd:simpleType[xsd:restriction]">
+    <xsl:element name="enum">
+      <xsl:attribute name="type">
+        <xsl:text>enum mddl_</xsl:text>
+        <xsl:value-of select="@name"/>
+        <xsl:text>_e</xsl:text>
+      </xsl:attribute>
+      <xsl:attribute name="slot">
+        <xsl:value-of select="@name"/>
+      </xsl:attribute>
+      <xsl:apply-templates/>
+    </xsl:element>
+  </xsl:template>
+
+  <xsl:template match="xsd:restriction">
+    <xsl:apply-templates/>
+  </xsl:template>
+
+  <xsl:template match="xsd:enumeration">
+    <xsl:element name="value">
+      <xsl:attribute name="slot">
+        <xsl:value-of select="@value"/>
+      </xsl:attribute>
+    </xsl:element>
+  </xsl:template>
+
+  <xsl:template match="xsd:simpleType[xsd:union]">
+    <xsl:element name="union">
+      <xsl:attribute name="type">
+        <xsl:text>union mddl_</xsl:text>
+        <xsl:value-of select="@name"/>
+        <xsl:text>_u</xsl:text>
+      </xsl:attribute>
+      <xsl:attribute name="slot">
+        <xsl:value-of select="@name"/>
+      </xsl:attribute>
+      <xsl:apply-templates/>
+    </xsl:element>
+  </xsl:template>
+
+  <xsl:template match="xsd:union">
+    <xsl:variable name="m" select="str:split(@memberTypes)"/>
+    <xsl:for-each select="$m">
+      <xsl:element name="slot">
+        <xsl:attribute name="type">
+          <xsl:text>mddl_</xsl:text>
+          <xsl:call-template name="make_stem">
+            <xsl:with-param name="type" select="."/>
+          </xsl:call-template>
+          <xsl:text>_t</xsl:text>
+        </xsl:attribute>
+        <xsl:attribute name="slot">
+          <xsl:call-template name="make_stem">
+            <xsl:with-param name="type" select="."/>
+          </xsl:call-template>
+        </xsl:attribute>
+      </xsl:element>
+    </xsl:for-each>
+  </xsl:template>
+
   <!-- do not process these -->
   <xsl:template
     match="xsd:element[
            substring(@name, string-length(@name) - 4, 5) = 'Group']"/>
-  <xsl:template match="xsd:simpleType"/>
   <xsl:template match="xsd:element[@name = 'mdMath']"/>
   <xsl:template match="xsd:element[@name = 'mdDecimal']"/>
   <xsl:template match="xsd:element[@name = 'mdDateTime']"/>
