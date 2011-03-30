@@ -7,10 +7,11 @@
   version="1.0">
 
   <xsl:output method="text"/>
+  <xsl:key name="special" match="slot" use="@class"/>
 
   <xsl:include href="autospec-common.xsl"/>
 
-  <xsl:template match="/xsd:schema">
+  <xsl:template match="spec">
     <xsl:text>/* AUTO-GENERATED, DO NOT MODIFY */
 
 %{
@@ -23,6 +24,7 @@ typedef enum {
 </xsl:text>
 
     <xsl:apply-templates mode="enum"/>
+    <xsl:apply-templates select="*/slot[@class]" mode="enum"/>
 
     <xsl:text>
 } mddl_tid_t;
@@ -46,6 +48,7 @@ struct mddl_tag_s {
 </xsl:text>
 
     <xsl:apply-templates mode="lookup"/>
+    <xsl:apply-templates select="*/slot[@class]" mode="lookup"/>
 
     <!-- custom bollocks that we erroneously created -->
     <xsl:text>/* compat */
@@ -55,34 +58,62 @@ mdRate,	MDDL_TAG_mdDecimal
 </xsl:text>
   </xsl:template>
 
-  <xsl:template match="xsd:element[@name]" mode="enum">
+  <xsl:template match="struct" mode="enum">
     <xsl:text>&#0009;</xsl:text>
       <xsl:call-template name="make_tag">
         <xsl:with-param name="name">
-          <xsl:value-of select="@name"/>
+          <xsl:value-of select="@slot"/>
         </xsl:with-param>
       </xsl:call-template>
     <xsl:text>,&#0010;</xsl:text>
   </xsl:template>
 
-  <xsl:template match="xsd:element[@name]" mode="lookup">
-    <xsl:value-of select="@name"/>
+  <xsl:template match="struct" mode="lookup">
+    <xsl:value-of select="@slot"/>
     <xsl:text>, </xsl:text>
     <xsl:text>&#0009;</xsl:text>
       <xsl:call-template name="make_tag">
         <xsl:with-param name="name">
-          <xsl:value-of select="@name"/>
+          <xsl:value-of select="@slot"/>
         </xsl:with-param>
       </xsl:call-template>
     <xsl:text>&#0010;</xsl:text>
+  </xsl:template>
+
+  <xsl:template match="slot[@class]" mode="enum">
+    <!-- uniquify -->
+    <xsl:if test="generate-id() = generate-id(key('special', @class))">
+      <xsl:text>&#0009;</xsl:text>
+      <xsl:call-template name="make_tag">
+        <xsl:with-param name="name">
+          <xsl:value-of select="@class"/>
+        </xsl:with-param>
+      </xsl:call-template>
+      <xsl:text>,&#0010;</xsl:text>
+    </xsl:if>
+  </xsl:template>
+
+  <xsl:template match="slot[@class]" mode="lookup">
+    <!-- uniquify -->
+    <xsl:if test="generate-id() = generate-id(key('special', @class))">
+      <xsl:value-of select="@class"/>
+      <xsl:text>, </xsl:text>
+      <xsl:text>&#0009;</xsl:text>
+      <xsl:call-template name="make_tag">
+        <xsl:with-param name="name">
+          <xsl:value-of select="@class"/>
+        </xsl:with-param>
+      </xsl:call-template>
+      <xsl:text>&#0010;</xsl:text>
+    </xsl:if>
   </xsl:template>
 
   <!-- catch all -->
   <xsl:template match="text()"/>
   <xsl:template match="text()" mode="enum"/>
   <xsl:template match="text()" mode="lookup"/>
-  <xsl:template match="xsd:*"/>
-  <xsl:template match="xsd:*" mode="enum"/>
-  <xsl:template match="xsd:*" mode="lookup"/>
+  <xsl:template match="*"/>
+  <xsl:template match="*" mode="enum"/>
+  <xsl:template match="*" mode="lookup"/>
 
 </xsl:stylesheet>

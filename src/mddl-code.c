@@ -749,6 +749,7 @@ _instrumentIdentifier(insdom))) {
 	case MDDL_TAG_mdString:
 	case MDDL_TAG_mdDecimal:
 	case MDDL_TAG_mdDateTime:
+	case MDDL_TAG_dateTime:
 	case MDDL_TAG_rate:
 	case MDDL_TAG_role:
 	case MDDL_TAG_rank:
@@ -788,6 +789,7 @@ sax_eo_elt(mddl_ctx_t ctx, const char *name)
 		stuff_buf_reset(ctx);
 		break;
 	}
+	case MDDL_TAG_dateTime:
 	case MDDL_TAG_mdDateTime: {
 		time_t t = get_zulu(ctx->sbuf);
 		if (ctx->state->cb->dtf) {
@@ -999,8 +1001,8 @@ main(int argc, char *argv[])
 
 	init(ctx);
 	for (unsigned int i = 0; i < argi->inputs_num; i++) {
-		parse_doc(ctx, argi->inputs[i]);
-		mddl_print(stdout, ctx->doc);
+		mddl_cmd_parse(ctx, argi->inputs[i]);
+		mddl_cmd_print(stdout, ctx->doc);
 	}
 	deinit(ctx);
 	return 0;

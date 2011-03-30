@@ -33,10 +33,10 @@ strndup_sans_ws(const char *buf, size_t bsz)
 	size_t idx;				\
 						\
 	idx = to->n##rt++;			\
-	to->##rt = realloc(			\
-		to->##rt,			\
-		to->n##rt * sizeof(*to->##rt));	\
-	res = to->##rt + idx;			\
+	to->rt = realloc(			\
+		to->rt,				\
+		to->n##rt * sizeof(*to->rt));	\
+	res = to->rt + idx;			\
 	/* initialise the result */		\
 	memset(res, 0, sizeof(*res));		\
 	return res
@@ -45,31 +45,31 @@ strndup_sans_ws(const char *buf, size_t bsz)
 #define SET_S_F(slot)				\
 	size_t len = strlen(from);		\
 						\
-	if (to->##slot) {			\
-		free(to->##slot);		\
+	if (to->slot) {			\
+		free(to->slot);		\
 	}					\
-	to->##slot =				\
+	to->slot =				\
 		strndup_sans_ws(from, len);	\
 	return
 
 /* for integers */
 #define SET_I_F(slot)				\
-	to->##slot = from;			\
+	to->slot = from;			\
 	return
 
 /* for doubles */
 #define SET_D_F(slot)				\
-	to->##slot = from;			\
+	to->slot = from;			\
 	return
 
 /* for time_t's */
 #define SET_t_F(slot)				\
-	to->##slot = from;			\
+	to->slot = from;			\
 	return
 
 /* for structs */
 #define SET_struct_F(slot)			\
-	*to->##slot = *from;			\
+	*to->slot = *from;			\
 	return
 
 #define SET_mddl_mdString_t_F		SET_S_F

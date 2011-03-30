@@ -241,7 +241,7 @@ print_issue_amount(FILE *out, mddl_issueAmount_t iamt, size_t indent)
 	fputs("<issueAmount>\n", out);
 
 	print_indent(out, indent + 2);
-	fprintf(out, "<mdPrice>%2.4f</mdPrice>\n", iamt->Price);
+	fprintf(out, "<mdDecimal>%2.4f</mdDecimal>\n", iamt->Price);
 
 	for (size_t i = 0; i < iamt->ncurrency; i++) {
 		mddl_currency_t ccy = iamt->currency + i;
@@ -260,7 +260,7 @@ print_issue_fees(FILE *out, mddl_issueFees_t ifee, size_t indent)
 	fputs("<issueFees>\n", out);
 
 	print_indent(out, indent + 2);
-	fprintf(out, "<mdPrice>%2.4f</mdPrice>\n", ifee->Price);
+	fprintf(out, "<mdDecimal>%2.4f</mdDecimal>\n", ifee->Price);
 
 	for (size_t i = 0; i < ifee->ncurrency; i++) {
 		mddl_currency_t ccy = ifee->currency + i;

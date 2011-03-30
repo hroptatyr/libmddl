@@ -7,11 +7,11 @@
   version="1.0">
 
   <xsl:output method="text"/>
-  <xsl:key name="attr" match="xsd:attribute" use="@name"/>
+  <xsl:key name="attr" match="slot" use="@slot"/>
 
   <xsl:include href="autospec-common.xsl"/>
 
-  <xsl:template match="/xsd:schema">
+  <xsl:template match="spec">
     <xsl:text>/* AUTO-GENERATED, DO NOT MODIFY */
 
 %{
@@ -49,28 +49,28 @@ struct mddl_attr_s {
     <xsl:apply-templates mode="lookup"/>
   </xsl:template>
 
-  <xsl:template match="xsd:attribute[@name]" mode="enum">
+  <xsl:template match="slot[@attr]" mode="enum">
     <!-- uniquify -->
-    <xsl:if test="generate-id() = generate-id(key('attr', @name))">
+    <xsl:if test="generate-id() = generate-id(key('attr', @slot))">
       <xsl:text>&#0009;</xsl:text>
       <xsl:call-template name="make_attr">
         <xsl:with-param name="name">
-          <xsl:value-of select="@name"/>
+          <xsl:value-of select="@slot"/>
         </xsl:with-param>
       </xsl:call-template>
       <xsl:text>,&#0010;</xsl:text>
     </xsl:if>
   </xsl:template>
 
-  <xsl:template match="xsd:attribute[@name]" mode="lookup">
+  <xsl:template match="slot[@attr]" mode="lookup">
     <!-- uniquify -->
-    <xsl:if test="generate-id() = generate-id(key('attr', @name))">
-      <xsl:value-of select="@name"/>
+    <xsl:if test="generate-id() = generate-id(key('attr', @slot))">
+      <xsl:value-of select="@slot"/>
       <xsl:text>, </xsl:text>
       <xsl:text>&#0009;</xsl:text>
       <xsl:call-template name="make_attr">
         <xsl:with-param name="name">
-          <xsl:value-of select="@name"/>
+          <xsl:value-of select="@slot"/>
         </xsl:with-param>
       </xsl:call-template>
       <xsl:text>&#0010;</xsl:text>
