@@ -211,6 +211,41 @@
     <xsl:apply-templates mode="conv"/>
   </xsl:template>
 
+
+  <xsl:template name="deref_type">
+    <xsl:param name="type"/>
+
+    <xsl:variable name="stem">
+      <xsl:call-template name="make_stem">
+        <xsl:with-param name="type" select="$type"/>
+      </xsl:call-template>
+    </xsl:variable>
+    <!-- dereference the guy -->
+    <xsl:variable name="deref_type"
+      select="/xsd:schema/xsd:element[@name=$stem]/@type"/>
+    <xsl:variable name="deref_stem">
+      <xsl:call-template name="make_stem">
+        <xsl:with-param name="type" select="$deref_type"/>
+      </xsl:call-template>
+    </xsl:variable>
+    <!-- check if its a complex type -->
+    <xsl:variable name="cmplx"
+      select="/xsd:schema/xsd:complexType[@name=$deref_stem]"/>
+
+    <xsl:choose>
+      <xsl:when test="$cmplx">
+        <xsl:call-template name="make_type">
+          <xsl:with-param name="type" select="$stem"/>
+        </xsl:call-template>
+      </xsl:when>
+      <xsl:otherwise>
+        <xsl:call-template name="make_type">
+          <xsl:with-param name="type" select="$deref_type"/>
+        </xsl:call-template>
+      </xsl:otherwise>
+    </xsl:choose>
+  </xsl:template>
+
   <xsl:template match="xsd:element[@ref]" mode="conv">
     <xsl:param name="maxocc" select="@maxOccurs"/>
 
@@ -219,11 +254,9 @@
         <xsl:with-param name="type" select="@ref"/>
       </xsl:call-template>
     </xsl:variable>
-    <xsl:variable name="deref_type"
-      select="/xsd:schema/xsd:element[@name=$stem]/@type"/>
-    <xsl:variable name="type">
-      <xsl:call-template name="make_type">
-        <xsl:with-param name="type" select="$deref_type"/>
+    <xsl:variable name="final_type">
+      <xsl:call-template name="deref_type">
+        <xsl:with-param name="type" select="@ref"/>
       </xsl:call-template>
     </xsl:variable>
 
@@ -235,18 +268,9 @@
           <xsl:text> omitted</xsl:text>
         </xsl:comment>
       </xsl:when>
-      <xsl:when test="starts-with($deref_type, 'xsd:')">
-        <xsl:call-template name="make_slot">
-          <xsl:with-param name="class" select="$stem"/>
-          <xsl:with-param name="type" select="$type"/>
-          <xsl:with-param name="slot"
-            select="../../xsd:annotation/xsd:appinfo/
-                    mddl:schema-classification/@type"/>
-        </xsl:call-template>
-      </xsl:when>
-      <xsl:otherwise>
+      <xsl:when test="starts-with($final_type, 'struct')">
         <xsl:call-template name="make_struct">
-          <xsl:with-param name="type" select="$type"/>
+          <xsl:with-param name="type" select="$final_type"/>
           <xsl:with-param name="slot" select="$stem"/>
           <xsl:with-param name="mult">
             <xsl:choose>
@@ -258,6 +282,15 @@
               </xsl:otherwise>
             </xsl:choose>
           </xsl:with-param>
+        </xsl:call-template>
+      </xsl:when>
+      <xsl:otherwise>
+        <xsl:call-template name="make_slot">
+          <xsl:with-param name="class" select="$stem"/>
+          <xsl:with-param name="type" select="$final_type"/>
+          <xsl:with-param name="slot"
+            select="../../xsd:annotation/xsd:appinfo/
+                    mddl:schema-classification/@type"/>
         </xsl:call-template>
       </xsl:otherwise>
     </xsl:choose>
@@ -485,7 +518,7 @@
         <xsl:text>anyURI</xsl:text>
       </xsl:with-param>
       <xsl:with-param name="type">
-        <xsl:text>mddl_anyURI_t</xsl:text>
+        <xsl:text>xsd_anyURI_t</xsl:text>
       </xsl:with-param>
       <xsl:with-param name="slot">
         <xsl:value-of select="@name"/>
