@@ -142,9 +142,12 @@
     <xsl:text>&#0009;&#0009;fprintf(stderr, "tid %u\n", tid);&#0010;</xsl:text>
     <!-- fix me, we need a better test than this -->
     <xsl:if test="name(*[1]) = 'slot' and not(*[1]/@attr)">
-      <xsl:text>&#0009;&#0009;if (!o-&gt;</xsl:text>
+      <xsl:text>&#0009;&#0009;if (</xsl:text>
+      <xsl:text>__</xsl:text>
+      <xsl:value-of select="./*[1]/@class"/>
+      <xsl:text>_null_p(o-&gt;</xsl:text>
       <xsl:value-of select="./*[1]/@slot"/>
-      <xsl:text>) {&#0010;</xsl:text>
+      <xsl:text>)) {&#0010;</xsl:text>
       <xsl:text>&#0009;&#0009;&#00009;</xsl:text>
       <xsl:value-of select="./*[1]/@type"/>
       <xsl:text> p = stuff_buf_to_</xsl:text>
