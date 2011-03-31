@@ -412,7 +412,7 @@
   </xsl:template>
 
   <xsl:template match="xsd:attribute[@name]" mode="conv">
-    <xsl:variable name="type">
+    <xsl:variable name="stem">
       <xsl:call-template name="make_stem">
         <xsl:with-param name="type">
           <xsl:value-of select="@type"/>
@@ -434,11 +434,58 @@
     </xsl:comment>
 
     <xsl:call-template name="make_slot">
-      <xsl:with-param name="class" select="$type"/>
+      <xsl:with-param name="class" select="$stem"/>
       <xsl:with-param name="type">
         <xsl:call-template name="make_type">
           <xsl:with-param name="type" select="@type"/>
         </xsl:call-template>
+      </xsl:with-param>
+      <xsl:with-param name="slot">
+        <xsl:value-of select="@name"/>
+      </xsl:with-param>
+      <xsl:with-param name="use">
+        <xsl:choose>
+          <xsl:when test="@fixed">
+            <xsl:text>mandatory</xsl:text>
+          </xsl:when>
+          <xsl:otherwise>
+            <xsl:value-of select="@use"/>
+          </xsl:otherwise>
+        </xsl:choose>
+      </xsl:with-param>
+      <xsl:with-param name="default">
+        <xsl:choose>
+          <xsl:when test="@fixed">
+            <xsl:value-of select="@fixed"/>
+          </xsl:when>
+          <xsl:otherwise>
+            <xsl:value-of select="@default"/>
+          </xsl:otherwise>
+        </xsl:choose>
+      </xsl:with-param>
+    </xsl:call-template>
+  </xsl:template>
+
+  <xsl:template match="xsd:attribute[@name='scheme']" mode="conv">
+    <xsl:comment>
+      <xsl:text>hardcoded ATTR </xsl:text>
+      <xsl:value-of select="@type"/>
+      <xsl:if test="@use">
+        <xsl:text> USE:</xsl:text>
+        <xsl:value-of select="@use"/>
+      </xsl:if>
+      <xsl:if test="@default">
+        <xsl:text> DEFAULT:</xsl:text>
+        <xsl:value-of select="@default"/>
+      </xsl:if>
+    </xsl:comment>
+
+    <xsl:call-template name="make_slot">
+      <xsl:with-param name="class">
+        <xsl:text>anyURI</xsl:text>
+      </xsl:with-param>
+      <xsl:with-param name="type">
+        <xsl:text>mddl_anyURI_t</xsl:text>
       </xsl:with-param>
       <xsl:with-param name="slot">
         <xsl:value-of select="@name"/>
