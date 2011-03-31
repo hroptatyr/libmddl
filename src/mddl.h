@@ -15,23 +15,22 @@
 
 typedef struct __mddl_s *mddl_doc_t;
 
-typedef char *mddl_ID_t;
-typedef char *mddl_mdString_t;
-typedef char *mddl_string_t;
-typedef char *mddl_mdUri_t;
-typedef char *mddl_anyURI_t;
+typedef char *xsd_ID_t;
+typedef char *xsd_string_t;
+typedef xsd_string_t mddl_mdString_t;
+typedef char *xsd_anyURI_t;
+typedef xsd_anyURI_t mddl_mdUri_t;
 
 typedef double xsd_decimal_t;
 typedef xsd_decimal_t mddl_mdDecimal_t;
 typedef xsd_decimal_t mddl_mdNonNegativeDecimal_t;
 
-typedef int mddl_mdBoolean_t;
+typedef int xsd_boolean_t;
+typedef xsd_boolean_t mddl_mdBoolean_t;
 typedef long int xsd_integer_t;
 typedef xsd_integer_t mddl_mdInteger_t;
 
-typedef union AnyDateTime_u mddl_AnyDateTime_t;
-typedef time_t mddl_mdDateTime_t;
-typedef time_t mddl_mdDuration_t;
+typedef time_t xsd_duration_t;
 
 typedef time_t xsd_dateTime_t;
 typedef time_t xsd_date_t;
