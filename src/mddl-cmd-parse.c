@@ -295,31 +295,26 @@ __strip_const(const char *v)
 	return u.p;
 }
 
-static mddl_ID_t
+static xsd_ID_t
 attr_to_ID(const char *v)
 {
 	return __strip_const(v);
 }
 
-static mddl_mdString_t
-attr_to_mdString(const char *v)
-{
-	return __strip_const(v);
-}
-
-static mddl_string_t
+static xsd_string_t
 attr_to_string(const char *v)
 {
 	return __strip_const(v);
 }
+#define attr_to_mdString	attr_to_string
 
-static mddl_anyURI_t
+static xsd_anyURI_t
 attr_to_anyURI(const char *v)
 {
 	return __strip_const(v);
 }
 
-static mddl_integer_t
+static xsd_integer_t
 attr_to_integer(const char *v)
 {
 	return strtol(v, NULL, 10);
@@ -328,7 +323,7 @@ attr_to_integer(const char *v)
 static mddl_QualityEnumeration_t
 attr_to_QualityEnumeration(const char *UNUSED(v))
 {
-	return 0;
+	return QE_UNK;
 }
 
 /* stuff buf handling */
@@ -353,45 +348,45 @@ stuff_buf_to_mdUri(mddl_ctx_t ctx)
 	return ctx->sbuf;
 }
 
-static mddl_mdDateTime_t
+static mddl_AnyDateTime_t
 stuff_buf_to_mdDateTime(mddl_ctx_t ctx)
 {
 	ctx->sbuf[ctx->sbix] = '\0';
-	return get_zulu(ctx->sbuf);
+	return (mddl_AnyDateTime_t)get_zulu(ctx->sbuf);
 }
 #define stuff_buf_to_AnyDateTime	stuff_buf_to_mdDateTime
 
-static mddl_mdDuration_t
+static xsd_duration_t
 stuff_buf_to_mdDuration(mddl_ctx_t ctx)
 {
 	ctx->sbuf[ctx->sbix] = '\0';
 	return (time_t)-1;
 }
 
-static mddl_mdInteger_t
+static xsd_integer_t
 stuff_buf_to_mdInteger(mddl_ctx_t ctx)
 {
 	ctx->sbuf[ctx->sbix] = '\0';
 	return strtol(ctx->sbuf, NULL, 10);
 }
 
-static mddl_mdDecimal_t
+static xsd_decimal_t
 stuff_buf_to_mdDecimal(mddl_ctx_t ctx)
 {
 	ctx->sbuf[ctx->sbix] = '\0';
 	return strtod(ctx->sbuf, NULL);
 }
 
-static mddl_mdNonNegativeDecimal_t
+static mddl_NonNegativeDecimal_t
 stuff_buf_to_mdNonNegativeDecimal(mddl_ctx_t ctx)
 {
-	double res;
+	mddl_NonNegativeDecimal_t res;
 	ctx->sbuf[ctx->sbix] = '\0';
-	res = strtod(ctx->sbuf, NULL);
-	if (res > 0.0) {
-		return res;
+	res.decimal = strtod(ctx->sbuf, NULL);
+	if (res.decimal < 0.0) {
+		res.decimal = 0.0;
 	}
-	return 0.0;
+	return res;
 }
 
 static mddl_mdBoolean_t

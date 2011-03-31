@@ -118,84 +118,11 @@ fputs_encq(const char *s, FILE *out)
 }
 
 
-/* some predicates */
-static bool
-__time_null_p(time_t stamp)
-{
-	return stamp == 0 || stamp == -1;
-}
-
-static bool
-__dateTime_null_p(mddl_dateTime_t dt)
-{
-	return __time_null_p(dt->AnyDateTime);
-}
-
-static bool
-__snap_null_p(mddl_snap_t snap)
-{
-	return snap->ndateTime == 0 &&
-		snap->ncaeDomain == 0 &&
-		snap->ncashDomain == 0 &&
-		snap->ncommodityDomain == 0 &&
-		snap->nentityDomain == 0 &&
-		snap->nforeignExchangeDomain == 0 &&
-		snap->nindexDomain == 0 &&
-		snap->nindicatorDomain == 0 &&
-		snap->ninstrumentDomain == 0 &&
-		snap->nportfolioDomain == 0 &&
-		snap->nsnapType == 0;
-}
-
-static bool
-__query_null_p(mddl_query_t q)
-{
-	return true;
-}
-
-static bool
-__header_null_p(mddl_header_t h)
-{
-	return __dateTime_null_p(h->dateTime) &&
-		__query_null_p(h->query) &&
-		h->nschemeInfo == 0;
-}
-
-static bool
-__mddlQuerySource_null_p(mddl_mddlQuerySource_t qs)
-{
-	return true;
-}
-
-static bool
-__queryReference_null_p(mddl_queryReference_t qr)
-{
-	return true;
-}
-
-static bool
-__queryStatusType_null_p(mddl_queryStatusType_t qst)
-{
-	return true;
-}
-
-static bool
-__source_null_p(mddl_source_t src)
-{
-	return src->Simple == NULL;
-}
-
-static bool
-__sequence_null_p(mddl_sequence_t seq)
-{
-	return seq->Simple == NULL;
-}
-
 /* some more printers we need */
 static void
 print_attr_ID(
 	FILE *out, const char *a,
-	mddl_ID_t id, const char *UNUSED(_default), size_t UNUSED(indent))
+	xsd_ID_t id, const char *UNUSED(_default), size_t UNUSED(indent))
 {
 	if (id == NULL) {
 		return;
@@ -212,7 +139,7 @@ print_attr_ID(
 static void
 print_attr_integer(
 	FILE *out, const char *a,
-	mddl_integer_t i, const char *UNUSED(_default), size_t UNUSED(i))
+	xsd_integer_t i, const char *UNUSED(_default), size_t UNUSED(i))
 {
 	fprintf(out, " %s=\"%li\"", a, i);
 	return;
@@ -221,7 +148,7 @@ print_attr_integer(
 static void
 print_attr_string(
 	FILE *out, const char *a,
-	mddl_string_t s, const char *UNUSED(_default), size_t UNUSED(i))
+	xsd_string_t s, const char *UNUSED(_default), size_t UNUSED(i))
 {
 	if (s == NULL) {
 		return;
@@ -275,7 +202,7 @@ print_attr_mdString(
 static void
 print_attr_anyURI(
 	FILE *out, const char *a,
-	mddl_anyURI_t u, const char *UNUSED(_default), size_t UNUSED(i))
+	xsd_anyURI_t u, const char *UNUSED(_default), size_t UNUSED(i))
 {
 	if (u == NULL) {
 		return;
@@ -316,7 +243,7 @@ print_mdUri(FILE *out, mddl_mdUri_t u, size_t indent)
 }
 
 static void
-print_mdDecimal(FILE *out, mddl_mdDecimal_t d, size_t indent)
+print_decimal(FILE *out, xsd_decimal_t d, size_t indent)
 {
 	print_indent(out, indent);
 	fputs("<mdDecimal>", out);
@@ -324,23 +251,24 @@ print_mdDecimal(FILE *out, mddl_mdDecimal_t d, size_t indent)
 	fputs("</mdDecimal>\n", out);
 	return;
 }
+#define print_mdDecimal	print_decimal
 
 static void
 print_mdNonNegativeDecimal(
-	FILE *out, mddl_mdNonNegativeDecimal_t d, size_t indent)
+	FILE *out, mddl_NonNegativeDecimal_t d, size_t indent)
 {
-	if (d < 0.0) {
+	if (d.decimal < 0.0) {
 		return;
 	}
 	print_indent(out, indent);
 	fputs("<mdNonNegativeDecimal>", out);
-	fprintf(out, "%g", d);
+	fprintf(out, "%g", d.decimal);
 	fputs("</mdNonNegativeDecimal>\n", out);
 	return;
 }
 
 static void
-print_mdInteger(FILE *out, mddl_mdInteger_t i, size_t indent)
+print_integer(FILE *out, xsd_integer_t i, size_t indent)
 {
 	print_indent(out, indent);
 	fputs("<mdInteger>", out);
@@ -348,6 +276,7 @@ print_mdInteger(FILE *out, mddl_mdInteger_t i, size_t indent)
 	fputs("</mdInteger>\n", out);
 	return;
 }
+#define print_mdInteger		print_integer
 
 static void
 print_mdBoolean(FILE *out, mddl_mdBoolean_t b, size_t indent)
@@ -362,29 +291,21 @@ print_mdBoolean(FILE *out, mddl_mdBoolean_t b, size_t indent)
 }
 
 static void
-print_mdDateTime(FILE *out, mddl_mdDateTime_t dt, size_t indent)
+print_AnyDateTime(FILE *out, mddl_AnyDateTime_t dt, size_t indent)
 {
-	if (__time_null_p(dt)) {
+	if (__time_null_p(dt.dateTime)) {
 		return;
 	}
 	print_indent(out, indent);
 	fputs("<mdDateTime>", out);
-	print_zulu(out, dt);
+	print_zulu(out, dt.dateTime);
 	fputs("</mdDateTime>\n", out);
 	return;
 }
+#define print_mdDateTime	print_AnyDateTime
 
 static void
-print_AnyDateTime(FILE *out, mddl_AnyDateTime_t dt, size_t indent)
-{
-	print_indent(out, indent);
-	print_zulu(out, dt);
-	fputs("\n", out);
-	return;
-}
-
-static void
-print_mdDuration(FILE *out, mddl_mdDuration_t du, size_t indent)
+print_mdDuration(FILE *out, xsd_duration_t du, size_t indent)
 {
 	print_indent(out, indent);
 	fputs("<mdDuration>no_printer</mdDuration>\n", out);

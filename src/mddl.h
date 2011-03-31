@@ -3,6 +3,8 @@
 #if !defined INCLUDED_mddl_h_
 #define INCLUDED_mddl_h_
 
+#include <stdbool.h>
+
 #undef DECLF
 #undef DEFUN
 #if defined STATIC_GUTS
@@ -23,7 +25,6 @@ typedef xsd_anyURI_t mddl_mdUri_t;
 
 typedef double xsd_decimal_t;
 typedef xsd_decimal_t mddl_mdDecimal_t;
-typedef xsd_decimal_t mddl_mdNonNegativeDecimal_t;
 
 typedef int xsd_boolean_t;
 typedef xsd_boolean_t mddl_mdBoolean_t;
@@ -48,5 +49,129 @@ typedef enum {
 
 /* print service */
 DECLF void mddl_print(void *out, mddl_doc_t doc);
+
+
+static bool
+__time_null_p(time_t stamp)
+{
+	return stamp == 0 || stamp == -1;
+}
+
+static bool
+__snap_null_p(mddl_snap_t snap)
+{
+	return snap->ndateTime == 0 &&
+		snap->ncaeDomain == 0 &&
+		snap->ncashDomain == 0 &&
+		snap->ncommodityDomain == 0 &&
+		snap->nentityDomain == 0 &&
+		snap->nforeignExchangeDomain == 0 &&
+		snap->nindexDomain == 0 &&
+		snap->nindicatorDomain == 0 &&
+		snap->ninstrumentDomain == 0 &&
+		snap->nportfolioDomain == 0 &&
+		snap->nsnapType == 0;
+}
+
+static bool
+__query_null_p(mddl_query_t q)
+{
+	return true;
+}
+
+static bool
+__mdDuration_null_p(xsd_duration_t du)
+{
+	return du == 0;
+}
+
+static bool
+__dateTime_null_p(mddl_dateTime_t dt)
+{
+	return __time_null_p(dt->AnyDateTime.dateTime);
+}
+
+static bool
+__header_null_p(mddl_header_t h)
+{
+	return __dateTime_null_p(h->dateTime) &&
+		__query_null_p(h->query) &&
+		h->nschemeInfo == 0;
+}
+
+static bool
+__mddlQuerySource_null_p(mddl_mddlQuerySource_t qs)
+{
+	return true;
+}
+
+static bool
+__queryReference_null_p(mddl_queryReference_t qr)
+{
+	return true;
+}
+
+static bool
+__queryStatusType_null_p(mddl_queryStatusType_t qst)
+{
+	return true;
+}
+
+static bool
+__source_null_p(mddl_source_t src)
+{
+	return src->Simple == NULL;
+}
+
+static bool
+__sequence_null_p(mddl_sequence_t seq)
+{
+	return seq->Simple == NULL;
+}
+
+static bool
+__string_null_p(xsd_string_t str)
+{
+	return str == NULL;
+}
+#define __mdString_null_p	__string_null_p
+
+static bool
+__mdBoolean_null_p(xsd_boolean_t b)
+{
+	return b == 0;
+}
+
+static bool
+__mdInteger_null_p(xsd_integer_t i)
+{
+	return i == 0;
+}
+
+static bool
+__mdDecimal_null_p(xsd_decimal_t d)
+{
+	return d == 0.0;
+}
+
+static bool
+__mdNonNegativeDecimal_null_p(mddl_NonNegativeDecimal_t nnd)
+{
+	return __mdDecimal_null_p(nnd.decimal);
+}
+
+static bool
+__mdUri_null_p(xsd_anyURI_t u)
+{
+	return u == NULL;
+}
+
+static bool
+__AnyDateTime_null_p(mddl_AnyDateTime_t dt)
+{
+	return __time_null_p(dt.dateTime);
+}
+
+#define __mdDateTime_null_p	__AnyDateTime_null_p
 
 #endif	/* INCLUDED_mddl_h_ */
