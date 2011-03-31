@@ -73,22 +73,21 @@ strndup_sans_ws(const char *buf, size_t bsz)
 	return
 
 #define SET_mddl_mdString_t_F		SET_S_F
-#define SET_mddl_string_t_F		SET_S_F
-#define SET_mddl_ID_t_F			SET_S_F
+#define SET_xsd_string_t_F		SET_S_F
+#define SET_xsd_ID_t_F			SET_S_F
 #define SET_mddl_mdUri_t_F		SET_S_F
-#define SET_mddl_anyURI_t_F		SET_S_F
+#define SET_xsd_anyURI_t_F		SET_S_F
 
 #define SET_mddl_QualityEnumeration_t_F	SET_I_F
 #define SET_mddl_mdInteger_t_F		SET_I_F
-#define SET_mddl_integer_t_F		SET_I_F
-#define SET_mddl_mdBoolean_t_F		SET_I_F
+#define SET_xsd_integer_t_F		SET_I_F
+#define SET_xsd_boolean_t_F		SET_I_F
 
-#define SET_mddl_mdDateTime_t_F		SET_t_F
 #define SET_mddl_AnyDateTime_t_F	SET_t_F
-#define SET_mddl_mdDuration_t_F		SET_t_F
+#define SET_xsd_duration_t_F		SET_t_F
 
-#define SET_mddl_mdDecimal_t_F		SET_D_F
-#define SET_mddl_mdNonNegativeDecimal_t_F	SET_D_F
+#define SET_xsd_decimal_t_F		SET_D_F
+#define SET_mddl_NonNegativeDecimal_t_F	SET_D_F
 
 #include "mddl-3.0-beta-funs.c"
 

@@ -24,7 +24,7 @@ typedef enum {
 </xsl:text>
 
     <xsl:apply-templates mode="enum"/>
-    <xsl:apply-templates select="*/slot[@class]" mode="enum"/>
+    <xsl:apply-templates select="struct/slot[@class]" mode="enum"/>
 
     <xsl:text>
 } mddl_tid_t;
@@ -48,7 +48,7 @@ struct mddl_tag_s {
 </xsl:text>
 
     <xsl:apply-templates mode="lookup"/>
-    <xsl:apply-templates select="*/slot[@class]" mode="lookup"/>
+    <xsl:apply-templates select="struct/slot[@class]" mode="lookup"/>
 
     <!-- custom bollocks that we erroneously created -->
     <xsl:text>/* compat */
@@ -60,11 +60,11 @@ mdRate,	MDDL_TAG_mdDecimal
 
   <xsl:template match="struct" mode="enum">
     <xsl:text>&#0009;</xsl:text>
-      <xsl:call-template name="make_tag">
-        <xsl:with-param name="name">
-          <xsl:value-of select="@slot"/>
-        </xsl:with-param>
-      </xsl:call-template>
+    <xsl:call-template name="make_tag">
+      <xsl:with-param name="name">
+        <xsl:value-of select="@slot"/>
+      </xsl:with-param>
+    </xsl:call-template>
     <xsl:text>,&#0010;</xsl:text>
   </xsl:template>
 
@@ -72,11 +72,11 @@ mdRate,	MDDL_TAG_mdDecimal
     <xsl:value-of select="@slot"/>
     <xsl:text>, </xsl:text>
     <xsl:text>&#0009;</xsl:text>
-      <xsl:call-template name="make_tag">
-        <xsl:with-param name="name">
-          <xsl:value-of select="@slot"/>
-        </xsl:with-param>
-      </xsl:call-template>
+    <xsl:call-template name="make_tag">
+      <xsl:with-param name="name">
+        <xsl:value-of select="@slot"/>
+      </xsl:with-param>
+    </xsl:call-template>
     <xsl:text>&#0010;</xsl:text>
   </xsl:template>
 

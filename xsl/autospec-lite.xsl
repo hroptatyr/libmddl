@@ -17,6 +17,9 @@
     <xsl:apply-templates mode="tdef"/>
     <xsl:text>&#0010;</xsl:text>
 
+    <xsl:apply-templates mode="udef"/>
+    <xsl:text>&#0010;</xsl:text>
+
     <xsl:apply-templates mode="sdef"/>
     <xsl:text>&#0010;</xsl:text>
 
@@ -27,6 +30,18 @@
     <xsl:text>typedef </xsl:text>
     <xsl:value-of select="@type"/>
     <xsl:text> *mddl_</xsl:text>
+    <xsl:value-of select="@slot"/>
+    <xsl:text>_t;&#0010;</xsl:text>
+  </xsl:template>
+
+  <xsl:template match="union" mode="udef">
+    <xsl:text>typedef </xsl:text>
+    <xsl:value-of select="@type"/>
+    <xsl:text> {&#0010;</xsl:text>
+
+    <xsl:apply-templates/>
+
+    <xsl:text>} mddl_</xsl:text>
     <xsl:value-of select="@slot"/>
     <xsl:text>_t;&#0010;</xsl:text>
   </xsl:template>
@@ -72,6 +87,7 @@
 
   <!-- catch all -->
   <xsl:template match="text()"/>
+  <xsl:template match="text()" mode="udef"/>
   <xsl:template match="text()" mode="tdef"/>
   <xsl:template match="text()" mode="sdef"/>
 
