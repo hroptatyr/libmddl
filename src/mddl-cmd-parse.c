@@ -433,7 +433,6 @@ sax_bo_elt(mddl_ctx_t ctx, const char *name, const char **attrs)
 	}
 
 	/* call the autogen'd code */
-	fprintf(stderr, "gbo %u %s\n", tid, name);
 	stuff_buf_reset(ctx);
 	parse_bo(ctx, tid, attrs);
 	return;
@@ -453,13 +452,11 @@ sax_eo_elt(mddl_ctx_t ctx, const char *name)
 	}
 
 	/* call the autogen'd code */
-	fprintf(stderr, "geo %u %s\n", tid, name);
 	parse_eo(ctx, tid);
 	stuff_buf_reset(ctx);
 
 	/* restore old handler */
 	if (LIKELY(tid == get_state_otype(ctx))) {
-		fprintf(stderr, "popping %s\n", name);
 		pop_state(ctx);
 	}
 	return;

@@ -139,7 +139,6 @@
     </xsl:apply-templates>
 
     <xsl:text>&#0009;default:&#0010;</xsl:text>
-    <xsl:text>&#0009;&#0009;fprintf(stderr, "tid %u\n", tid);&#0010;</xsl:text>
     <!-- fix me, we need a better test than this -->
     <xsl:if test="name(*[1]) = 'slot' and not(*[1]/@attr)">
       <xsl:text>&#0009;&#0009;if (</xsl:text>
@@ -161,6 +160,7 @@
       <xsl:text>&#0009;&#0009;}&#0010;</xsl:text>
     </xsl:if>
 
+    <xsl:text>&#0009;&#0009;break;&#0010;</xsl:text>
     <xsl:text>&#0009;}&#0010;</xsl:text>
 
     <xsl:text>&#0009;return;&#0010;</xsl:text>
