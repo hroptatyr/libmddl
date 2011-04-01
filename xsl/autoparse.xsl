@@ -184,7 +184,7 @@
     <xsl:value-of select="@slot"/>
     <xsl:text>(o, p);&#0010;</xsl:text>
     <xsl:text>&#0009;&#0009;&#0009;break;&#0010;</xsl:text>
-    <xsl:text>&#0009;}&#0010;</xsl:text>
+    <xsl:text>&#0009;&#0009;}&#0010;</xsl:text>
   </xsl:template>
 
   <xsl:template match="struct[@mult = '*']" mode="bo">
