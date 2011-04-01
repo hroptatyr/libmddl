@@ -23,9 +23,14 @@ static char*
 strndup_sans_ws(const char *buf, size_t bsz)
 {
 /* like strndup() but skip leading whitespace */
-	while (__wsp(*buf++));
-	while (__wsp(buf[--bsz]));
-	return strndup(--buf, ++bsz);
+	while (__wsp(*buf)) {
+		buf++;
+		bsz--;
+	}
+	while (bsz > 0 && __wsp(buf[bsz - 1])) {
+		bsz--;
+	}
+	return bsz ? strndup(buf, bsz) : NULL;
 }
 
 #define ADDF(rt)				\
