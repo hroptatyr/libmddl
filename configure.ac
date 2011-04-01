@@ -19,6 +19,7 @@ PKG_CHECK_MODULES([LUA], [lua >= 5.1.0], [:], [:])
 
 ## output
 AC_CONFIG_FILES([Makefile])
+AC_CONFIG_FILES([xsl/Makefile])
 AC_CONFIG_FILES([src/Makefile])
 AC_OUTPUT
 

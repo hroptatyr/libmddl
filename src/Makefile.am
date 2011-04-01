@@ -6,6 +6,7 @@ bin_PROGRAMS =
 lib_LTLIBRARIES =
 BUILT_SOURCES =
 CLEANFILES = $(BUILT_SOURCES)
+EXTRA_DIST =
 
 lib_LTLIBRARIES += libmddl.la
 libmddl_la_SOURCES = mddl.c mddl.h
@@ -19,7 +20,6 @@ mddl_SOURCES += mddl-cmd-parse.c
 mddl_CPPFLAGS = $(AM_CPPFLAGS) $(LIBXML_CFLAGS)
 mddl_LDADD = libmddl.la
 mddl_LDFLAGS = $(AM_LDFLAGS) $(LIBXML_LIBS)
-BUILT_SOURCES += mddl-tag.c mddl-attr.c
 BUILT_SOURCES += mddl-3.0-beta-spec.xml
 BUILT_SOURCES += mddl-3.0-beta-spec.h
 BUILT_SOURCES += mddl-3.0-beta-funs.h mddl-3.0-beta-funs.c
@@ -27,6 +27,7 @@ BUILT_SOURCES += mddl-3.0-beta-tag.gperf mddl-3.0-beta-tag.c
 BUILT_SOURCES += mddl-3.0-beta-attr.gperf mddl-3.0-beta-attr.c
 BUILT_SOURCES += mddl-3.0-beta-print.c
 BUILT_SOURCES += mddl-3.0-beta-parse.c
+EXTRA_DIST += mddl-3.0-beta-lite.xsd
 
 mddl-3.0-beta-spec.xml: $(top_srcdir)/xsl/spec-to-struct.xsl mddl-3.0-beta-lite.xsd
 	xsltproc $+ > $@
