@@ -35,11 +35,6 @@ typedef xmlSAXHandler sax_hdl_s;
 typedef sax_hdl_s *sax_hdl_t;
 typedef struct mddl_ctxcb_s *mddl_ctxcb_t;
 
-struct mddl_ns_s {
-	char *pref;
-	char *href;
-};
-
 /* contextual callbacks */
 struct mddl_ctxcb_s {
 	/* for a linked list */
@@ -243,7 +238,7 @@ mddl_init(mddl_ctx_t ctx, const char **attrs)
 	init_ctxcb(ctx);
 	/* alloc some space for our document */
 	{
-		struct __mddl_s *m = calloc(sizeof(*m), 1);
+		struct mddl_doc_s *m = calloc(sizeof(*m), 1);
 		mddl_ctxcb_t cc = pop_ctxcb(ctx);
 
 		ctx->doc = m;

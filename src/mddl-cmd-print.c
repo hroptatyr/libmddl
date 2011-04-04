@@ -320,6 +320,7 @@ void
 mddl_cmd_print(void *out, mddl_doc_t doc)
 {
 	const size_t indent = 0;
+	mddl_mddl_t tree = doc->tree;
 
 	/* mimicking
 	 * print_mddl(out, doc, indent);
@@ -333,14 +334,14 @@ mddl_cmd_print(void *out, mddl_doc_t doc)
   xsi:schemaLocation=\
 \"http://www.mddl.org/mddl/3.0-beta mddl-3.0-beta-full.xsd\">\n", out);
 
-        if (!__header_null_p(doc->header)) {
-                print_header(out, doc->header, indent + 2);
+        if (!__header_null_p(tree->header)) {
+                print_header(out, tree->header, indent + 2);
         }
-        for (size_t i = 0; i < doc->nsnap; i++) {
-                print_snap(out, doc->snap + i, indent + 2);
+        for (size_t i = 0; i < tree->nsnap; i++) {
+                print_snap(out, tree->snap + i, indent + 2);
         }
-        for (size_t i = 0; i < doc->ntimeseries; i++) {
-                print_timeseries(out, doc->timeseries + i, indent + 2);
+        for (size_t i = 0; i < tree->ntimeseries; i++) {
+                print_timeseries(out, tree->timeseries + i, indent + 2);
         }
 
 	fputs("</mddl>\n", out);
