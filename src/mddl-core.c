@@ -119,7 +119,9 @@ mddl_process(struct __clo_s *clo)
 			fputs("print command needs FILE argument.\n", stderr);
 		} else if (stat(f, &st) < 0 && errno == ENOENT) {
 			fprintf(stderr, "Cannot open %s, no such file\n", f);
-		} else if ((doc = mddl_cmd_parse(clo->print->file)) != NULL) {
+		} else if ((doc = mddl_cmd_parse(f)) == NULL) {
+			fprintf(stderr, "Could not parse %s\n", f);
+		} else {
 			mddl_cmd_print(stdout, doc);
 			res = 0;
 		}
