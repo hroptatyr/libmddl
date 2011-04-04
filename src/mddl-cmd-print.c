@@ -328,11 +328,26 @@ mddl_cmd_print(void *out, mddl_doc_t doc)
 
 	fputs("\
 <?xml version=\"1.0\"?>\n\
-<mddl xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n\
-  xmlns=\"http://www.mddl.org/mddl/3.0-beta\"\n\
-  version=\"3.0-beta\"\n\
-  xsi:schemaLocation=\
-\"http://www.mddl.org/mddl/3.0-beta mddl-3.0-beta-full.xsd\">\n", out);
+<mddl", out);
+
+	for (size_t i = 0; i < doc->nns; i++) {
+		fputs(" xmlns", out);
+		if (UNLIKELY(doc->ns[i].pref != NULL)) {
+			fputc(':', out);
+			fputs(doc->ns[i].pref, out);
+		}
+		fputc('=', out);
+		fputc('"', out);
+		fputs(doc->ns[i].href, out);
+		fputc('"', out);
+	}
+	if (LIKELY(doc->tree->version != NULL)) {
+		fputs(" version=\"", out);
+		fputs(doc->tree->version, out);
+		fputc('"', out);
+	}
+	/* finish the tag */
+	fputs(">\n", out);
 
         if (!__header_null_p(tree->header)) {
                 print_header(out, tree->header, indent + 2);

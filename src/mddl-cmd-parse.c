@@ -419,6 +419,8 @@ sax_bo_elt(mddl_ctx_t ctx, const char *name, const char **attrs)
 	/* check for mddl */
 	if (UNLIKELY(tid == MDDL_TAG_mddl)) {
 		mddl_init(ctx, attrs);
+		/* just call the stuff the autogen'd parser would have done */
+		parse_mddl_attrs(ctx, ctx->doc->tree, attrs);
 		return;
 	}
 

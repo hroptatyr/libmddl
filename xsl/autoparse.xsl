@@ -83,6 +83,8 @@
     </xsl:apply-templates>
 
     <xsl:text>
+		case MDDL_ATTR_UNK:
+			break;
 		default:
 			fprintf(stderr, "aid %u illegal inside </xsl:text>
     <xsl:value-of select="@slot"/>
