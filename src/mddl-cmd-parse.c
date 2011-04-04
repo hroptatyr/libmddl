@@ -524,7 +524,15 @@ mddl_cmd_parse(const char *file)
 	ctx->hdl->getEntity = sax_get_ent;
 
 	if (xmlSAXUserParseFile(ctx->hdl, ctx, file) == 0) {
-		res = ctx->doc;
+		/* now make way for the name spaces we tracked */
+		size_t nns = ctx->nns;
+		res = realloc(ctx->doc, sizeof(*res) + nns * sizeof(*res->ns));
+		res->nns = nns;
+		for (size_t i = 0; i < nns; i++) {
+			res->ns[i].pref = ctx->ns[i].pref
+				? strdup(ctx->ns[i].pref) : NULL;
+			res->ns[i].href = strdup(ctx->ns[i].href);
+		}
 	}
 	deinit(ctx);
 	return res;
