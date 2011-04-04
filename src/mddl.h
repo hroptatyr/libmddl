@@ -104,13 +104,7 @@ __dateTime_null_p(mddl_dateTime_t dt)
 	return __time_null_p(dt->AnyDateTime.dateTime);
 }
 
-static bool
-__header_null_p(mddl_header_t h)
-{
-	return __dateTime_null_p(h->dateTime) &&
-		__query_null_p(h->query) &&
-		h->nschemeInfo == 0;
-}
+DECLF bool __header_null_p(mddl_header_t h);
 
 static bool
 __mddlQuerySource_null_p(mddl_mddlQuerySource_t qs)
