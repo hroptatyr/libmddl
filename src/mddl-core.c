@@ -115,11 +115,15 @@ mddl_process(struct __clo_s *clo)
 		struct stat st = {0};
 		mddl_doc_t doc;
 
-		if (f == NULL) {
-			fputs("print command needs FILE argument.\n", stderr);
+		/* special thing so we can process pipes */
+		if (f == NULL || (f[0] == '-' && f[1] == '\0')) {
+			f = "/dev/stdin";
 		} else if (stat(f, &st) < 0 && errno == ENOENT) {
 			fprintf(stderr, "Cannot open %s, no such file\n", f);
-		} else if ((doc = mddl_cmd_parse(f)) == NULL) {
+			break;
+		}
+		/* just try and parse whatever we've got */
+		if ((doc = mddl_cmd_parse(f)) == NULL) {
 			fprintf(stderr, "Could not parse %s\n", f);
 		} else {
 			mddl_cmd_print(stdout, doc);
