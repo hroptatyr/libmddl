@@ -96,4 +96,15 @@ strndup_sans_ws(const char *buf, size_t bsz)
 
 #include "mddl-3.0-beta-funs.c"
 
+/* more stuff that would normally go to a header but for pipeline reasons
+ * is best kept here */
+DEFUN bool
+__header_null_p(mddl_header_t h)
+{
+	return __dateTime_null_p(h->dateTime) &&
+		__source_null_p(h->source) &&
+		__query_null_p(h->query) &&
+		h->nschemeInfo == 0;
+}
+
 /* mddl.c ends here */

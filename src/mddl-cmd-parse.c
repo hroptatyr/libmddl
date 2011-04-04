@@ -35,11 +35,6 @@ typedef xmlSAXHandler sax_hdl_s;
 typedef sax_hdl_s *sax_hdl_t;
 typedef struct mddl_ctxcb_s *mddl_ctxcb_t;
 
-struct mddl_ns_s {
-	char *pref;
-	char *href;
-};
-
 /* contextual callbacks */
 struct mddl_ctxcb_s {
 	/* for a linked list */
@@ -243,7 +238,7 @@ mddl_init(mddl_ctx_t ctx, const char **attrs)
 	init_ctxcb(ctx);
 	/* alloc some space for our document */
 	{
-		struct __mddl_s *m = calloc(sizeof(*m), 1);
+		struct mddl_doc_s *m = calloc(sizeof(*m), 1);
 		mddl_ctxcb_t cc = pop_ctxcb(ctx);
 
 		ctx->doc = m;
@@ -424,6 +419,8 @@ sax_bo_elt(mddl_ctx_t ctx, const char *name, const char **attrs)
 	/* check for mddl */
 	if (UNLIKELY(tid == MDDL_TAG_mddl)) {
 		mddl_init(ctx, attrs);
+		/* just call the stuff the autogen'd parser would have done */
+		parse_mddl_attrs(ctx, ctx->doc->tree, attrs);
 		return;
 	}
 
@@ -529,7 +526,15 @@ mddl_cmd_parse(const char *file)
 	ctx->hdl->getEntity = sax_get_ent;
 
 	if (xmlSAXUserParseFile(ctx->hdl, ctx, file) == 0) {
-		res = ctx->doc;
+		/* now make way for the name spaces we tracked */
+		size_t nns = ctx->nns;
+		res = realloc(ctx->doc, sizeof(*res) + nns * sizeof(*res->ns));
+		res->nns = nns;
+		for (size_t i = 0; i < nns; i++) {
+			res->ns[i].pref = ctx->ns[i].pref
+				? strdup(ctx->ns[i].pref) : NULL;
+			res->ns[i].href = strdup(ctx->ns[i].href);
+		}
 	}
 	deinit(ctx);
 	return res;
