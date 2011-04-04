@@ -290,8 +290,19 @@ print_mdBoolean(FILE *out, mddl_mdBoolean_t b, size_t indent)
 	return;
 }
 
+/* special bollocks for extension elements */
 static void
-print_AnyDateTime(FILE *out, mddl_AnyDateTime_t dt, size_t indent)
+print_AnyDateTime(FILE *out, mddl_AnyDateTime_t dt, size_t UNUSED(indent))
+{
+	if (__time_null_p(dt.dateTime)) {
+		return;
+	}
+	print_zulu(out, dt.dateTime);
+	return;
+}
+
+static void
+print_mdDateTime(FILE *out, mddl_AnyDateTime_t dt, size_t indent)
 {
 	if (__time_null_p(dt.dateTime)) {
 		return;
@@ -302,7 +313,6 @@ print_AnyDateTime(FILE *out, mddl_AnyDateTime_t dt, size_t indent)
 	fputs("</mdDateTime>\n", out);
 	return;
 }
-#define print_mdDateTime	print_AnyDateTime
 
 static void
 print_mdDuration(FILE *out, xsd_duration_t du, size_t indent)

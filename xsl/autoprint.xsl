@@ -54,12 +54,31 @@
 
     <xsl:apply-templates select="slot[@attr]" mode="attr"/>
 
-    <xsl:text>&#0009;fputs("&gt;\n", out);&#0010;</xsl:text>
+    <!-- for more than one slot we resort to indenting -->
+    <xsl:choose>
+      <xsl:when test="count(*[not(@attr)]) > 1">
+        <!-- more than one tag follow, so close the tag and put a newline -->
+        <xsl:text>&#0009;fputs("&gt;\n", out);&#0010;</xsl:text>
 
-    <!-- all the rest -->
-    <xsl:apply-templates/>
+        <!-- all the rest -->
+        <xsl:apply-templates>
+          <xsl:with-param name="indent">
+            <xsl:text>indent + 2</xsl:text>
+          </xsl:with-param>
+        </xsl:apply-templates>
 
-    <xsl:text>&#0009;print_indent(out, indent);&#0010;</xsl:text>
+        <xsl:text>&#0009;print_indent(out, indent);&#0010;</xsl:text>
+      </xsl:when>
+      <xsl:otherwise>
+        <xsl:text>&#0009;fputc('&gt;', out);&#0010;</xsl:text>
+        <!-- all the rest -->
+        <xsl:apply-templates>
+          <xsl:with-param name="indent" select="0"/>
+        </xsl:apply-templates>
+      </xsl:otherwise>
+    </xsl:choose>
+
+    <!-- close the tag -->
     <xsl:text>&#0009;fputs("&lt;/</xsl:text>
     <xsl:value-of select="@slot"/>
     <xsl:text>&gt;\n", out);&#0010;</xsl:text>
@@ -91,11 +110,14 @@
   </xsl:template>
 
   <xsl:template match="slot[not(@attr)]">
+    <xsl:param name="indent"/>
+
     <xsl:text>&#0009;print_</xsl:text>
     <xsl:value-of select="@class"/>
     <xsl:text>(out, p-&gt;</xsl:text>
     <xsl:value-of select="@slot"/>
-    <xsl:text>, indent + 2</xsl:text>
+    <xsl:text>, </xsl:text>
+    <xsl:value-of select="$indent"/>
     <xsl:text>);&#0010;</xsl:text>
   </xsl:template>
 
