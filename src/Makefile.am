@@ -1,6 +1,5 @@
 AM_CFLAGS = -std=c99
 AM_CPPFLAGS = -Wall -DDEBUG -D_GNU_SOURCE
-AM_LDFLAGS = -static
 
 bin_PROGRAMS =
 lib_LTLIBRARIES =
@@ -21,7 +20,7 @@ mddl_SOURCES += mddl-cmd-code.c
 mddl_SOURCES += mddl-cmd-name.c
 mddl_CPPFLAGS = $(AM_CPPFLAGS) $(LIBXML_CFLAGS)
 mddl_LDADD = libmddl.la
-mddl_LDFLAGS = $(AM_LDFLAGS) $(LIBXML_LIBS)
+mddl_LDFLAGS = -static $(LIBXML_LIBS)
 BUILT_SOURCES += mddl-3.0-beta-spec.xml
 BUILT_SOURCES += mddl-3.0-beta-spec.h
 BUILT_SOURCES += mddl-3.0-beta-funs.h mddl-3.0-beta-funs.c
