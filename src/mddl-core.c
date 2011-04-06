@@ -168,7 +168,8 @@ mddl_process(struct __clo_s *clo)
 		res = 0;
 		break;
 	case MDDL_CMD_NAME:
-		//mddl_cmd_name(stdout, doc);
+		mddl_cmd_name(stdout, doc);
+		res = 0;
 		break;
 	default:
 		break;
