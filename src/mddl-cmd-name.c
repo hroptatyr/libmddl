@@ -24,8 +24,10 @@
 #define countof(_x)	(sizeof(_x) / sizeof(*_x))
 
 
-print_name(FILE *out, mddl_name_t c)
+print_name(FILE *out, mddl_name_t c, const char *ctx)
 {
+	fputs(ctx, out);
+	fputc('\t', out);
 	fputs(c->Simple, out);
 	fputc('\n', out);
 	return;
@@ -35,7 +37,7 @@ static void
 search_mktidn(FILE *out, mddl_marketIdentifier_t mi)
 {
 	for (size_t i = 0; i < mi->nname; i++) {
-		print_name(out, mi->name + i);
+		print_name(out, mi->name + i, "mi");
 	}
 	return;
 }
@@ -44,7 +46,7 @@ static void
 search_insidn(FILE *out, mddl_instrumentIdentifier_t ii)
 {
 	for (size_t i = 0; i < ii->nname; i++) {
-		print_name(out, ii->name + i);
+		print_name(out, ii->name + i, "ii");
 	}
 	for (size_t i = 0; i < ii->nmarketIdentifier; i++) {
 		search_mktidn(out, ii->marketIdentifier + i);
