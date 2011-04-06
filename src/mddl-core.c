@@ -61,16 +61,29 @@
 #define countof(_x)	(sizeof(_x) / sizeof(*_x))
 
 extern mddl_doc_t mddl_cmd_parse(const char *file);
-extern mddl_doc_t mddl_cmd_print(FILE *file, mddl_doc_t);
+extern void mddl_cmd_print(FILE *file, mddl_doc_t);
+extern void mddl_cmd_code(FILE *file, mddl_doc_t, const char *scheme);
+extern void mddl_cmd_name(FILE *file, mddl_doc_t);
 
 typedef enum {
 	MDDL_CMD_UNK,
 	MDDL_CMD_VERSION,
 	MDDL_CMD_PRINT,
+	MDDL_CMD_CODE,
+	MDDL_CMD_NAME,
 } mddl_cmd_t;
 
 /* new_pf specific options */
 struct __print_clo_s {
+	const char *file;
+};
+
+struct __code_clo_s {
+	const char *file;
+	const char *scheme;
+};
+
+struct __name_clo_s {
 	const char *file;
 };
 
@@ -81,6 +94,8 @@ struct __clo_s {
 	mddl_cmd_t cmd;
 	union {
 		struct __print_clo_s print[1];
+		struct __code_clo_s code[1];
+		struct __name_clo_s name[1];
 	};
 };
 
@@ -98,7 +113,12 @@ Fiddle with mddl files.\n\
 \n\
 Supported commands:\n\
 \n\
-  print [OPTIONS] FILE       Read FILE and print in normalised form\n\
+  print FILE            Read FILE and print in normalised form\n\
+\n\
+  code [OPTIONS] FILE   Read FILE and print codes\n\
+    -s, --scheme=URI    Only print codes that match URI\n\
+\n\
+  name FILE             Read FILE and print names along with their contexts\n\
 \n\
 ";
 
@@ -108,32 +128,52 @@ static int
 mddl_process(struct __clo_s *clo)
 {
 	int res = -1;
+	mddl_doc_t doc = NULL;
 
+	/* for all commands that need a file */
 	switch (clo->cmd) {
-	case MDDL_CMD_PRINT: {
+	case MDDL_CMD_PRINT:
+	case MDDL_CMD_CODE:
+	case MDDL_CMD_NAME: {
 		const char *f = clo->print->file;
 		struct stat st = {0};
-		mddl_doc_t doc;
 
 		/* special thing so we can process pipes */
 		if (f == NULL || (f[0] == '-' && f[1] == '\0')) {
 			f = "/dev/stdin";
 		} else if (stat(f, &st) < 0 && errno == ENOENT) {
 			fprintf(stderr, "Cannot open %s, no such file\n", f);
-			break;
+			res = -1;
+			goto out;
 		}
 		/* just try and parse whatever we've got */
 		if ((doc = mddl_cmd_parse(f)) == NULL) {
 			fprintf(stderr, "Could not parse %s\n", f);
-		} else {
-			mddl_cmd_print(stdout, doc);
-			res = 0;
+			res = -1;
+			goto out;
 		}
 		break;
 	}
 	default:
 		break;
 	}
+
+	switch (clo->cmd) {
+	case MDDL_CMD_PRINT:
+		mddl_cmd_print(stdout, doc);
+		res = 0;
+		break;
+	case MDDL_CMD_CODE:
+		mddl_cmd_code(stdout, doc, clo->code->scheme);
+		res = 0;
+		break;
+	case MDDL_CMD_NAME:
+		//mddl_cmd_name(stdout, doc);
+		break;
+	default:
+		break;
+	}
+out:
 	return res;
 }
 
@@ -146,16 +186,75 @@ pr_unknown(const char *arg)
 	return;
 }
 
+static char*
+__get_val(int *i, size_t len, char *argv[])
+{
+	char *p = argv[*i];
+
+	switch (p[len]) {
+	case '\0':
+		p = argv[*i + 1];
+		argv[*i] = NULL;
+		argv[*i + 1] = NULL;
+		(*i)++;
+		break;
+	case '=':
+		p += len + 1;
+		argv[*i] = NULL;
+		break;
+	default:
+		pr_unknown(argv[*i]);
+		p = NULL;
+	}
+	return p;
+}
+
 static void
 parse_print_args(struct __clo_s *clo, int argc, char *argv[])
 {
-/* also used for new-pf */
 	for (int i = 0; i < argc; i++) {
 		char *p = argv[i];
 
 		if (clo->print->file == NULL) {
 			/* must be a file name then */
 			clo->print->file = argv[i];
+			argv[i] = NULL;
+		}
+	}
+	return;
+}
+
+static void
+parse_code_args(struct __clo_s *clo, int argc, char *argv[])
+{
+	for (int i = 0; i < argc; i++) {
+		char *p = argv[i];
+
+		if (p[0] == '-' && p[1] != '\0') {
+			/* could be -s or --scheme */
+			if (p[1] == 's') {
+				clo->code->scheme = __get_val(&i, 2, argv);
+			} else if (strncmp(p + 1, "-scheme", 7) == 0) {
+				clo->code->scheme = __get_val(&i, 8, argv);
+			}
+		} else if (clo->code->file == NULL) {
+			/* must be a file name then */
+			clo->code->file = argv[i];
+			argv[i] = NULL;
+		}
+	}
+	return;
+}
+
+static void
+parse_name_args(struct __clo_s *clo, int argc, char *argv[])
+{
+	for (int i = 0; i < argc; i++) {
+		char *p = argv[i];
+
+		if (clo->name->file == NULL) {
+			/* must be a file name then */
+			clo->name->file = argv[i];
 			argv[i] = NULL;
 		}
 	}
@@ -211,7 +310,28 @@ parse_args(struct __clo_s *clo, int argc, char *argv[])
 				clo->cmd = MDDL_CMD_PRINT;
 				parse_print_args(clo, new_argc, new_argv);
 				continue;
-
+			}
+			break;
+		}
+		case 'c': {
+			/* code */
+			int new_argc = argc - i - 1;
+			char **new_argv = argv + i + 1;
+			if (strcmp(p, "ode") == 0) {
+				clo->cmd = MDDL_CMD_CODE;
+				parse_code_args(clo, new_argc, new_argv);
+				continue;
+			}
+			break;
+		}
+		case 'n': {
+			/* name */
+			int new_argc = argc - i - 1;
+			char **new_argv = argv + i + 1;
+			if (strcmp(p, "ame") == 0) {
+				clo->cmd = MDDL_CMD_NAME;
+				parse_name_args(clo, new_argc, new_argv);
+				continue;
 			}
 			break;
 		}
@@ -262,6 +382,8 @@ main(int argc, char *argv[])
 	case MDDL_CMD_VERSION:
 		print_version();
 		return 0;
+	case MDDL_CMD_CODE:
+	case MDDL_CMD_NAME:
 	case MDDL_CMD_PRINT:
 		break;
 	}
