@@ -18,6 +18,7 @@ mddl_SOURCES += mddl-cmd-print.c
 mddl_SOURCES += mddl-cmd-parse.c
 mddl_SOURCES += mddl-cmd-code.c
 mddl_SOURCES += mddl-cmd-name.c
+mddl_SOURCES += mddl-cmd-objective.c
 mddl_CPPFLAGS = $(AM_CPPFLAGS) $(LIBXML_CFLAGS)
 mddl_LDADD = libmddl.la
 mddl_LDFLAGS = -static $(LIBXML_LIBS)

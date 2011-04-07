@@ -22,6 +22,10 @@ struct __name_clo_s {
 	const char *code;
 };
 
+struct __objctv_clo_s {
+	const char *file;
+};
+
 /* command line options */
 struct __clo_s {
 	int helpp;
@@ -31,6 +35,7 @@ struct __clo_s {
 		struct __print_clo_s print[1];
 		struct __code_clo_s code[1];
 		struct __name_clo_s name[1];
+		struct __objctv_clo_s objctv[1];
 	};
 
 	/* output options */
@@ -42,5 +47,6 @@ extern mddl_doc_t mddl_cmd_parse(const char *file);
 extern void mddl_cmd_print(mddl_clo_t, mddl_doc_t);
 extern void mddl_cmd_code(mddl_clo_t, mddl_doc_t);
 extern void mddl_cmd_name(mddl_clo_t, mddl_doc_t);
+extern void mddl_cmd_objective(mddl_clo_t, mddl_doc_t);
 
 #endif	/* INCLUDED_mddl_core_h_ */
