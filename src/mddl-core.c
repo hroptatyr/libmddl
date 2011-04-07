@@ -48,6 +48,7 @@
 #include <assert.h>
 #include <errno.h>
 #include "mddl.h"
+#include "mddl-core.h"
 
 #if !defined UNUSED
 # define UNUSED(_x)	__attribute__((unused)) _x##_unused
@@ -60,43 +61,12 @@
 #endif
 #define countof(_x)	(sizeof(_x) / sizeof(*_x))
 
-extern mddl_doc_t mddl_cmd_parse(const char *file);
-extern void mddl_cmd_print(FILE *file, mddl_doc_t);
-extern void mddl_cmd_code(FILE *file, mddl_doc_t, const char *scheme);
-extern void mddl_cmd_name(FILE *file, mddl_doc_t);
-
-typedef enum {
+enum __cmd_e {
 	MDDL_CMD_UNK,
 	MDDL_CMD_VERSION,
 	MDDL_CMD_PRINT,
 	MDDL_CMD_CODE,
 	MDDL_CMD_NAME,
-} mddl_cmd_t;
-
-/* new_pf specific options */
-struct __print_clo_s {
-	const char *file;
-};
-
-struct __code_clo_s {
-	const char *file;
-	const char *scheme;
-};
-
-struct __name_clo_s {
-	const char *file;
-};
-
-/* command line options */
-struct __clo_s {
-	int helpp;
-
-	mddl_cmd_t cmd;
-	union {
-		struct __print_clo_s print[1];
-		struct __code_clo_s code[1];
-		struct __name_clo_s name[1];
-	};
 };
 
 #define VER	"mddl v" VERSION "\n"
@@ -119,6 +89,9 @@ Supported commands:\n\
     -s, --scheme=URI    Only print codes that match URI\n\
 \n\
   name FILE             Read FILE and print names along with their contexts\n\
+    -c, --code=CODE     Only print names in sections that contain code tags\n\
+                        that match CODE\n\
+    -s, --scheme=URI    Only match codes whose scheme is URI\n\
 \n\
 ";
 
@@ -160,15 +133,18 @@ mddl_process(struct __clo_s *clo)
 
 	switch (clo->cmd) {
 	case MDDL_CMD_PRINT:
-		mddl_cmd_print(stdout, doc);
+		clo->out = stdout;
+		mddl_cmd_print(clo, doc);
 		res = 0;
 		break;
 	case MDDL_CMD_CODE:
-		mddl_cmd_code(stdout, doc, clo->code->scheme);
+		clo->out = stdout;
+		mddl_cmd_code(clo, doc);
 		res = 0;
 		break;
 	case MDDL_CMD_NAME:
-		mddl_cmd_name(stdout, doc);
+		clo->out = stdout;
+		mddl_cmd_name(clo, doc);
 		res = 0;
 		break;
 	default:
@@ -253,7 +229,18 @@ parse_name_args(struct __clo_s *clo, int argc, char *argv[])
 	for (int i = 0; i < argc; i++) {
 		char *p = argv[i];
 
-		if (clo->name->file == NULL) {
+		if (p[0] == '-' && p[1] != '\0') {
+			/* could be -s or --scheme */
+			if (p[1] == 's') {
+				clo->name->scheme = __get_val(&i, 2, argv);
+			} else if (strncmp(p + 1, "-scheme", 7) == 0) {
+				clo->name->scheme = __get_val(&i, 8, argv);
+			} else if (p[1] == 'c') {
+				clo->name->code = __get_val(&i, 2, argv);
+			} else if (strncmp(p + 1, "-code", 5) == 0) {
+				clo->name->code = __get_val(&i, 6, argv);
+			}
+		} else if (clo->name->file == NULL) {
 			/* must be a file name then */
 			clo->name->file = argv[i];
 			argv[i] = NULL;

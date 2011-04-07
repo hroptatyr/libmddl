@@ -7,6 +7,7 @@
 #include <ctype.h>
 #include <assert.h>
 #include "mddl.h"
+#include "mddl-core.h"
 
 #if defined __INTEL_COMPILER
 # pragma warning (disable:869)
@@ -25,8 +26,11 @@
 
 
 static void
-print_code(FILE *out, mddl_code_t c, const char *scheme)
+print_code(mddl_clo_t clo, mddl_code_t c)
 {
+	FILE *out = clo->out;
+	const char *scheme = clo->code->scheme;
+
 	if (scheme != NULL && strcmp(c->scheme, scheme) != 0) {
 		return;
 	}
@@ -41,54 +45,54 @@ print_code(FILE *out, mddl_code_t c, const char *scheme)
 }
 
 static void
-search_mktidn(FILE *out, mddl_marketIdentifier_t mi, const char *scheme)
+search_mktidn(mddl_clo_t clo, mddl_marketIdentifier_t mi)
 {
 	for (size_t i = 0; i < mi->ncode; i++) {
-		print_code(out, mi->code + i, scheme);
+		print_code(clo, mi->code + i);
 	}
 	return;
 }
 
 static void
-search_insidn(FILE *out, mddl_instrumentIdentifier_t ii, const char *scheme)
+search_insidn(mddl_clo_t clo, mddl_instrumentIdentifier_t ii)
 {
 	for (size_t i = 0; i < ii->ncode; i++) {
-		print_code(out, ii->code + i, scheme);
+		print_code(clo, ii->code + i);
 	}
 	for (size_t i = 0; i < ii->nmarketIdentifier; i++) {
-		search_mktidn(out, ii->marketIdentifier + i, scheme);
+		search_mktidn(clo, ii->marketIdentifier + i);
 	}
 	return;
 }
 
 static void
-search_insdom(FILE *out, mddl_instrumentDomain_t id, const char *scheme)
+search_insdom(mddl_clo_t clo, mddl_instrumentDomain_t id)
 {
 	for (size_t j = 0; j < id->ninstrumentIdentifier; j++) {
-		search_insidn(out, id->instrumentIdentifier + j, scheme);
+		search_insidn(clo, id->instrumentIdentifier + j);
 	}
 	return;
 }
 
 static void
-search_snap(FILE *out, mddl_snap_t s, const char *scheme)
+search_snap(mddl_clo_t clo, mddl_snap_t s)
 {
 	for (size_t i = 0; i < s->ninstrumentDomain; i++) {
-		search_insdom(out, s->instrumentDomain + i, scheme);
+		search_insdom(clo, s->instrumentDomain + i);
 	}
 	return;
 }
 
 
 void
-mddl_cmd_code(FILE *out, mddl_doc_t doc, const char *scheme)
+mddl_cmd_code(mddl_clo_t clo, mddl_doc_t doc)
 {
 	const size_t indent = 0;
 	mddl_mddl_t tree = doc->tree;
 
 	/* try and find candidates */
         for (size_t i = 0; i < doc->tree->nsnap; i++) {
-		search_snap(out, doc->tree->snap + i, scheme);
+		search_snap(clo, doc->tree->snap + i);
         }
 	return;
 }
