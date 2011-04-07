@@ -7,6 +7,7 @@
 #include <ctype.h>
 #include <assert.h>
 #include "mddl.h"
+#include "mddl-core.h"
 
 #if defined __INTEL_COMPILER
 # pragma warning (disable:869)
@@ -25,8 +26,10 @@
 
 
 static void
-print_name(FILE *out, mddl_name_t n, const char *ctx)
+print_name(mddl_clo_t clo, mddl_name_t n, const char *ctx)
 {
+	FILE *out = clo->out;
+
 	fputs(ctx, out);
 	fputc('\t', out);
 	fputs(n->Simple, out);
@@ -39,54 +42,54 @@ print_name(FILE *out, mddl_name_t n, const char *ctx)
 }
 
 static void
-search_mktidn(FILE *out, mddl_marketIdentifier_t mi)
+search_mktidn(mddl_clo_t clo, mddl_marketIdentifier_t mi)
 {
 	for (size_t i = 0; i < mi->nname; i++) {
-		print_name(out, mi->name + i, "mi");
+		print_name(clo, mi->name + i, "mi");
 	}
 	return;
 }
 
 static void
-search_insidn(FILE *out, mddl_instrumentIdentifier_t ii)
+search_insidn(mddl_clo_t clo, mddl_instrumentIdentifier_t ii)
 {
 	for (size_t i = 0; i < ii->nname; i++) {
-		print_name(out, ii->name + i, "ii");
+		print_name(clo, ii->name + i, "ii");
 	}
 	for (size_t i = 0; i < ii->nmarketIdentifier; i++) {
-		search_mktidn(out, ii->marketIdentifier + i);
+		search_mktidn(clo, ii->marketIdentifier + i);
 	}
 	return;
 }
 
 static void
-search_insdom(FILE *out, mddl_instrumentDomain_t id)
+search_insdom(mddl_clo_t clo, mddl_instrumentDomain_t id)
 {
 	for (size_t j = 0; j < id->ninstrumentIdentifier; j++) {
-		search_insidn(out, id->instrumentIdentifier + j);
+		search_insidn(clo, id->instrumentIdentifier + j);
 	}
 	return;
 }
 
 static void
-search_snap(FILE *out, mddl_snap_t s)
+search_snap(mddl_clo_t clo, mddl_snap_t s)
 {
 	for (size_t i = 0; i < s->ninstrumentDomain; i++) {
-		search_insdom(out, s->instrumentDomain + i);
+		search_insdom(clo, s->instrumentDomain + i);
 	}
 	return;
 }
 
 
 void
-mddl_cmd_name(FILE *out, mddl_doc_t doc)
+mddl_cmd_name(mddl_clo_t clo, mddl_doc_t doc)
 {
 	const size_t indent = 0;
 	mddl_mddl_t tree = doc->tree;
 
 	/* try and find candidates */
         for (size_t i = 0; i < doc->tree->nsnap; i++) {
-		search_snap(out, doc->tree->snap + i);
+		search_snap(clo, doc->tree->snap + i);
         }
 	return;
 }

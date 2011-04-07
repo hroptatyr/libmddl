@@ -7,6 +7,7 @@
 #include <ctype.h>
 #include <assert.h>
 #include "mddl.h"
+#include "mddl-core.h"
 
 #if defined __INTEL_COMPILER
 # pragma warning (disable:869)
@@ -327,10 +328,11 @@ print_mdDuration(FILE *out, xsd_duration_t du, size_t indent)
 
 
 void
-mddl_cmd_print(void *out, mddl_doc_t doc)
+mddl_cmd_print(mddl_clo_t clo, mddl_doc_t doc)
 {
 	const size_t indent = 0;
 	mddl_mddl_t tree = doc->tree;
+	FILE *out = clo->out;
 
 	/* mimicking
 	 * print_mddl(out, doc, indent);
