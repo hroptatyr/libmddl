@@ -88,7 +88,7 @@ Supported commands:\n\
   code [OPTIONS] FILE   Read FILE and print codes\n\
     -s, --scheme=URI    Only print codes that match URI\n\
 \n\
-  name FILE             Read FILE and print names along with their contexts\n\
+  name [OPTIONS] FILE   Read FILE and print names along with their contexts\n\
     -c, --code=CODE     Only print names in sections that contain code tags\n\
                         that match CODE\n\
     -s, --scheme=URI    Only match codes whose scheme is URI\n\
