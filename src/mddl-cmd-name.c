@@ -24,11 +24,16 @@
 #define countof(_x)	(sizeof(_x) / sizeof(*_x))
 
 
-print_name(FILE *out, mddl_name_t c, const char *ctx)
+static void
+print_name(FILE *out, mddl_name_t n, const char *ctx)
 {
 	fputs(ctx, out);
 	fputc('\t', out);
-	fputs(c->Simple, out);
+	fputs(n->Simple, out);
+	fputc('\t', out);
+	if (!__source_null_p(n->source)) {
+		fputs(n->source->Simple, out);
+	}
 	fputc('\n', out);
 	return;
 }
