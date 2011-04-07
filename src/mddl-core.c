@@ -67,6 +67,7 @@ enum __cmd_e {
 	MDDL_CMD_PRINT,
 	MDDL_CMD_CODE,
 	MDDL_CMD_NAME,
+	MDDL_CMD_OBJECTIVE,
 };
 
 #define VER	"mddl v" VERSION "\n"
@@ -88,10 +89,12 @@ Supported commands:\n\
   code [OPTIONS] FILE   Read FILE and print codes\n\
     -s, --scheme=URI    Only print codes that match URI\n\
 \n\
-  name FILE             Read FILE and print names along with their contexts\n\
+  name [OPTIONS] FILE   Read FILE and print names along with their contexts\n\
     -c, --code=CODE     Only print names in sections that contain code tags\n\
                         that match CODE\n\
     -s, --scheme=URI    Only match codes whose scheme is URI\n\
+\n\
+  objective FILE        Read FILE and print objectives\n\
 \n\
 ";
 
@@ -107,7 +110,8 @@ mddl_process(struct __clo_s *clo)
 	switch (clo->cmd) {
 	case MDDL_CMD_PRINT:
 	case MDDL_CMD_CODE:
-	case MDDL_CMD_NAME: {
+	case MDDL_CMD_NAME:
+	case MDDL_CMD_OBJECTIVE: {
 		const char *f = clo->print->file;
 		struct stat st = {0};
 
@@ -145,6 +149,11 @@ mddl_process(struct __clo_s *clo)
 	case MDDL_CMD_NAME:
 		clo->out = stdout;
 		mddl_cmd_name(clo, doc);
+		res = 0;
+		break;
+	case MDDL_CMD_OBJECTIVE:
+		clo->out = stdout;
+		mddl_cmd_objective(clo, doc);
 		res = 0;
 		break;
 	default:
@@ -250,6 +259,21 @@ parse_name_args(struct __clo_s *clo, int argc, char *argv[])
 }
 
 static void
+parse_objctv_args(struct __clo_s *clo, int argc, char *argv[])
+{
+	for (int i = 0; i < argc; i++) {
+		char *p = argv[i];
+
+		if (clo->objctv->file == NULL) {
+			/* must be a file name then */
+			clo->objctv->file = argv[i];
+			argv[i] = NULL;
+		}
+	}
+	return;
+}
+
+static void
 parse_args(struct __clo_s *clo, int argc, char *argv[])
 {
 	for (int i = 0; i < argc; i++) {
@@ -323,6 +347,17 @@ parse_args(struct __clo_s *clo, int argc, char *argv[])
 			}
 			break;
 		}
+		case 'o': {
+			/* objective */
+			int new_argc = argc - i - 1;
+			char **new_argv = argv + i + 1;
+			if (strcmp(p, "bjective") == 0) {
+				clo->cmd = MDDL_CMD_OBJECTIVE;
+				parse_objctv_args(clo, new_argc, new_argv);
+				continue;
+			}
+			break;
+		}
 		default:
 			break;
 		}
@@ -373,6 +408,7 @@ main(int argc, char *argv[])
 	case MDDL_CMD_CODE:
 	case MDDL_CMD_NAME:
 	case MDDL_CMD_PRINT:
+	case MDDL_CMD_OBJECTIVE:
 		break;
 	}
 
