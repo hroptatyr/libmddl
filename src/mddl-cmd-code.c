@@ -24,14 +24,19 @@
 #define countof(_x)	(sizeof(_x) / sizeof(*_x))
 
 
+static void
 print_code(FILE *out, mddl_code_t c, const char *scheme)
 {
-	if (scheme == NULL || strcmp(c->scheme, scheme) == 0) {
-		fputs(c->scheme, out);
-		fputc('\t', out);
-		fputs(c->Enumeration, out);
-		fputc('\n', out);
+	if (scheme != NULL && strcmp(c->scheme, scheme) != 0) {
+		return;
 	}
+	fputs(c->scheme, out);
+	fputc('\t', out);
+	fputs(c->Enumeration, out);
+	if (!__source_null_p(c->source)) {
+		fputs(c->source->Simple, out);
+	}
+	fputc('\n', out);
 	return;
 }
 
