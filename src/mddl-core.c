@@ -89,6 +89,9 @@ Supported commands:\n\
     -s, --scheme=URI    Only print codes that match URI\n\
 \n\
   name FILE             Read FILE and print names along with their contexts\n\
+    -c, --code=CODE     Only print names in sections that contain code tags\n\
+                        that match CODE\n\
+    -s, --scheme=URI    Only match codes whose scheme is URI\n\
 \n\
 ";
 
@@ -226,7 +229,18 @@ parse_name_args(struct __clo_s *clo, int argc, char *argv[])
 	for (int i = 0; i < argc; i++) {
 		char *p = argv[i];
 
-		if (clo->name->file == NULL) {
+		if (p[0] == '-' && p[1] != '\0') {
+			/* could be -s or --scheme */
+			if (p[1] == 's') {
+				clo->name->scheme = __get_val(&i, 2, argv);
+			} else if (strncmp(p + 1, "-scheme", 7) == 0) {
+				clo->name->scheme = __get_val(&i, 8, argv);
+			} else if (p[1] == 'c') {
+				clo->name->code = __get_val(&i, 2, argv);
+			} else if (strncmp(p + 1, "-code", 5) == 0) {
+				clo->name->code = __get_val(&i, 6, argv);
+			}
+		} else if (clo->name->file == NULL) {
 			/* must be a file name then */
 			clo->name->file = argv[i];
 			argv[i] = NULL;
