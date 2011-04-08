@@ -96,10 +96,38 @@ search_insidn(mddl_clo_t clo, mddl_instrumentIdentifier_t ii, bool match)
 }
 
 static void
+search_issref(mddl_clo_t clo, mddl_issuerRef_t ir, bool match)
+{
+	const char *code = clo->name->code;
+	const char *scheme = clo->name->scheme;
+
+	if (match ||
+	    (match = code_match_p(ir->code, ir->ncode, scheme, code))) {
+		/* ah, ir matches, good, just print all them names */
+		for (size_t i = 0; i < ir->nname; i++) {
+			print_name(clo, ir->name + i, "ir");
+		}
+	}
+	return;
+}
+
+static void
+search_issdat(mddl_clo_t clo, mddl_issueData_t id)
+{
+	for (size_t i = 0; i < id->nissuerRef; i++) {
+		search_issref(clo, id->issuerRef + i, false);
+	}
+	return;
+}
+
+static void
 search_insdom(mddl_clo_t clo, mddl_instrumentDomain_t id)
 {
 	for (size_t j = 0; j < id->ninstrumentIdentifier; j++) {
 		search_insidn(clo, id->instrumentIdentifier + j, false);
+	}
+	for (size_t j = 0; j < id->nissueData; j++) {
+		search_issdat(clo, id->issueData + j);
 	}
 	return;
 }
