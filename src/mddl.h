@@ -3,6 +3,7 @@
 #if !defined INCLUDED_mddl_h_
 #define INCLUDED_mddl_h_
 
+#include <stdlib.h>
 #include <stdbool.h>
 
 #undef DECLF
