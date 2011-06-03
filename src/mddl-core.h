@@ -6,6 +6,16 @@
 typedef enum __cmd_e mddl_cmd_t;
 typedef struct __clo_s *mddl_clo_t;
 
+/* commands we support */
+typedef enum __cmd_e {
+	MDDL_CMD_UNK,
+	MDDL_CMD_VERSION,
+	MDDL_CMD_PRINT,
+	MDDL_CMD_CODE,
+	MDDL_CMD_NAME,
+	MDDL_CMD_OBJECTIVE,
+};
+
 /* new_pf specific options */
 struct __print_clo_s {
 	const char *file;
