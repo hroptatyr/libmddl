@@ -3,7 +3,7 @@ exec_prefix=@exec_prefix@
 includedir=@includedir@
 libdir=@libdir@
 libexecdir=@libexecdir@
-stubfile=${libexecdir}/libmddl_stub.a
+stubfile=${libexecdir}/mddl/libmddl_stub.a
 
 Name: libmddl
 Description: Market Data Definition Language
