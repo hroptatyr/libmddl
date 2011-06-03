@@ -61,15 +61,6 @@
 #endif
 #define countof(_x)	(sizeof(_x) / sizeof(*_x))
 
-enum __cmd_e {
-	MDDL_CMD_UNK,
-	MDDL_CMD_VERSION,
-	MDDL_CMD_PRINT,
-	MDDL_CMD_CODE,
-	MDDL_CMD_NAME,
-	MDDL_CMD_OBJECTIVE,
-};
-
 #define VER	"mddl v" VERSION "\n"
 
 static const char usage[] = VER "\
