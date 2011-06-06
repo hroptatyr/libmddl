@@ -45,6 +45,7 @@ libmddl_stub_a_SOURCES += mddl-cmd-parse.c
 libmddl_stub_a_SOURCES += mddl-cmd-code.c
 libmddl_stub_a_SOURCES += mddl-cmd-name.c
 libmddl_stub_a_SOURCES += mddl-cmd-objective.c
+header_HEADERS += mddl-core.h
 
 
 mddl-3.0-beta-spec.xml: $(top_srcdir)/xsl/spec-to-struct.xsl mddl-3.0-beta-lite.xsd
