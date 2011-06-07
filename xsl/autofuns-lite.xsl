@@ -262,6 +262,17 @@
     <xsl:text>&#0009;}&#0010;</xsl:text>
   </xsl:template>
 
+  <xsl:template match="slot[@class='mdString']" mode="free">
+    <xsl:param name="super"/>
+    <xsl:text>&#0009;if (victim-&gt;</xsl:text>
+    <xsl:value-of select="@slot"/>
+    <xsl:text>) {&#0010;</xsl:text>
+    <xsl:text>&#0009;&#0009;free(victim-&gt;</xsl:text>
+    <xsl:value-of select="@slot"/>
+    <xsl:text>);&#0010;</xsl:text>
+    <xsl:text>&#0009;}&#0010;</xsl:text>
+  </xsl:template>
+
   <!-- catch all -->
   <xsl:template match="text()"/>
   <xsl:template match="text()" mode="decl"/>
