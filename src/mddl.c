@@ -54,10 +54,14 @@ strndup_sans_ws(const char *buf, size_t bsz)
 	}							\
 	memmove(from->rt + idx, from->rt + idx + 1,		\
 		(from->n##rt - (idx + 1)) * sizeof(*what));	\
-	from->n##rt--;						\
-	from->rt = realloc(					\
-		from->rt,					\
-		from->n##rt * sizeof(*from->rt));		\
+	if (--from->n##rt > 0) {				\
+		from->rt = realloc(				\
+			from->rt,				\
+			from->n##rt * sizeof(*from->rt));	\
+	} else {						\
+		free(from->rt);					\
+		from->rt = NULL;				\
+	}							\
 	return 1
 
 /* for strings */
