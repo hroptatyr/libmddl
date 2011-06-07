@@ -553,6 +553,7 @@ mddl_free_doc(mddl_doc_t doc)
 	}
 	if (doc->tree) {
 		mddl_free_mddl(doc->tree);
+		free(doc->tree);
 	}
 	return;
 }
