@@ -54,6 +54,16 @@
     <xsl:text>(mddl_</xsl:text>
     <xsl:value-of select="$super"/>
     <xsl:text>_t to);&#0010;</xsl:text>
+
+    <xsl:text>DECLF int mddl_</xsl:text>
+    <xsl:value-of select="$super"/>
+    <xsl:text>_rem_</xsl:text>
+    <xsl:value-of select="@slot"/>
+    <xsl:text>(mddl_</xsl:text>
+    <xsl:value-of select="$super"/>
+    <xsl:text>_t from, </xsl:text>
+    <xsl:value-of select="$retty"/>
+    <xsl:text> what);&#0010;</xsl:text>
   </xsl:template>
 
   <xsl:template match="struct[@mult!='*']" mode="decl">
@@ -140,6 +150,22 @@
     <xsl:text>_t to)&#0010;</xsl:text>
     <xsl:text>{&#0010;</xsl:text>
     <xsl:text>&#0009;ADDF(</xsl:text>	
+    <xsl:value-of select="@slot"/>
+    <xsl:text>);&#0010;</xsl:text>
+    <xsl:text>}&#0010;&#0010;</xsl:text>
+
+    <xsl:text>DEFUN int&#0010;</xsl:text>
+    <xsl:text>mddl_</xsl:text>
+    <xsl:value-of select="$super"/>
+    <xsl:text>_rem_</xsl:text>
+    <xsl:value-of select="@slot"/>
+    <xsl:text>(mddl_</xsl:text>
+    <xsl:value-of select="$super"/>
+    <xsl:text>_t from, </xsl:text>
+    <xsl:value-of select="$retty"/>
+    <xsl:text> what)&#0010;</xsl:text>
+    <xsl:text>{&#0010;</xsl:text>
+    <xsl:text>&#0009;REMF(</xsl:text>	
     <xsl:value-of select="@slot"/>
     <xsl:text>);&#0010;</xsl:text>
     <xsl:text>}&#0010;&#0010;</xsl:text>

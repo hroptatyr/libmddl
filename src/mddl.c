@@ -46,6 +46,20 @@ strndup_sans_ws(const char *buf, size_t bsz)
 	memset(res, 0, sizeof(*res));		\
 	return res
 
+#define REMF(rt)						\
+	size_t idx = (what - from->rt) / sizeof(*what);		\
+								\
+	if (idx >= from->n##rt) {				\
+		return 0;					\
+	}							\
+	memmove(from->rt + idx, from->rt + idx + 1,		\
+		(from->n##rt - (idx + 1)) * sizeof(*what));	\
+	from->n##rt--;						\
+	from->rt = realloc(					\
+		from->rt,					\
+		from->n##rt * sizeof(*from->rt));		\
+	return 1
+
 /* for strings */
 #define SET_S_F(slot)				\
 	size_t len = strlen(from);		\
