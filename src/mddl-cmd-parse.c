@@ -540,4 +540,21 @@ mddl_cmd_parse(const char *file)
 	return res;
 }
 
+void
+mddl_free_doc(mddl_doc_t doc)
+{
+	for (size_t i = 0; i < doc->nns; i++) {
+		if (doc->ns[i].pref) {
+			free(doc->ns[i].pref);
+		}
+		if (doc->ns[i].href) {
+			free(doc->ns[i].href);
+		}
+	}
+	if (doc->tree) {
+		mddl_free_mddl(doc->tree);
+	}
+	return;
+}
+
 /* mddl-code.c ends here */

@@ -27,6 +27,13 @@
     <xsl:apply-templates mode="decl">
       <xsl:with-param name="super" select="@slot"/>
     </xsl:apply-templates>
+
+    <xsl:text>/* dtor */&#0010;</xsl:text>
+    <xsl:text>DECLF void mddl_free_</xsl:text>
+    <xsl:value-of select="@slot"/>
+    <xsl:text>(</xsl:text>
+    <xsl:value-of select="@type"/>
+    <xsl:text>*);</xsl:text>
     <xsl:text>&#0010;&#0010;</xsl:text>
   </xsl:template>
 
@@ -98,7 +105,21 @@
     <xsl:apply-templates mode="def">
       <xsl:with-param name="super" select="@slot"/>
     </xsl:apply-templates>
-    <xsl:text>&#0010;&#0010;</xsl:text>
+
+    <xsl:text>&#0010;/* dtor */&#0010;</xsl:text>
+    <xsl:text>DEFUN void&#0010;mddl_free_</xsl:text>
+    <xsl:value-of select="@slot"/>
+    <xsl:text>(</xsl:text>
+    <xsl:value-of select="@type"/>
+    <xsl:text> *victim)&#0010;</xsl:text>
+    <xsl:text>{&#0010;</xsl:text>
+    <xsl:apply-templates mode="free">
+      <xsl:with-param name="super" select="@slot"/>
+    </xsl:apply-templates>
+    <xsl:text>&#0009;free(victim);&#0010;</xsl:text>
+    <xsl:text>&#0009;return;&#0010;</xsl:text>
+    <xsl:text>}&#0010;&#0010;</xsl:text>
+    <xsl:text>&#0010;</xsl:text>
   </xsl:template>
 
   <xsl:template match="struct[@mult='*']" mode="def">
@@ -197,12 +218,27 @@
     <xsl:text>}&#0010;</xsl:text>
   </xsl:template>
 
+  <xsl:template match="struct[@mult='*']" mode="free">
+    <xsl:param name="super"/>
+    <xsl:text>&#0009;if (victim-&gt;</xsl:text>
+    <xsl:value-of select="@slot"/>
+    <xsl:text>) {&#0010;</xsl:text>
+    <xsl:text>&#0009;&#0009;mddl_free_</xsl:text>
+    <xsl:value-of select="@slot"/>
+    <xsl:text>(victim-&gt;</xsl:text>
+    <xsl:value-of select="@slot"/>
+    <xsl:text>);&#0010;</xsl:text>
+    <xsl:text>&#0009;}&#0010;</xsl:text>
+  </xsl:template>
+
   <!-- catch all -->
   <xsl:template match="text()"/>
   <xsl:template match="text()" mode="decl"/>
   <xsl:template match="text()" mode="def"/>
+  <xsl:template match="text()" mode="free"/>
   <xsl:template match="*"/>
   <xsl:template match="*" mode="decl"/>
   <xsl:template match="*" mode="def"/>
+  <xsl:template match="*" mode="free"/>
 
 </xsl:stylesheet>
