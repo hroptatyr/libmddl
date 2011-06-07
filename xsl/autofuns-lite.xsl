@@ -116,7 +116,6 @@
     <xsl:apply-templates mode="free">
       <xsl:with-param name="super" select="@slot"/>
     </xsl:apply-templates>
-    <xsl:text>&#0009;free(victim);&#0010;</xsl:text>
     <xsl:text>&#0009;return;&#0010;</xsl:text>
     <xsl:text>}&#0010;&#0010;</xsl:text>
     <xsl:text>&#0010;</xsl:text>
@@ -228,6 +227,12 @@
     <xsl:text>(victim-&gt;</xsl:text>
     <xsl:value-of select="@slot"/>
     <xsl:text>);&#0010;</xsl:text>
+    <xsl:text>&#0009;&#0009;free(victim-&gt;</xsl:text>
+    <xsl:value-of select="@slot"/>
+    <xsl:text>);&#0010;</xsl:text>
+    <xsl:text>&#0009;&#0009;victim-&gt;n</xsl:text>
+    <xsl:value-of select="@slot"/>
+    <xsl:text> = 0;&#0010;</xsl:text>
     <xsl:text>&#0009;}&#0010;</xsl:text>
   </xsl:template>
 
