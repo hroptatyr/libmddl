@@ -1,4 +1,0 @@
-description "Thingamabobs."
-
-args "--unamed-opts=MDDL_FILES"
-
