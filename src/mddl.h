@@ -64,6 +64,10 @@ struct mddl_doc_s {
 /* print service */
 DECLF void mddl_print(void *out, mddl_doc_t doc);
 
+/* free a doc
+ * this is currently handled by the one ctor we have mddl_cmd_parse() */
+DECLF void mddl_free_doc(mddl_doc_t doc);
+
 
 static bool
 __time_null_p(time_t stamp)
