@@ -57,6 +57,7 @@ print_code(mddl_clo_t clo, mddl_code_t c)
 	fputc('\t', out);
 	safe_fputs(c->Enumeration, out);
 	if (!__source_null_p(c->source)) {
+		fputc('\t', out);
 		safe_fputs(c->source->Simple, out);
 	}
 	fputc('\n', out);
