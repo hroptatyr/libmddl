@@ -24,21 +24,40 @@
 #endif
 #define countof(_x)	(sizeof(_x) / sizeof(*_x))
 
+static int
+safe_strcmp(const char *a, const char *b)
+{
+	if (a && b) {
+		return strcmp(a, b);
+	}
+	/* a string is always equal to the NULL string :O */
+	return 0;
+}
+
+static size_t
+safe_fputs(const char *s, FILE *whither)
+{
+	if (s) {
+		return fputs(s, whither);
+	}
+	return 0;
+}
+
 
-static void
+static void __attribute__((noinline))
 print_code(mddl_clo_t clo, mddl_code_t c)
 {
 	FILE *out = clo->out;
 	const char *scheme = clo->code->scheme;
 
-	if (scheme != NULL && strcmp(c->scheme, scheme) != 0) {
+	if (safe_strcmp(c->scheme, scheme) != 0) {
 		return;
 	}
-	fputs(c->scheme, out);
+	safe_fputs(c->scheme, out);
 	fputc('\t', out);
-	fputs(c->Enumeration, out);
+	safe_fputs(c->Enumeration, out);
 	if (!__source_null_p(c->source)) {
-		fputs(c->source->Simple, out);
+		safe_fputs(c->source->Simple, out);
 	}
 	fputc('\n', out);
 	return;
