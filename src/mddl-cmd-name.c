@@ -24,6 +24,15 @@
 #endif
 #define countof(_x)	(sizeof(_x) / sizeof(*_x))
 
+static size_t
+safe_fputs(const char *s, FILE *whither)
+{
+	if (s) {
+		return fputs(s, whither);
+	}
+	return 0;
+}
+
 
 static void
 print_name(mddl_clo_t clo, mddl_name_t n, const char *ctx)
@@ -32,7 +41,7 @@ print_name(mddl_clo_t clo, mddl_name_t n, const char *ctx)
 
 	fputs(ctx, out);
 	fputc('\t', out);
-	fputs(n->Simple, out);
+	safe_fputs(n->Simple, out);
 	fputc('\t', out);
 	if (!__source_null_p(n->source)) {
 		fputs(n->source->Simple, out);
