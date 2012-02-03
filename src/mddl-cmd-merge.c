@@ -1,6 +1,6 @@
-/*** mddl-core.h -- our universe of commands
+/*** mddl-cmd-merge.c -- merge two (or more) mddl files
  *
- * Copyright (C) 2010 - 2012  Sebastian Freundt
+ * Copyright (C) 2012 Sebastian Freundt
  *
  * Author:  Sebastian Freundt <freundt@ga-group.nl>
  *
@@ -35,77 +35,74 @@
  *
  **/
 
-#if !defined INCLUDED_mddl_core_h_
-#define INCLUDED_mddl_core_h_
-
+#include <stdlib.h>
+#include <stdbool.h>
+#include <string.h>
 #include <stdio.h>
+#include <sys/stat.h>
+#include <time.h>
+#include <ctype.h>
+#include <assert.h>
+#include <errno.h>
+#include "mddl.h"
+#include "mddl-core.h"
 
-typedef enum __cmd_e mddl_cmd_t;
-typedef struct __clo_s *mddl_clo_t;
+#if defined __INTEL_COMPILER
+# pragma warning (disable:869)
+# pragma warning (disable:177)
+#endif	/* __INTEL_COMPILER */
+#if !defined UNUSED
+# define UNUSED(_x)	__attribute__((unused)) _x##_unused
+#endif	/* !UNUSED */
+#if !defined LIKELY
+# define LIKELY(_x)	__builtin_expect((_x), 1)
+#endif
+#if !defined UNLIKELY
+# define UNLIKELY(_x)	__builtin_expect((_x), 0)
+#endif
+#define countof(_x)	(sizeof(_x) / sizeof(*_x))
 
-/* commands we support */
-enum __cmd_e {
-	MDDL_CMD_UNK,
-	MDDL_CMD_VERSION,
-	MDDL_CMD_PRINT,
-	MDDL_CMD_CODE,
-	MDDL_CMD_NAME,
-	MDDL_CMD_OBJECTIVE,
-	MDDL_CMD_MERGE,
-};
+static mddl_doc_t
+__read_file(const char *f)
+{
+	struct stat st = {0};
+	mddl_doc_t res = NULL;
 
-/* new_pf specific options */
-struct __print_clo_s {
-	const char *file;
-};
-
-struct __code_clo_s {
-	const char *file;
-	const char *scheme;
-};
-
-struct __name_clo_s {
-	const char *file;
-	const char *scheme;
-	const char *code;
-};
-
-struct __objctv_clo_s {
-	const char *file;
-};
-
-struct __merge_clo_s {
-	const char *file1;
-	const char *file2;
-};
-
-/* command line options */
-struct __clo_s {
-	int helpp;
-
-	mddl_cmd_t cmd;
-	union {
-		struct __print_clo_s print[1];
-		struct __code_clo_s code[1];
-		struct __name_clo_s name[1];
-		struct __objctv_clo_s objctv[1];
-		struct __merge_clo_s merge[1];
-	};
-
-	/* output options */
-	FILE *out;
-};
+	/* special thing so we can process pipes */
+	if (f == NULL || (f[0] == '-' && f[1] == '\0')) {
+		f = "/dev/stdin";
+	} else if (stat(f, &st) < 0 && errno == ENOENT) {
+		fprintf(stderr, "Cannot open %s, no such file\n", f);
+		goto out;
+	}
+	/* just try and parse whatever we've got */
+	if ((res = mddl_cmd_parse(f)) == NULL) {
+		fprintf(stderr, "Could not parse %s\n", f);
+		goto out;
+	}
+out:
+	return res;
+}
 
 
-extern mddl_doc_t mddl_cmd_parse(const char *file);
-extern void mddl_cmd_print(mddl_clo_t, mddl_doc_t);
-extern void mddl_cmd_code(mddl_clo_t, mddl_doc_t);
-extern void mddl_cmd_name(mddl_clo_t, mddl_doc_t);
-extern void mddl_cmd_objective(mddl_clo_t, mddl_doc_t);
+int
+mddl_cmd_merge(mddl_clo_t clo)
+{
+	const size_t indent = 0;
+	mddl_doc_t doc_from;
+	mddl_doc_t doc_to;
+	mddl_mddl_t from;
+	mddl_mddl_t to;
+	int res = 0;
 
-/**
- * merge FILE [FILEs...]
- * (somewhat) intelligently merge FILE and FILEs */
-extern int mddl_cmd_merge(mddl_clo_t);
+	if ((doc_from = __read_file(clo->merge->file1)) == NULL ||
+	    (doc_to = __read_file(clo->merge->file2)) == NULL) {
+		res = -1;
+		goto out;
+	}
 
-#endif	/* INCLUDED_mddl_core_h_ */
+out:
+	return res;
+}
+
+/* mddl-cmd-merge.c ends here */
