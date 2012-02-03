@@ -85,22 +85,64 @@ out:
 }
 
 
+static void
+__merge_snap(mddl_snap_t tgt, mddl_snap_t src)
+{
+	if (tgt->ninstrumentDomain == 1 &&
+	    src->ninstrumentDomain == 1) {
+		/* copy instrument identifiers */
+		mddl_instrumentDomain_t tgtii = tgt->instrumentDomain;
+		mddl_instrumentDomain_t srcii = src->instrumentDomain;
+		for (size_t i = 0; i < srcii->ninstrumentIdentifier; i++) {
+			mddl_instrumentIdentifier_t srcid =
+				srcii->instrumentIdentifier + i;
+			mddl_instrumentIdentifier_t tgtid =
+				mddl_instrumentDomain_add_instrumentIdentifier(
+					tgtii);
+			memcpy(tgtid, srcid, sizeof(*srcid));
+		}
+	}
+	return;
+}
+
+static mddl_doc_t
+__merge(mddl_doc_t tgtsrc, mddl_doc_t src)
+{
+	mddl_mddl_t troot;
+	mddl_mddl_t sroot;
+
+	if ((troot = tgtsrc->tree) == NULL) {
+		return NULL;
+	} else if ((sroot = src->tree) == NULL) {
+		return tgtsrc;
+	}
+	/* if both have a snap, just use it */
+	if ((troot->nsnap == 1) && (sroot->nsnap >= 1)) {
+		__merge_snap(troot->snap, sroot->snap);
+	}
+	return tgtsrc;
+}
+
+
 int
 mddl_cmd_merge(mddl_clo_t clo)
 {
 	const size_t indent = 0;
 	mddl_doc_t doc_from;
 	mddl_doc_t doc_to;
-	mddl_mddl_t from;
-	mddl_mddl_t to;
 	int res = 0;
 
-	if ((doc_from = __read_file(clo->merge->file1)) == NULL ||
-	    (doc_to = __read_file(clo->merge->file2)) == NULL) {
+	if ((doc_to = __read_file(clo->merge->file1)) == NULL ||
+	    (doc_from = __read_file(clo->merge->file2)) == NULL) {
+		res = -1;
+		goto out;
+	} else if ((doc_to = __merge(doc_to, doc_from)) == NULL) {
 		res = -1;
 		goto out;
 	}
-
+	/* fiddle with clo and print the result */
+	clo->print->file = NULL;
+	mddl_cmd_print(clo, doc_to);
 out:
 	return res;
 }
