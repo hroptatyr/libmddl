@@ -1,5 +1,10 @@
 AC_PREREQ([2.63])
-AC_INIT([libmddl], m4_esyscmd([./git-version-gen]), [https://trac.ga-group.nl/freundt_devel/])
+m4_define([GIT_VERSION_GEN], [dnl
+pushdef([version], [m4_esyscmd([./git-version-gen])])[]dnl
+ifelse([]version[], [], [0.1.1], []version[])[]dnl
+popdef([version])[]dnl
+])
+AC_INIT([libmddl], [GIT_VERSION_GEN], [https://trac.ga-group.nl/freundt_devel/])
 AC_CONFIG_AUX_DIR([.])
 AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_HEADER([src/config.h])
