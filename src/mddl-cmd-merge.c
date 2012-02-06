@@ -216,7 +216,14 @@ __merge(mddl_doc_t tgtsrc, mddl_doc_t src)
 	}
 	/* if both have a snap, just use it */
 	if ((troot->nsnap == 1) && (sroot->nsnap >= 1)) {
+		/* first one gets merged ... */
 		__merge_snap(troot->snap, sroot->snap);
+	}
+	/* ... others just appended */
+	for (size_t i = 1; i < sroot->nsnap; i++) {
+		mddl_snap_t newsn = mddl_mddl_add_snap(troot);
+		mddl_snap_t ssnap = sroot->snap + i;
+		memcpy(newsn, ssnap, sizeof(*ssnap));
 	}
 	return tgtsrc;
 }
