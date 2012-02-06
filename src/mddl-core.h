@@ -51,6 +51,7 @@ enum __cmd_e {
 	MDDL_CMD_CODE,
 	MDDL_CMD_NAME,
 	MDDL_CMD_OBJECTIVE,
+	MDDL_CMD_MERGE,
 };
 
 /* new_pf specific options */
@@ -73,6 +74,11 @@ struct __objctv_clo_s {
 	const char *file;
 };
 
+struct __merge_clo_s {
+	const char *file1;
+	const char *file2;
+};
+
 /* command line options */
 struct __clo_s {
 	int helpp;
@@ -83,6 +89,7 @@ struct __clo_s {
 		struct __code_clo_s code[1];
 		struct __name_clo_s name[1];
 		struct __objctv_clo_s objctv[1];
+		struct __merge_clo_s merge[1];
 	};
 
 	/* output options */
@@ -95,5 +102,10 @@ extern void mddl_cmd_print(mddl_clo_t, mddl_doc_t);
 extern void mddl_cmd_code(mddl_clo_t, mddl_doc_t);
 extern void mddl_cmd_name(mddl_clo_t, mddl_doc_t);
 extern void mddl_cmd_objective(mddl_clo_t, mddl_doc_t);
+
+/**
+ * merge FILE [FILEs...]
+ * (somewhat) intelligently merge FILE and FILEs */
+extern int mddl_cmd_merge(mddl_clo_t);
 
 #endif	/* INCLUDED_mddl_core_h_ */
