@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<mddl xmlns:ns_1="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://www.mddl.org/mddl/3.0-beta" version="3.0-beta" ns_1:schemaLocation="http://www.mddl.org/mddl/3.0-beta mddl-3.0-beta-full.xsd">
+<mddl xmlns="http://www.mddl.org/mddl/3.0-beta" xmlns:ns_1="http://www.w3.org/2001/XMLSchema-instance" version="3.0-beta">
   <header>
     <dateTime>2012-02-03T10:30:52+0000</dateTime>
     <source>
@@ -9,28 +9,34 @@
   <snap>
     <instrumentDomain>
       <instrumentIdentifier>
-        <scopeType>global</scopeType>
         <code scheme="http://www.mddl.org/ext/scheme/symbol?SRC=WKN">
           <mdString>113520</mdString>
         </code>
         <code scheme="http://www.mddl.org/ext/scheme/symbol?SRC=ISIN">
           <mdString>DE0001135200</mdString>
         </code>
+        <scopeType>
+          <mdString>global</mdString>
+        </scopeType>
       </instrumentIdentifier>
       <instrumentIdentifier>
-        <scopeType>market</scopeType>
         <code scheme="http://www.mddl.org/ext/scheme/symbol?SRC=ARIVA">
           <mdString>40921.17</mdString>
         </code>
         <marketIdentifier>
-          <name>
-            <mdString>Berlin</mdString>
-            <role>ariva-name</role>
-          </name>
           <code scheme="http://mddl.org/ext/scheme/iso10383.xml">
             <mdString>XBER</mdString>
           </code>
+          <name>
+            <mdString>Berlin</mdString>
+            <role>
+              <mdString>ariva-name</mdString>
+            </role>
+          </name>
         </marketIdentifier>
+        <scopeType>
+          <mdString>market</mdString>
+        </scopeType>
       </instrumentIdentifier>
     </instrumentDomain>
   </snap>
