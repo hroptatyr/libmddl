@@ -14,6 +14,7 @@ AM_MT_LOG_FLAGS = --builddir $(top_builddir)/src --hash sha1sum
 LOG_COMPILER = echo
 
 TESTS += merge.1.mt
+TESTS += merge.2.mt
 EXTRA_DIST += merge.a.mddl
 EXTRA_DIST += merge.b.mddl
 EXTRA_DIST += merge.c.mddl
