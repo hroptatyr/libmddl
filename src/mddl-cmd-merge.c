@@ -85,11 +85,89 @@ out:
 }
 
 
+static bool
+__scopeType_sim_p(mddl_scopeType_t a, mddl_scopeType_t b)
+{
+	if (strcmp(a->Enumeration, b->Enumeration) == 0) {
+		return true;
+	}
+	return false;
+}
+
+static bool
+__code_sim_p(mddl_code_t a, mddl_code_t b)
+{
+	if (strcmp(a->scheme, b->scheme) == 0 &&
+	    strcmp(a->Enumeration, b->Enumeration) == 0) {
+		return true;
+	}
+	return false;
+}
+
+static bool
+__name_sim_p(mddl_name_t a, mddl_name_t b)
+{
+	if (strcmp(a->Simple, b->Simple) == 0) {
+		return true;
+	}
+	return false;
+}
+
+#define CHECK_SIM(__type, __a, __b)					\
+	if ((__a)->n##__type != (__b)->n##__type) {			\
+		return false;						\
+	}								\
+	for (size_t i = 0; i < (__a)->n##__type; i++) {			\
+		mddl_##__type##_t __type##a = (__a)->__type + i;	\
+		bool subres = false;					\
+		for (size_t j = 0; j < (__b)->n##__type; j++) {		\
+			mddl_##__type##_t __type##b = (__b)->__type + j; \
+			if (__##__type##_sim_p(__type##a, __type##b)) { \
+				subres = true;				\
+				break;					\
+			}						\
+		}							\
+		if (!subres) {						\
+			return false;					\
+		}							\
+	}
+
+static bool
+__insidn_sim_p(mddl_instrumentIdentifier_t a, mddl_instrumentIdentifier_t b)
+{
+/* return non-FALSE if A and B are similar in some sense
+ * - same scopeType(s)
+ * - same code scheme(s) and code(s) */
+	bool res = false;
+
+	/* check if the scopes match */
+	CHECK_SIM(scopeType, a, b);
+
+	if (a->nmarketIdentifier > 0 || b->nmarketIdentifier > 0) {
+		CHECK_SIM(code, a, b);
+	}
+	return true;
+}
+
 static mddl_instrumentIdentifier_t
 __insdom_insidn(mddl_instrumentDomain_t lis, mddl_instrumentIdentifier_t ii)
 {
-/* return non-NULL iff LIS has an instrument identifier similar to II */
-	return false;
+/* return non-NULL iff LIS has an instrument identifier similar to II
+ * Similar here means: see __insidn_sim_p() */
+	for (size_t i = 0; i < lis->ninstrumentIdentifier; i++) {
+		mddl_instrumentIdentifier_t tii = lis->instrumentIdentifier + i;
+
+		if (__insidn_sim_p(tii, ii)) {
+			return tii;
+		}
+	}
+	return NULL;
+}
+
+static void
+__merge_insidn(mddl_instrumentIdentifier_t tgt, mddl_instrumentIdentifier_t src)
+{
+	return;
 }
 
 static void
