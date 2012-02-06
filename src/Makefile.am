@@ -25,6 +25,7 @@ mddl_SOURCES += mddl-cmd-parse.c
 mddl_SOURCES += mddl-cmd-code.c
 mddl_SOURCES += mddl-cmd-name.c
 mddl_SOURCES += mddl-cmd-objective.c
+mddl_SOURCES += mddl-cmd-merge.c
 mddl_CPPFLAGS = $(AM_CPPFLAGS) $(LIBXML_CFLAGS)
 mddl_LDADD = libmddl.la
 mddl_LDFLAGS = -static $(LIBXML_LIBS)
@@ -45,6 +46,7 @@ libmddl_stub_a_SOURCES += mddl-cmd-parse.c
 libmddl_stub_a_SOURCES += mddl-cmd-code.c
 libmddl_stub_a_SOURCES += mddl-cmd-name.c
 libmddl_stub_a_SOURCES += mddl-cmd-objective.c
+libmddl_stub_a_SOURCES += mddl-cmd-merge.c
 header_HEADERS += mddl-core.h
 
 

@@ -87,6 +87,8 @@ Supported commands:\n\
 \n\
   objective FILE        Read FILE and print objectives\n\
 \n\
+  merge FILE1 FILE2     Merge FILE1 and FILE2 (somewhat) intelligently\n\
+\n\
 ";
 
 
@@ -146,6 +148,10 @@ mddl_process(struct __clo_s *clo)
 		clo->out = stdout;
 		mddl_cmd_objective(clo, doc);
 		res = 0;
+		break;
+	case MDDL_CMD_MERGE:
+		clo->out = stdout;
+		res = mddl_cmd_merge(clo);
 		break;
 	default:
 		break;
@@ -265,6 +271,25 @@ parse_objctv_args(struct __clo_s *clo, int argc, char *argv[])
 }
 
 static void
+parse_merge_args(struct __clo_s *clo, int argc, char *argv[])
+{
+	for (int i = 0; i < argc; i++) {
+		char *p = argv[i];
+
+		if (clo->merge->file1 == NULL) {
+			/* must be file1 then */
+			clo->merge->file1 = argv[i];
+			argv[i] = NULL;
+		} else if (clo->merge->file2 == NULL) {
+			/* must be file1 then */
+			clo->merge->file2 = argv[i];
+			argv[i] = NULL;
+		}
+	}
+	return;
+}
+
+static void
 parse_args(struct __clo_s *clo, int argc, char *argv[])
 {
 	for (int i = 0; i < argc; i++) {
@@ -338,6 +363,17 @@ parse_args(struct __clo_s *clo, int argc, char *argv[])
 			}
 			break;
 		}
+		case 'm': {
+			/* merge */
+			int new_argc = argc - i - 1;
+			char **new_argv = argv + i + 1;
+			if (strcmp(p, "erge") == 0) {
+				clo->cmd = MDDL_CMD_MERGE;
+				parse_merge_args(clo, new_argc, new_argv);
+				continue;
+			}
+			break;
+		}
 		case 'o': {
 			/* objective */
 			int new_argc = argc - i - 1;
@@ -400,6 +436,8 @@ main(int argc, char *argv[])
 	case MDDL_CMD_NAME:
 	case MDDL_CMD_PRINT:
 	case MDDL_CMD_OBJECTIVE:
+	case MDDL_CMD_MERGE:
+		/* everything that goes to the processing stuff below */
 		break;
 	}
 
