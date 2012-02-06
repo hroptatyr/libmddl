@@ -85,21 +85,41 @@ out:
 }
 
 
+static mddl_instrumentIdentifier_t
+__insdom_insidn(mddl_instrumentDomain_t lis, mddl_instrumentIdentifier_t ii)
+{
+/* return non-NULL iff LIS has an instrument identifier similar to II */
+	return false;
+}
+
+static void
+__merge_insdom(mddl_instrumentDomain_t tgt, mddl_instrumentDomain_t src)
+{
+	/* merge instrument identifiers */
+	for (size_t i = 0; i < src->ninstrumentIdentifier; i++) {
+		mddl_instrumentIdentifier_t ii = src->instrumentIdentifier + i;
+		mddl_instrumentIdentifier_t tgtii;
+
+#define __add_insidn	mddl_instrumentDomain_add_instrumentIdentifier
+		if ((tgtii = __insdom_insidn(tgt, ii)) == NULL) {
+			tgtii = __add_insidn(tgt);
+			memcpy(tgtii, ii, sizeof(*ii));
+		}
+#undef __add_insidn
+	}
+	return;
+}
+
 static void
 __merge_snap(mddl_snap_t tgt, mddl_snap_t src)
 {
-	if (tgt->ninstrumentDomain == 1 &&
-	    src->ninstrumentDomain == 1) {
-		/* copy instrument identifiers */
-		mddl_instrumentDomain_t tgtii = tgt->instrumentDomain;
-		mddl_instrumentDomain_t srcii = src->instrumentDomain;
-		for (size_t i = 0; i < srcii->ninstrumentIdentifier; i++) {
-			mddl_instrumentIdentifier_t srcid =
-				srcii->instrumentIdentifier + i;
-			mddl_instrumentIdentifier_t tgtid =
-				mddl_instrumentDomain_add_instrumentIdentifier(
-					tgtii);
-			memcpy(tgtid, srcid, sizeof(*srcid));
+	/* merge instrument domain */
+	if (tgt->ninstrumentDomain >= 1) {
+		mddl_instrumentDomain_t tdom = tgt->instrumentDomain;
+		for (size_t i = 0; i < src->ninstrumentDomain; i++) {
+			mddl_instrumentDomain_t sdom =
+				src->instrumentDomain + i;
+			__merge_insdom(tdom, sdom);
 		}
 	}
 	return;
