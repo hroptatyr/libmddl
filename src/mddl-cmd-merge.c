@@ -192,13 +192,16 @@ static void
 __merge_snap(mddl_snap_t tgt, mddl_snap_t src)
 {
 	/* merge instrument domain */
-	if (tgt->ninstrumentDomain >= 1) {
-		mddl_instrumentDomain_t tdom = tgt->instrumentDomain;
-		for (size_t i = 0; i < src->ninstrumentDomain; i++) {
-			mddl_instrumentDomain_t sdom =
-				src->instrumentDomain + i;
-			__merge_insdom(tdom, sdom);
-		}
+	if (tgt->ninstrumentDomain == 1 && src->ninstrumentDomain >= 1) {
+		/* first one gets merged ... */
+		__merge_insdom(tgt->instrumentDomain, src->instrumentDomain);
+	}
+	/* ... and others just get appended */
+	for (size_t i = 1; i < src->ninstrumentDomain; i++) {
+		mddl_instrumentDomain_t newdom =
+			mddl_snap_add_instrumentDomain(tgt);
+		mddl_instrumentDomain_t sdom = src->instrumentDomain + i;
+		memcpy(newdom, sdom, sizeof(*sdom));
 	}
 	return;
 }
