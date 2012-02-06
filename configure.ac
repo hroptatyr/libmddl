@@ -43,5 +43,6 @@ AC_CONFIG_FILES([Makefile])
 AC_CONFIG_FILES([libmddl.pc])
 AC_CONFIG_FILES([xsl/Makefile])
 AC_CONFIG_FILES([src/Makefile])
+AC_CONFIG_FILES([test/Makefile])
 AC_OUTPUT
 
