@@ -34,6 +34,29 @@
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  **/
+/**
+ * Merging as defined by us is always pairwise and type-locked, so a
+ * snap can be merged to another snap, but not to 2 snap structures at
+ * once nor can an instrumentDomain be merge *into* an existing snap
+ *
+ * The exact arithmetics are yet to be worked out and they may be more
+ * intelligent in the future allowing for mergers of best matches.
+ * Right now the decision what to merge onto what is order-dependent
+ * and the currently used algorithm is:
+ *
+ * snap + snap:
+ *   merge first instrument domains
+ *   append other instrument domains
+ *   merge first objectives
+ *   append other objectives
+ *   ...
+ *
+ * ins dom + ins dom:
+ *   merge first instrument identifiers
+ *   append other instrument identifiers
+ *   ...
+ *
+ * many more to be documented. */
 
 #include <stdlib.h>
 #include <stdbool.h>
