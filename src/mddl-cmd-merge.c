@@ -112,6 +112,15 @@ out:
 
 
 static bool
+__scopeType_eq_p(mddl_scopeType_t a, const char *value)
+{
+	if (strcmp(a->Enumeration, value) == 0) {
+		return true;
+	}
+	return false;
+}
+
+static bool
 __scopeType_sim_p(mddl_scopeType_t a, mddl_scopeType_t b)
 {
 	if (strcmp(a->Enumeration, b->Enumeration) == 0) {
@@ -136,6 +145,12 @@ __name_sim_p(mddl_name_t a, mddl_name_t b)
 	if (strcmp(a->Simple, b->Simple) == 0) {
 		return true;
 	}
+	return false;
+}
+
+static bool
+__marketIdentifier_sim_p(mddl_marketIdentifier_t a, mddl_marketIdentifier_t b)
+{
 	return false;
 }
 
@@ -165,6 +180,7 @@ __##__type##_allsim_p(mddl_##__par##_t a, mddl_##__par##_t b)		\
 
 DEFALLSIM(instrumentIdentifier, scopeType); 
 DEFALLSIM(instrumentIdentifier, code); 
+DEFALLSIM(instrumentIdentifier, marketIdentifier); 
 
 static bool
 __insidn_sim_p(mddl_instrumentIdentifier_t a, mddl_instrumentIdentifier_t b)
@@ -172,26 +188,76 @@ __insidn_sim_p(mddl_instrumentIdentifier_t a, mddl_instrumentIdentifier_t b)
 /* return non-FALSE if A and B are similar in some sense
  * - same scopeType(s)
  * - same code scheme(s) and code(s) */
-	bool res = false;
+	bool res;
 
 	/* check if the scopes match */
-	__scopeType_allsim_p(a, b);
+	res = __scopeType_allsim_p(a, b);
 
 	if (a->nmarketIdentifier > 0 || b->nmarketIdentifier > 0) {
-		__code_allsim_p(a, b);
+		res = res && __code_allsim_p(a, b);
 	}
-	return true;
+	return res;
+#define __instrumentIdentifier_sim_p	__insidn_sim_p
 }
 
+#define APPENDN(__par, __type, __tgt, __src, __st)			\
+	for (size_t i = __st; i < (__src)->n##__type; i++) {		\
+		mddl_##__type##_t tmp = mddl_##__par##_add_##__type(__tgt); \
+		mddl_##__type##_t sty = __src->__type + i;		\
+		memcpy(tmp, sty, sizeof(*sty));				\
+	}
+
+#define MERGEN(__par, __type, __tgt, __src, __st)			\
+	for (size_t i = __st; i < (__src)->n##__type; i++) {		\
+		bool skip = false;					\
+		mddl_##__type##_t sty = __src->__type + i;		\
+		mddl_##__type##_t tty;					\
+									\
+		for (size_t j = 0; (__tgt)->n##__type; j++) {		\
+			tty = __tgt->__type + j;			\
+			if (__##__type##_sim_p(tty, sty)) {		\
+				skip = true;				\
+				break;					\
+			}						\
+		}							\
+		if (!skip) {						\
+			tty = mddl_##__par##_add_##__type(__tgt);	\
+			memcpy(tty, sty, sizeof(*sty));			\
+		}							\
+	}
 
 static int
 __merge_insidn(mddl_instrumentIdentifier_t tgt, mddl_instrumentIdentifier_t src)
 {
 	/* for ins idns to be merged the scopes must match ... */
-	if (__insidn_sim_p(tgt, src)) {
+	if (!__scopeType_allsim_p(tgt, src)) {
+		return -1;
+	}
+	/* ... and if the scope is `market' ... */
+	if (tgt->nscopeType == 1 &&
+	    __scopeType_eq_p(tgt->scopeType, "market")) {
+		if (!__marketIdentifier_allsim_p(tgt, src)) {
+			/* ... the marketIdentifiers must match */
+			return -1;
+		} else if (!__code_allsim_p(tgt, src)) {
+			/* ... and also the codes */
+			return -1;
+		}
+		/* ah good, let's merge the guy then */
+		APPENDN(instrumentIdentifier, name, tgt, src, 0);
 		return 0;
 	}
-	return -1;
+	/* otherwise just append all children */
+	MERGEN(instrumentIdentifier, code, tgt, src, 0);
+	MERGEN(instrumentIdentifier, name, tgt, src, 0);
+	APPENDN(instrumentIdentifier, country, tgt, src, 0);
+	APPENDN(instrumentIdentifier, instrumentData, tgt, src, 0);
+	APPENDN(instrumentIdentifier, instrumentStatusType, tgt, src, 0);
+	APPENDN(instrumentIdentifier, marketIdentifier, tgt, src, 0);
+	MERGEN(instrumentIdentifier, scopeType, tgt, src, 0);
+	APPENDN(instrumentIdentifier, segmentIdentifier, tgt, src, 0);
+	APPENDN(instrumentIdentifier, tranche, tgt, src, 0);
+	return 0;
 }
 
 static int
@@ -221,11 +287,7 @@ __merge_insdom(mddl_instrumentDomain_t tgt, mddl_instrumentDomain_t src)
 		}
 	}
 	/* ... append the rest */
-	for (size_t i = nmrg; i < src->ninstrumentIdentifier; i++) {
-		mddl_instrumentIdentifier_t tii = __add_insidn(tgt);
-		mddl_instrumentIdentifier_t sii = src->instrumentIdentifier + i;
-		memcpy(tii, sii, sizeof(*sii));
-	}
+	APPENDN(instrumentDomain, instrumentIdentifier, tgt, src, nmrg);
 
 	/* same for objectives, no merge for them */
 	nmrg = 1;
@@ -240,18 +302,13 @@ __merge_insdom(mddl_instrumentDomain_t tgt, mddl_instrumentDomain_t src)
 			nmrg = 0;
 		}
 	}
-	for (size_t i = 0; i < src->nobjective; i++) {
-		mddl_objective_t tobj = __add_objective(tgt);
-		mddl_objective_t sobj = src->objective + i;
-		memcpy(tobj, sobj, sizeof(*sobj));
-	}
+	APPENDN(instrumentDomain, objective, tgt, src, nmrg);
 	return 0;
 }
 
 static int
 __merge_snap(mddl_snap_t tgt, mddl_snap_t src)
 {
-#define __add_insdom	mddl_snap_add_instrumentDomain
 	size_t nmrg = 1;
 
 	/* make sure there's at least one insdom on both sides */
@@ -267,18 +324,13 @@ __merge_snap(mddl_snap_t tgt, mddl_snap_t src)
 		}
 	}
 	/* ... and others just get appended */
-	for (size_t i = nmrg; i < src->ninstrumentDomain; i++) {
-		mddl_instrumentDomain_t tdom = __add_insdom(tgt);
-		mddl_instrumentDomain_t sdom = src->instrumentDomain + i;
-		memcpy(tdom, sdom, sizeof(*sdom));
-	}
+	APPENDN(snap, instrumentDomain, tgt, src, nmrg);
 	return 0;
 }
 
 static mddl_doc_t
 __merge(mddl_doc_t tgtsrc, mddl_doc_t src)
 {
-#define __add_snap	mddl_mddl_add_snap
 	mddl_mddl_t troot;
 	mddl_mddl_t sroot;
 	size_t nmrg = 1;
@@ -299,11 +351,7 @@ __merge(mddl_doc_t tgtsrc, mddl_doc_t src)
 		}
 	}
 	/* ... others just appended */
-	for (size_t i = nmrg; i < sroot->nsnap; i++) {
-		mddl_snap_t newsn = __add_snap(troot);
-		mddl_snap_t ssnap = sroot->snap + i;
-		memcpy(newsn, ssnap, sizeof(*ssnap));
-	}
+	APPENDN(mddl, snap, troot, sroot, nmrg);
 	return tgtsrc;
 }
 
