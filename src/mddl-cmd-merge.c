@@ -34,6 +34,29 @@
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  **/
+/**
+ * Merging as defined by us is always pairwise and type-locked, so a
+ * snap can be merged to another snap, but not to 2 snap structures at
+ * once nor can an instrumentDomain be merge *into* an existing snap
+ *
+ * The exact arithmetics are yet to be worked out and they may be more
+ * intelligent in the future allowing for mergers of best matches.
+ * Right now the decision what to merge onto what is order-dependent
+ * and the currently used algorithm is:
+ *
+ * snap + snap:
+ *   merge first instrument domains
+ *   append other instrument domains
+ *   merge first objectives
+ *   append other objectives
+ *   ...
+ *
+ * ins dom + ins dom:
+ *   merge first instrument identifiers
+ *   append other instrument identifiers
+ *   ...
+ *
+ * many more to be documented. */
 
 #include <stdlib.h>
 #include <stdbool.h>
@@ -89,6 +112,15 @@ out:
 
 
 static bool
+__scopeType_eq_p(mddl_scopeType_t a, const char *value)
+{
+	if (strcmp(a->Enumeration, value) == 0) {
+		return true;
+	}
+	return false;
+}
+
+static bool
 __scopeType_sim_p(mddl_scopeType_t a, mddl_scopeType_t b)
 {
 	if (strcmp(a->Enumeration, b->Enumeration) == 0) {
@@ -116,15 +148,24 @@ __name_sim_p(mddl_name_t a, mddl_name_t b)
 	return false;
 }
 
-#define CHECK_SIM(__type, __a, __b)					\
-	if ((__a)->n##__type != (__b)->n##__type) {			\
+static bool
+__marketIdentifier_sim_p(mddl_marketIdentifier_t a, mddl_marketIdentifier_t b)
+{
+	return false;
+}
+
+#define DEFALLSIM(__par, __type)					\
+static bool								\
+__##__type##_allsim_p(mddl_##__par##_t a, mddl_##__par##_t b)		\
+{									\
+	if (a->n##__type != b->n##__type) {				\
 		return false;						\
 	}								\
-	for (size_t i = 0; i < (__a)->n##__type; i++) {			\
-		mddl_##__type##_t __type##a = (__a)->__type + i;	\
+	for (size_t i = 0; i < a->n##__type; i++) {			\
+		mddl_##__type##_t __type##a = a->__type + i;		\
 		bool subres = false;					\
-		for (size_t j = 0; j < (__b)->n##__type; j++) {		\
-			mddl_##__type##_t __type##b = (__b)->__type + j; \
+		for (size_t j = 0; j < b->n##__type; j++) {		\
+			mddl_##__type##_t __type##b = b->__type + j;	\
 			if (__##__type##_sim_p(__type##a, __type##b)) { \
 				subres = true;				\
 				break;					\
@@ -133,7 +174,13 @@ __name_sim_p(mddl_name_t a, mddl_name_t b)
 		if (!subres) {						\
 			return false;					\
 		}							\
-	}
+	}								\
+	return true;							\
+}
+
+DEFALLSIM(instrumentIdentifier, scopeType); 
+DEFALLSIM(instrumentIdentifier, code); 
+DEFALLSIM(instrumentIdentifier, marketIdentifier); 
 
 static bool
 __insidn_sim_p(mddl_instrumentIdentifier_t a, mddl_instrumentIdentifier_t b)
@@ -141,72 +188,144 @@ __insidn_sim_p(mddl_instrumentIdentifier_t a, mddl_instrumentIdentifier_t b)
 /* return non-FALSE if A and B are similar in some sense
  * - same scopeType(s)
  * - same code scheme(s) and code(s) */
-	bool res = false;
+	bool res;
 
 	/* check if the scopes match */
-	CHECK_SIM(scopeType, a, b);
+	res = __scopeType_allsim_p(a, b);
 
 	if (a->nmarketIdentifier > 0 || b->nmarketIdentifier > 0) {
-		CHECK_SIM(code, a, b);
+		res = res && __code_allsim_p(a, b);
 	}
-	return true;
+	return res;
+#define __instrumentIdentifier_sim_p	__insidn_sim_p
 }
 
-static mddl_instrumentIdentifier_t
-__insdom_insidn(mddl_instrumentDomain_t lis, mddl_instrumentIdentifier_t ii)
-{
-/* return non-NULL iff LIS has an instrument identifier similar to II
- * Similar here means: see __insidn_sim_p() */
-	for (size_t i = 0; i < lis->ninstrumentIdentifier; i++) {
-		mddl_instrumentIdentifier_t tii = lis->instrumentIdentifier + i;
-
-		if (__insidn_sim_p(tii, ii)) {
-			return tii;
-		}
+#define APPENDN(__par, __type, __tgt, __src, __st)			\
+	for (size_t i = __st; i < (__src)->n##__type; i++) {		\
+		mddl_##__type##_t tmp = mddl_##__par##_add_##__type(__tgt); \
+		mddl_##__type##_t sty = __src->__type + i;		\
+		memcpy(tmp, sty, sizeof(*sty));				\
 	}
-	return NULL;
-}
 
-static void
+#define MERGEN(__par, __type, __tgt, __src, __st)			\
+	for (size_t i = __st; i < (__src)->n##__type; i++) {		\
+		bool skip = false;					\
+		mddl_##__type##_t sty = __src->__type + i;		\
+		mddl_##__type##_t tty;					\
+									\
+		for (size_t j = 0; (__tgt)->n##__type; j++) {		\
+			tty = __tgt->__type + j;			\
+			if (__##__type##_sim_p(tty, sty)) {		\
+				skip = true;				\
+				break;					\
+			}						\
+		}							\
+		if (!skip) {						\
+			tty = mddl_##__par##_add_##__type(__tgt);	\
+			memcpy(tty, sty, sizeof(*sty));			\
+		}							\
+	}
+
+static int
 __merge_insidn(mddl_instrumentIdentifier_t tgt, mddl_instrumentIdentifier_t src)
 {
-	return;
+	/* for ins idns to be merged the scopes must match ... */
+	if (!__scopeType_allsim_p(tgt, src)) {
+		return -1;
+	}
+	/* ... and if the scope is `market' ... */
+	if (tgt->nscopeType == 1 &&
+	    __scopeType_eq_p(tgt->scopeType, "market")) {
+		if (!__marketIdentifier_allsim_p(tgt, src)) {
+			/* ... the marketIdentifiers must match */
+			return -1;
+		} else if (!__code_allsim_p(tgt, src)) {
+			/* ... and also the codes */
+			return -1;
+		}
+		/* ah good, let's merge the guy then */
+		APPENDN(instrumentIdentifier, name, tgt, src, 0);
+		return 0;
+	}
+	/* otherwise just append all children */
+	MERGEN(instrumentIdentifier, code, tgt, src, 0);
+	MERGEN(instrumentIdentifier, name, tgt, src, 0);
+	APPENDN(instrumentIdentifier, country, tgt, src, 0);
+	APPENDN(instrumentIdentifier, instrumentData, tgt, src, 0);
+	APPENDN(instrumentIdentifier, instrumentStatusType, tgt, src, 0);
+	APPENDN(instrumentIdentifier, marketIdentifier, tgt, src, 0);
+	MERGEN(instrumentIdentifier, scopeType, tgt, src, 0);
+	APPENDN(instrumentIdentifier, segmentIdentifier, tgt, src, 0);
+	APPENDN(instrumentIdentifier, tranche, tgt, src, 0);
+	return 0;
 }
 
-static void
+static int
+__merge_objective(mddl_objective_t tgt, mddl_objective_t src)
+{
+/* objectives can be merged if they're 100% identical */
+	return strcmp(tgt->Simple, src->Simple) == 0 ? 0 : -1;
+}
+
+static int
 __merge_insdom(mddl_instrumentDomain_t tgt, mddl_instrumentDomain_t src)
 {
-	/* merge instrument identifiers */
-	for (size_t i = 0; i < src->ninstrumentIdentifier; i++) {
-		mddl_instrumentIdentifier_t ii = src->instrumentIdentifier + i;
-		mddl_instrumentIdentifier_t tgtii;
-
 #define __add_insidn	mddl_instrumentDomain_add_instrumentIdentifier
-		if ((tgtii = __insdom_insidn(tgt, ii)) == NULL) {
-			tgtii = __add_insidn(tgt);
-			memcpy(tgtii, ii, sizeof(*ii));
+#define __add_objective	mddl_instrumentDomain_add_objective
+	size_t nmrg = 1;
+
+	/* make sure there's instrument identifiers */
+	if (tgt->ninstrumentIdentifier == 0 && src->ninstrumentIdentifier > 0) {
+		/* no merge now */
+		nmrg = 0;
+	} else if (src->ninstrumentIdentifier > 0) {
+		/* first gets merged ... */
+		mddl_instrumentIdentifier_t tgtii = tgt->instrumentIdentifier;
+		if (__merge_insidn(tgtii, src->instrumentIdentifier) < 0) {
+			/* error merging them, so append */
+			nmrg = 0;
 		}
-#undef __add_insidn
 	}
-	return;
+	/* ... append the rest */
+	APPENDN(instrumentDomain, instrumentIdentifier, tgt, src, nmrg);
+
+	/* same for objectives, no merge for them */
+	nmrg = 1;
+	if (tgt->nobjective == 0 && src->nobjective > 0) {
+		/* no merge now */
+		nmrg = 0;
+	} else if (src->nobjective > 0) {
+		/* try a merge ... */
+		mddl_objective_t tobj = tgt->objective;
+		if (__merge_objective(tobj, src->objective) < 0) {
+			/* error merging them, so append */
+			nmrg = 0;
+		}
+	}
+	APPENDN(instrumentDomain, objective, tgt, src, nmrg);
+	return 0;
 }
 
-static void
+static int
 __merge_snap(mddl_snap_t tgt, mddl_snap_t src)
 {
-	/* merge instrument domain */
-	if (tgt->ninstrumentDomain == 1 && src->ninstrumentDomain >= 1) {
+	size_t nmrg = 1;
+
+	/* make sure there's at least one insdom on both sides */
+	if (tgt->ninstrumentDomain == 0 && src->ninstrumentDomain > 0) {
+		/* no merge in this case */
+		nmrg = 0;
+	} else if (src->ninstrumentDomain > 0) {
 		/* first one gets merged ... */
-		__merge_insdom(tgt->instrumentDomain, src->instrumentDomain);
+		mddl_instrumentDomain_t tdom = tgt->instrumentDomain;
+		if (__merge_insdom(tdom, src->instrumentDomain) < 0) {
+			/* error merging them, so append */
+			nmrg = 0;
+		}
 	}
 	/* ... and others just get appended */
-	for (size_t i = 1; i < src->ninstrumentDomain; i++) {
-		mddl_instrumentDomain_t newdom =
-			mddl_snap_add_instrumentDomain(tgt);
-		mddl_instrumentDomain_t sdom = src->instrumentDomain + i;
-		memcpy(newdom, sdom, sizeof(*sdom));
-	}
-	return;
+	APPENDN(snap, instrumentDomain, tgt, src, nmrg);
+	return 0;
 }
 
 static mddl_doc_t
@@ -214,23 +333,25 @@ __merge(mddl_doc_t tgtsrc, mddl_doc_t src)
 {
 	mddl_mddl_t troot;
 	mddl_mddl_t sroot;
+	size_t nmrg = 1;
 
 	if ((troot = tgtsrc->tree) == NULL) {
 		return NULL;
 	} else if ((sroot = src->tree) == NULL) {
 		return tgtsrc;
 	}
-	/* if both have a snap, just use it */
-	if ((troot->nsnap == 1) && (sroot->nsnap >= 1)) {
-		/* first one gets merged ... */
-		__merge_snap(troot->snap, sroot->snap);
+	/* make sure there's (at least) one snap in troot */
+	if (troot->nsnap == 0 && sroot->nsnap > 0) {
+		/* don't bother merging in this case */
+		nmrg = 0;
+	} else if (sroot->nsnap > 0) {
+		/* if sroot also has a snap, the first ones get merged ... */
+		if (__merge_snap(troot->snap, sroot->snap) < 0) {
+			nmrg = 0;
+		}
 	}
 	/* ... others just appended */
-	for (size_t i = 1; i < sroot->nsnap; i++) {
-		mddl_snap_t newsn = mddl_mddl_add_snap(troot);
-		mddl_snap_t ssnap = sroot->snap + i;
-		memcpy(newsn, ssnap, sizeof(*ssnap));
-	}
+	APPENDN(mddl, snap, troot, sroot, nmrg);
 	return tgtsrc;
 }
 
