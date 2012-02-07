@@ -61,9 +61,10 @@
 #endif
 #define countof(_x)	(sizeof(_x) / sizeof(*_x))
 
-#define VER	"mddl v" VERSION "\n"
+#define VER	"mddl v" VERSION
 
-static const char usage[] = VER "\
+const char version[] = VER;
+static const char usage[] = VER "\n\
 \n\
 Usage: mddl [-h|--help] [-V|--version]\n\
   or : mddl [OPTIONS] COMMAND [COMMAND-OPTIONS]\n\
@@ -87,7 +88,7 @@ Supported commands:\n\
 \n\
   objective FILE        Read FILE and print objectives\n\
 \n\
-  merge FILE1 FILE2     Merge FILE1 and FILE2 (somewhat) intelligently\n\
+  merge FILEs...        Merge FILEs (somewhat) intelligently\n\
 \n\
 ";
 
@@ -273,19 +274,10 @@ parse_objctv_args(struct __clo_s *clo, int argc, char *argv[])
 static void
 parse_merge_args(struct __clo_s *clo, int argc, char *argv[])
 {
-	for (int i = 0; i < argc; i++) {
-		char *p = argv[i];
-
-		if (clo->merge->file1 == NULL) {
-			/* must be file1 then */
-			clo->merge->file1 = argv[i];
-			argv[i] = NULL;
-		} else if (clo->merge->file2 == NULL) {
-			/* must be file1 then */
-			clo->merge->file2 = argv[i];
-			argv[i] = NULL;
-		}
-	}
+/* extract options we want to pass down to the merge subcommand
+ * at the moment there's no additional options, just files */
+	clo->merge->nfiles = argc;
+	clo->merge->files = argv;
 	return;
 }
 
@@ -308,9 +300,11 @@ parse_args(struct __clo_s *clo, int argc, char *argv[])
 				/* long opt */
 				if (strcmp(p, "help") == 0) {
 					clo->helpp = 1;
+					argv[i] = NULL;
 					continue;
 				} else if (strcmp(p, "version") == 0) {
 					clo->cmd = MDDL_CMD_VERSION;
+					argv[i] = NULL;
 					return;
 				}
 				break;
@@ -318,6 +312,7 @@ parse_args(struct __clo_s *clo, int argc, char *argv[])
 				if (*p == '\0') {
 					/* it's -V */
 					clo->cmd = MDDL_CMD_VERSION;
+					argv[i] = NULL;
 					return;
 				}
 				break;
@@ -325,6 +320,7 @@ parse_args(struct __clo_s *clo, int argc, char *argv[])
 				if (*p == '\0') {
 					/* it's -h */
 					clo->helpp = 1;
+					argv[i] = NULL;
 					continue;
 				}
 				break;
@@ -389,8 +385,15 @@ parse_args(struct __clo_s *clo, int argc, char *argv[])
 			break;
 		}
 
-		/* if we end up here, something could not be parsed */
-		pr_unknown(argv[i]);
+		/* if we end up here, something could not be parsed,
+		 * make that depend on the actual command we're calling */
+		switch (clo->cmd) {
+		case MDDL_CMD_MERGE:
+			break;
+		default:
+			pr_unknown(argv[i]);
+			break;
+		}
 	}
 	return;
 }
@@ -418,27 +421,13 @@ main(int argc, char *argv[])
 	/* parse them command line */
 	parse_args(&argi, argc - 1, argv + 1);
 
-	if (argi.helpp) {
+	if (argi.helpp && argi.cmd == MDDL_CMD_UNK) {
 		/* command specific help? la'ers */
 		print_usage(argi.cmd);
 		return 0;
-	}
-
-	switch (argi.cmd) {
-	case MDDL_CMD_UNK:
-	default:
-		print_usage(argi.cmd);
-		return 1;
-	case MDDL_CMD_VERSION:
+	} else if (argi.cmd == MDDL_CMD_VERSION) {
 		print_version();
 		return 0;
-	case MDDL_CMD_CODE:
-	case MDDL_CMD_NAME:
-	case MDDL_CMD_PRINT:
-	case MDDL_CMD_OBJECTIVE:
-	case MDDL_CMD_MERGE:
-		/* everything that goes to the processing stuff below */
-		break;
 	}
 
 	/* now go go go */

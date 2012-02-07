@@ -1,4 +1,4 @@
-AM_CFLAGS = -std=c99
+AM_CFLAGS =
 AM_CPPFLAGS = -Wall -DDEBUG -D_GNU_SOURCE
 
 headerdir = $(includedir)/mddl
