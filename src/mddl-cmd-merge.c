@@ -220,9 +220,15 @@ __merge(mddl_doc_t tgtsrc, mddl_doc_t src)
 	} else if ((sroot = src->tree) == NULL) {
 		return tgtsrc;
 	}
-	/* if both have a snap, just use it */
-	if ((troot->nsnap == 1) && (sroot->nsnap >= 1)) {
-		/* first one gets merged ... */
+	/* make sure there's (at least) one snap in troot */
+	if (troot->nsnap == 0) {
+		troot->snap = mddl_mddl_add_snap(troot);
+		/* don't bother merging in this case */
+		if (sroot->nsnap > 0) {
+			memcpy(troot->snap, sroot->snap, sizeof(*sroot->snap));
+		}
+	} else if (sroot->nsnap > 0) {
+		/* if sroot also has a snap, the first ones get merged ... */
 		__merge_snap(troot->snap, sroot->snap);
 	}
 	/* ... others just appended */
