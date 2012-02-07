@@ -87,7 +87,7 @@ Supported commands:\n\
 \n\
   objective FILE        Read FILE and print objectives\n\
 \n\
-  merge FILE1 FILE2     Merge FILE1 and FILE2 (somewhat) intelligently\n\
+  merge FILEs...        Merge FILEs (somewhat) intelligently\n\
 \n\
 ";
 
@@ -273,19 +273,10 @@ parse_objctv_args(struct __clo_s *clo, int argc, char *argv[])
 static void
 parse_merge_args(struct __clo_s *clo, int argc, char *argv[])
 {
-	for (int i = 0; i < argc; i++) {
-		char *p = argv[i];
-
-		if (clo->merge->file1 == NULL) {
-			/* must be file1 then */
-			clo->merge->file1 = argv[i];
-			argv[i] = NULL;
-		} else if (clo->merge->file2 == NULL) {
-			/* must be file1 then */
-			clo->merge->file2 = argv[i];
-			argv[i] = NULL;
-		}
-	}
+/* extract options we want to pass down to the merge subcommand
+ * at the moment there's no additional options, just files */
+	clo->merge->nfiles = argc;
+	clo->merge->files = argv;
 	return;
 }
 

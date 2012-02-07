@@ -236,21 +236,28 @@ int
 mddl_cmd_merge(mddl_clo_t clo)
 {
 	const size_t indent = 0;
-	mddl_doc_t doc_from;
-	mddl_doc_t doc_to;
+	mddl_doc_t res_doc;
 	int res = 0;
 
-	if ((doc_to = __read_file(clo->merge->file1)) == NULL ||
-	    (doc_from = __read_file(clo->merge->file2)) == NULL) {
-		res = -1;
-		goto out;
-	} else if ((doc_to = __merge(doc_to, doc_from)) == NULL) {
+	/* we destructively modify the first parsed document */
+	if (clo->merge->nfiles == 0 ||
+	    (res_doc = __read_file(clo->merge->files[0])) == NULL) {
 		res = -1;
 		goto out;
 	}
+	/* otherwise we have a valid target doc ... */
+	for (size_t i = 1; i < clo->merge->nfiles; i++) {
+		/* ... and merge the stuff one by one */
+		const char *f = clo->merge->files[i];
+		mddl_doc_t tmp;
+
+		if (f != NULL && (tmp = __read_file(f)) != NULL) {
+			(void)__merge(res_doc, tmp);
+		}
+	}
 	/* fiddle with clo and print the result */
 	clo->print->file = NULL;
-	mddl_cmd_print(clo, doc_to);
+	mddl_cmd_print(clo, res_doc);
 out:
 	return res;
 }

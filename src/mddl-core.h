@@ -75,8 +75,8 @@ struct __objctv_clo_s {
 };
 
 struct __merge_clo_s {
-	const char *file1;
-	const char *file2;
+	size_t nfiles;
+	char *const *files;
 };
 
 /* command line options */
