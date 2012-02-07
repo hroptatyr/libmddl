@@ -385,8 +385,15 @@ parse_args(struct __clo_s *clo, int argc, char *argv[])
 			break;
 		}
 
-		/* if we end up here, something could not be parsed */
-		pr_unknown(argv[i]);
+		/* if we end up here, something could not be parsed,
+		 * make that depend on the actual command we're calling */
+		switch (clo->cmd) {
+		case MDDL_CMD_MERGE:
+			break;
+		default:
+			pr_unknown(argv[i]);
+			break;
+		}
 	}
 	return;
 }
