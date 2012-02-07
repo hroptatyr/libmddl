@@ -69,7 +69,10 @@ __read_file(const char *f)
 	mddl_doc_t res = NULL;
 
 	/* special thing so we can process pipes */
-	if (f == NULL || (f[0] == '-' && f[1] == '\0')) {
+	if (f == NULL) {
+		/* we shouldn't be here */
+		goto out;
+	} else if (f[0] == '-' && f[1] == '\0') {
 		f = "/dev/stdin";
 	} else if (stat(f, &st) < 0 && errno == ENOENT) {
 		fprintf(stderr, "Cannot open %s, no such file\n", f);
@@ -232,6 +235,27 @@ __merge(mddl_doc_t tgtsrc, mddl_doc_t src)
 }
 
 
+/* help stuff */
+static const char sub_usage[] = "  merge FILEs...";
+static const char expl_1ln[] = "Merge FILEs (somewhat) intelligently";
+
+static void
+print_usage(mddl_clo_t UNUSED(clo))
+{
+	fputs(version, stdout);
+	fputc('\n', stdout);
+	fputc('\n', stdout);
+	fputs("Usage: mddl [OPTIONS]", stdout);
+	fputs(sub_usage + 1, stdout);
+	fputc('\n', stdout);
+	fputc('\n', stdout);
+	fputs(expl_1ln, stdout);
+	fputc('\n', stdout);
+	fputc('\n', stdout);
+	return;
+}
+
+
 int
 mddl_cmd_merge(mddl_clo_t clo)
 {
@@ -239,6 +263,11 @@ mddl_cmd_merge(mddl_clo_t clo)
 	mddl_doc_t res_doc;
 	int res = 0;
 
+	/* check if it's just a help request */
+	if (clo->helpp) {
+		print_usage(clo);
+		goto out;
+	}
 	/* we destructively modify the first parsed document */
 	if (clo->merge->nfiles == 0 ||
 	    (res_doc = __read_file(clo->merge->files[0])) == NULL) {
