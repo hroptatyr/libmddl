@@ -217,8 +217,13 @@ __merge_insdom(mddl_instrumentDomain_t tgt, mddl_instrumentDomain_t src)
 static void
 __merge_snap(mddl_snap_t tgt, mddl_snap_t src)
 {
-	/* merge instrument domain */
-	if (tgt->ninstrumentDomain == 1 && src->ninstrumentDomain >= 1) {
+	/* make sure there's at least one insdom on both sides */
+	if (tgt->ninstrumentDomain == 0 && src->ninstrumentDomain > 0) {
+		mddl_instrumentDomain_t sinsdom = src->instrumentDomain;
+		tgt->instrumentDomain = mddl_snap_add_instrumentDomain(tgt);
+		/* no merge in this case */
+		memcpy(tgt->instrumentDomain, sinsdom, sizeof(*sinsdom));
+	} else if (src->ninstrumentDomain > 0) {
 		/* first one gets merged ... */
 		__merge_insdom(tgt->instrumentDomain, src->instrumentDomain);
 	}
@@ -244,12 +249,10 @@ __merge(mddl_doc_t tgtsrc, mddl_doc_t src)
 		return tgtsrc;
 	}
 	/* make sure there's (at least) one snap in troot */
-	if (troot->nsnap == 0) {
+	if (troot->nsnap == 0 && sroot->nsnap > 0) {
 		troot->snap = mddl_mddl_add_snap(troot);
 		/* don't bother merging in this case */
-		if (sroot->nsnap > 0) {
-			memcpy(troot->snap, sroot->snap, sizeof(*sroot->snap));
-		}
+		memcpy(troot->snap, sroot->snap, sizeof(*sroot->snap));
 	} else if (sroot->nsnap > 0) {
 		/* if sroot also has a snap, the first ones get merged ... */
 		__merge_snap(troot->snap, sroot->snap);
