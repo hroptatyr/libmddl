@@ -16,8 +16,11 @@ LOG_COMPILER = echo
 TESTS += merge.1.mt
 TESTS += merge.2.mt
 TESTS += merge.3.mt
+TESTS += merge.4.mt
+TESTS += merge.5.mt
 EXTRA_DIST += merge.a.mddl
 EXTRA_DIST += merge.b.mddl
 EXTRA_DIST += merge.c.mddl
+EXTRA_DIST += merge.d.mddl
 
 ## Makefile.am ends here
