@@ -108,4 +108,7 @@ extern void mddl_cmd_objective(mddl_clo_t, mddl_doc_t);
  * (somewhat) intelligently merge FILE and FILEs */
 extern int mddl_cmd_merge(mddl_clo_t);
 
+/* helper for usage output */
+extern const char version[];
+
 #endif	/* INCLUDED_mddl_core_h_ */
