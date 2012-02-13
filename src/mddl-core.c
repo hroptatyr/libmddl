@@ -409,6 +409,7 @@ static void
 print_version(void)
 {
 	fputs(VER, stdout);
+	fputc('\n', stdout);
 	return;
 }
 
